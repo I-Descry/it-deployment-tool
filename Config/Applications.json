@@ -1,0 +1,30 @@
+[
+  {
+    "Name": "Google Chrome",
+    "Winget": "Google.Chrome",
+    "Category": "Browsers",
+    "Description": "Google web browser",
+    "Recommended": true
+  },
+  {
+    "Name": "Viber",
+    "Winget": "Rakuten.Viber",
+    "Category": "Communication",
+    "Description": "Messaging application",
+    "Recommended": true
+  },
+  {
+    "Name": "UltraViewer",
+    "Winget": "DucFabulous.UltraViewer",
+    "Category": "Remote Support",
+    "Description": "Remote desktop software",
+    "Recommended": false
+  },
+  {
+    "Name": "AnyDesk",
+    "Winget": "AnyDesk.AnyDesk",
+    "Category": "Remote Support",
+    "Description": "Remote desktop software",
+    "Recommended": true
+  }
+]

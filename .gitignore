@@ -1,0 +1,22 @@
+# Deployment logs
+Logs/*
+!Logs/.gitkeep
+
+# Offline installer files
+Installers/*
+!Installers/.gitkeep
+
+# Installer packages
+*.exe
+*.msi
+*.msix
+*.msixbundle
+*.zip
+
+# Temporary files
+*.log
+*.tmp
+*.bak
+
+# Editor settings
+.vscode/
