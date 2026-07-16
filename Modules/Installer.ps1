@@ -42,6 +42,33 @@ function Test-WingetPackage {
   return ($LASTEXITCODE -eq 0)
 }
 
+function Test-ApplicationInstalled {
+  param(
+    [PSCustomObject]$Application
+  )
+
+  $RegistryPaths = @(
+    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+    "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+  )
+
+  foreach ($RegistryPath in $RegistryPaths) {
+    $InstalledApplication = Get-ItemProperty -Path $RegistryPath -ErrorAction SilentlyContinue |
+    Where-Object {
+      $_.DisplayName -and
+      $_.DisplayName.Trim() -like "$($Application.Name)*"
+    } |
+    Select-Object -First 1
+
+    if ($null -ne $InstalledApplication) {
+      return $true
+    }
+  }
+
+  return $false
+}
+
 function Install-ApplicationWithWinget {
   param(
     [PSCustomObject]$Application
@@ -79,30 +106,44 @@ function Install-SelectedApplications {
     return
   }
 
-  if ($SelectedApplications.Count -gt 1) {
+  Write-Host
+  Write-Host "Starting installation queue..." -ForegroundColor Cyan
+
+  for (
+    $Index = 0
+    $Index -lt $SelectedApplications.Count
+    $Index++
+  ) {
+    $Application = $SelectedApplications[$Index]
+    $CurrentNumber = $Index + 1
+
     Write-Host
-    Write-Host "For this test, select only one application." -ForegroundColor Yellow
-    Pause-Application
+    Write-Host ("[{0}/{1}] {2}" -f $CurrentNumber, $SelectedApplications.Count, $Application.Name) -ForegroundColor Cyan
+    Write-Host "Checking package..." -NoNewline
 
-    return
+    $PackageExists = Test-WingetPackage -Application $Application
+
+    if (-not $PackageExists) {
+      Write-Host " [ NOT FOUND ]" -ForegroundColor Red
+      continue
+    }
+
+    Write-Host " [ OK ]" -ForegroundColor Green
+
+    $AlreadyInstalled = Test-ApplicationInstalled -Application $Application
+    
+    if ($AlreadyInstalled) {
+      Write-Host ("$($Application.Name) is already installed. Skipping.") -ForegroundColor Yellow
+      continue
+    }
+
+    [void](
+      Install-ApplicationWithWinget -Application $Application
+    )
   }
-
-  $Application = $SelectedApplications[0]
 
   Write-Host
-  Write-Host "Checking $($Application.Name)..." -ForegroundColor Cyan
-
-  $PackageExists = Test-WingetPackage -Application $Application
-
-  if (-not $PackageExists) {
-    Write-Host
-    Write-Host "$($Application.Name) was not found in Winget." -ForegroundColor Red
-    Pause-Application
-
-    return
-  }
-
-  [void](Install-ApplicationWithWinget -Application $Application)
-
+  Write-Host "Installation queue completed." -ForegroundColor Cyan
+  
   Pause-Application
 }
