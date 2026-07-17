@@ -8,7 +8,7 @@ Instead of manually downloading and installing each application one by one, the 
 
 ## Current Version
 
-`0.6.1-dev`
+`0.6.1`
 
 ---
 
@@ -71,11 +71,15 @@ IT Deployment Tool/
 │   ├── ApplicationCatalog.ps1
 │   ├── ApplicationMenu.ps1
 │   ├── ApplicationSelection.ps1
-│   ├── Installer.ps1
+│   ├── Elevation.ps1
+│   ├── InstallationQueue.ps1
+│   ├── InstalledApplications.ps1
 │   ├── Logging.ps1
 │   ├── Menu.ps1
-│   ├── System.ps1
-│   └── UI.ps1
+│   ├── SystemChecks.ps1
+│   ├── SystemInformation.ps1
+│   ├── UI.ps1
+│   └── WingetInstaller.ps1
 ├── .gitignore
 ├── README.md
 └── Start.ps1
