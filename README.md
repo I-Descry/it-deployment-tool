@@ -8,7 +8,7 @@ Instead of manually downloading and installing each application one by one, the 
 
 ## Current Version
 
-`0.6.0`
+`0.6.1-dev`
 
 ---
 
