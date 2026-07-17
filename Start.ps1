@@ -1,6 +1,6 @@
 # ============================================================
 # IT Deployment Tool
-# Version 0.6.1-dev
+# Version 0.7.0-dev
 # Author : IT04 - John Paul Villacorta
 # ============================================================
 
@@ -9,7 +9,7 @@
 # ============================================================
 
 $AppName = "IT DEPLOYMENT TOOL"
-$AppVersion = "0.6.1-dev"
+$AppVersion = "0.7.0-dev"
 $AppAuthor = "IT04 - John Paul Villacorta"
 
 # ============================================================

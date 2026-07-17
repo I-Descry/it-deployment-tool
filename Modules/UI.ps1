@@ -38,8 +38,8 @@ function Write-Info {
 }
 
 function Pause-Application {
-  Write-Host ""
-  Read-Host "Press ENTER to continue"
+  Write-Host
+  [void](Read-Host "Press ENTER to continue")
 }
 
 function Show-Banner {

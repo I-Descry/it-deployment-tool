@@ -1,6 +1,7 @@
 [
   {
     "Name": "Google Chrome",
+    "InstallType": "Winget",
     "Winget": "Google.Chrome",
     "Category": "Browsers",
     "Description": "Google web browser",
@@ -8,6 +9,7 @@
   },
   {
     "Name": "Viber",
+    "InstallType": "Winget",
     "Winget": "Rakuten.Viber",
     "Category": "Communication",
     "Description": "Messaging application",
@@ -15,6 +17,7 @@
   },
   {
     "Name": "UltraViewer",
+    "InstallType": "Winget",
     "Winget": "DucFabulous.UltraViewer",
     "Category": "Remote Support",
     "Description": "Remote desktop software",
@@ -22,6 +25,7 @@
   },
   {
     "Name": "AnyDesk",
+    "InstallType": "Winget",
     "Winget": "AnyDesk.AnyDesk",
     "Category": "Remote Support",
     "Description": "Remote desktop software",

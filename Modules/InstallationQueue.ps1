@@ -18,7 +18,7 @@ function Install-SelectedApplications {
 
   $InstalledCount = 0
   $SkippedCount = 0
-  $FailedCOunt = 0
+  $FailedCount = 0
   $NotFoundCount = 0
   $CurrentNumber = 0
 
@@ -32,16 +32,15 @@ function Install-SelectedApplications {
 
     Write-Host
     Write-Host ("[{0}/{1}] {2}" -f $CurrentNumber, $SelectedApplications.Count, $Application.Name) -ForegroundColor Cyan
-    Write-Host "Checking package..." -NoNewline
-    
-    $PackageExists = Test-WinGetPackage -Application $Application
+    Write-Host "Checking installer..." -NoNewline
 
-    if (-not $PackageExists) {
+    $InstallerAvailable = Test-ApplicationInstallerAvailable -Application $Application
+
+    if (-not $InstallerAvailable) {
       Write-Host " [ NOT FOUND ]" -ForegroundColor Red
       $NotFoundCount++
 
-      Write-DeploymentLog -Message ("Package not found: {0} ({1})" -f $Application.Name, $Application.Winget) -Level "ERROR"
-
+      Write-DeploymentLog -Message ("Installer not found or unavailable: {0}" -f $Application.Name) -Level "ERROR"
       continue
     }
 
@@ -58,7 +57,7 @@ function Install-SelectedApplications {
       continue
     }
 
-    $InstallSucceeded = Install-ApplicationWithWinget -Application $Application
+    $InstallSucceeded = Install-ApplicationByType -Application $Application
     
     if ($InstallSucceeded) {
       $InstalledCount++
@@ -69,7 +68,7 @@ function Install-SelectedApplications {
   }
 
   Write-Host
-  Write-Section "Installed Summary"
+  Write-Section "Installation Summary"
 
   Write-Host ("Installed : {0}" -f $InstalledCount) -ForegroundColor Green
   Write-Host ("Skipped : {0}" -f $SkippedCount) -ForegroundColor Yellow
