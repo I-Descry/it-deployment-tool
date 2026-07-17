@@ -72,6 +72,7 @@ IT Deployment Tool/
 │   ├── ApplicationMenu.ps1
 │   ├── ApplicationSelection.ps1
 │   ├── Installer.ps1
+│   ├── Logging.ps1
 │   ├── Menu.ps1
 │   ├── System.ps1
 │   └── UI.ps1
