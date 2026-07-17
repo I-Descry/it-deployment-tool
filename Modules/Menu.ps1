@@ -26,6 +26,10 @@ function Start-MainMenu {
     switch ($choice) {
       "1" {
         Show-ApplicationMenu
+
+        Clear-Host
+        Show-Banner
+        Show-SystemInformation
       }
       "2" {
         Write-Host ""

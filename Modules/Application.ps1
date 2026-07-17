@@ -4,6 +4,9 @@ function Start-Application {
   # Load system information
   Get-SystemInformation
 
+  # Initialize Deployment Session Log
+  Initialize-DeploymentLog -Version $AppVersion
+
   # Run system checks
   Test-Administrator
   Test-Internet
@@ -17,4 +20,7 @@ function Start-Application {
 
   # Start the application
   Start-MainMenu
+
+  # Initialize Completion Log
+  Complete-DeploymentLog
 }

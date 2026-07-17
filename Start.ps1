@@ -1,6 +1,6 @@
 # ============================================================
 # IT Deployment Tool
-# Version 0.5.0-dev
+# Version 0.6.0
 # Author : IT04 - John Paul Villacorta
 # ============================================================
 
@@ -9,7 +9,7 @@
 # ============================================================
 
 $AppName = "IT DEPLOYMENT TOOL"
-$AppVersion = "0.5.0-dev"
+$AppVersion = "0.6.0"
 $AppAuthor = "IT04 - John Paul Villacorta"
 
 # ============================================================
@@ -46,8 +46,6 @@ $AdministratorGranted = Request-Administrator -ScriptPath $PSCommandPath
 if (-not $AdministratorGranted) {
   exit
 }
-
-Start-Application
 
 # ============================================================
 # Application Starts Here
