@@ -22,6 +22,38 @@ function Test-OfflineInstallerFile {
   return Test-Path -LiteralPath $InstallerPath -PathType Leaf
 }
 
+function Test-ApplicationSuccessExitCode {
+  param(
+    [PSCustomObject]$Application,
+    [int]$ExitCode
+  )
+
+  $SuccessExitCodes = @($Application.SuccessExitCodes)
+
+  if ($SuccessExitCodes.Count -eq 0) {
+    $SuccessExitCodes = @(0)
+  }
+
+  $SuccessExitCodes = @(
+    $SuccessExitCodes | ForEach-Object {
+      [int]$_
+    }
+  )
+
+  return ($ExitCode -in $SuccessExitCodes)
+}
+
+function Test-ApplicationRebootExitCode {
+  param(
+    [PSCustomObject]$Application,
+    [int]$ExitCode
+  )
+
+  $RebootExitCodes = @($Application.RebootExitCodes | Where-Object { $null -ne $_ })
+
+  return ($RebootExitCodes -contains $ExitCode)
+}
+
 function Install-ApplicationWithExe {
   param(
     [PSCustomObject]$Application
@@ -70,11 +102,21 @@ function Install-ApplicationWithExe {
     $Process = Start-Process @ProcessParameters
     $ExitCode = $Process.ExitCode
 
-    if ($ExitCode -eq 0) {
+    $InstallSucceeded = Test-ApplicationSuccessExitCode -Application $Application -ExitCode $ExitCode
+
+    $RestartRecommended = Test-ApplicationRebootExitCode -Application $Application -ExitCode $ExitCode
+
+    if ($InstallSucceeded) {
       Write-Host
       Write-Host ("$($Application.Name) installed successfully.") -ForegroundColor Green
 
       Write-DeploymentLog -Message "$($Application.Name) installed successfully." -Level "SUCCESS"
+
+      if ($RestartRecommended) {
+        Write-Host ("Restart recommended to complete $($Application.Name) setup.") -ForegroundColor Yellow
+
+        Write-DeploymentLog -Message ("{0} installed successfully. Restart recommended. Exit code: {1}" -f $Application.Name, $ExitCode) -Level "WARNING"
+      }
 
       return $true
     }

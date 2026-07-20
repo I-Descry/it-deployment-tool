@@ -7,24 +7,36 @@ function Test-ApplicationInstalled {
     [PSCustomObject]$Application
   )
 
+  $DetectionName = ([string]$Application.DetectionName).Trim()
+
+  if ([string]::IsNullOrWhiteSpace($DetectionName)) {
+    $DetectionName = ([string]$Application.Name).Trim()
+  }
+
+  if ([string]::IsNullOrWhiteSpace($DetectionName)) {
+    return $false
+  }
+
   $RegistryPaths = @(
     "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
     "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
     "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
   )
 
-  foreach ($RegistryPath in $RegistryPaths) {
-    $InstalledApplication = Get-ItemProperty -Path $RegistryPath -ErrorAction SilentlyContinue |
-    Where-Object {
-      $_.DisplayName -and
-      $_.DisplayName.Trim() -like "$($Application.Name)*"
-    } |
-    Select-Object -First 1
+  $InstalledApplication = Get-ItemProperty -Path $RegistryPaths -ErrorAction SilentlyContinue |
+  Where-Object {
+    $DisplayName = ([string]$_.DisplayName).Trim()
 
-    if ($null -ne $InstalledApplication) {
-      return $true
+    if ([string]::IsNullOrWhiteSpace($DisplayName)) {
+      return $false
     }
-  }
 
-  return $false
+    return $DisplayName.StartsWith(
+      $DetectionName,
+      [System.StringComparison]::OrdinalIgnoreCase
+    )
+  } |
+  Select-Object -First 1
+
+  return ($null -ne $InstalledApplication)
 }

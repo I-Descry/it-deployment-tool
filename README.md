@@ -8,7 +8,7 @@ Instead of manually downloading and installing each application one by one, the 
 
 ## Current Version
 
-`0.7.0-dev`
+`0.7.0`
 
 ---
 
@@ -38,6 +38,13 @@ Instead of manually downloading and installing each application one by one, the 
 - Supports silent installation through WinGet
 - Continues processing the installation queue when an application is skipped or fails
 - Displays an installation results summary
+- Supports online application installation through WinGet
+- Supports local offline EXE installers
+- Routes applications based on their configured installation type
+- Validates offline installer files before execution
+- Supports application-specific success exit codes
+- Detects when an installer recommends a restart
+- Supports company applications such as SAP GUI
 
 ### Deployment Logging
 
@@ -73,9 +80,11 @@ IT Deployment Tool/
 │   ├── ApplicationSelection.ps1
 │   ├── Elevation.ps1
 │   ├── InstallationQueue.ps1
+│   ├── InstallationRouter.ps1
 │   ├── InstalledApplications.ps1
 │   ├── Logging.ps1
 │   ├── Menu.ps1
+│   ├── OfflineInstaller.ps1
 │   ├── SystemChecks.ps1
 │   ├── SystemInformation.ps1
 │   ├── UI.ps1
@@ -84,3 +93,17 @@ IT Deployment Tool/
 ├── README.md
 └── Start.ps1
 ```
+
+## Offline Installers
+
+Offline installer files are stored inside the `Installers` directory.
+
+These files are excluded from the Git repository because they may be large, proprietary, or company-specific. After cloning the project, the required installer folders and files must be placed manually inside `Installers`.
+
+Example:
+
+```text
+Installers/
+└── SAPGUI-7.70-WINDOWS_50152942_2/
+    └── ...
+        └── SapGuiSetup.exe
