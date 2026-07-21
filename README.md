@@ -8,7 +8,7 @@ Instead of manually downloading and installing each application one by one, the 
 
 ## Current Version
 
-`0.7.0`
+`0.8.0`
 
 ---
 
@@ -46,13 +46,19 @@ Instead of manually downloading and installing each application one by one, the 
 - Detects when an installer recommends a restart
 - Supports company applications such as SAP GUI
 
-### Deployment Logging
+### Deployment Logs
 
 - Creates a seperate deployment log for every session
 - Records the computer name, logged-in user, and tool version
 - Records installed, skipped, failed, and missing applications
 - Records the final installation summary
 - Records deployment session start and completion times
+- Displays the ten most recent deployment logs
+- Sorts logs from newest to oldest
+- Allows logs to be selected and viewed inside PowerShell
+- Shows the log filename, modification date, and contents
+- Supports refreshing the log list
+- Opens the Logs directory in File Explorer
 
 ### User Interface
 
@@ -79,6 +85,8 @@ IT Deployment Tool/
 │   ├── ApplicationMenu.ps1
 │   ├── ApplicationSelection.ps1
 │   ├── Elevation.ps1
+│   ├── DeploymentLogs.ps1
+│   ├── DeploymentLogsMenu.ps1
 │   ├── InstallationQueue.ps1
 │   ├── InstallationRouter.ps1
 │   ├── InstalledApplications.ps1

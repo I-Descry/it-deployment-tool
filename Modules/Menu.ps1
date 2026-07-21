@@ -37,9 +37,11 @@ function Start-MainMenu {
         Pause-Application
       }
       "3" {
-        Write-Host ""
-        Write-Host "Opening Deployment Logs..."
-        Pause-Application
+        Show-DeploymentLogsMenu
+
+        Clear-Host
+        Show-Banner
+        Show-SystemInformation
       }
       "4" {
         Write-Host ""
