@@ -57,10 +57,12 @@ function Show-ApplicationOptions {
   Write-Host
   Write-Host "------------------------------------------------------------"
 
-  Write-Host "A - Select All"
-  Write-Host "C - Clear All"
-  Write-Host "I - Install Selected"
-  Write-Host "Q - Back"
+  Write-Host "[A] - Select All"
+  Write-Host "[R] - Select Recommended"
+  Write-Host "[P] - Preview Recommended Setup"
+  Write-Host "[C] - Clear All"
+  Write-Host "[I] - Install Selected"
+  Write-Host "[Q] - Back"
 }
 
 function Read-ApplicationChoice {
@@ -85,6 +87,20 @@ function Process-ApplicationChoice {
 
       "A" {
         Select-AllApplications
+
+        return $true
+      }
+
+      "R" {
+        $RecommendedCount = Select-RecommendedApplications
+
+        Write-DeploymentLog -Level "INFO" -Message ("{0} recommended application(s) selected." -f $RecommendedCount)
+
+        return $true
+      }
+
+      "P" {
+        Start-RecommendedApplicationsSetup
 
         return $true
       }

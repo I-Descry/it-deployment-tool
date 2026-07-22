@@ -29,3 +29,21 @@ function Clear-AllApplications {
     $Application.Selected = $false
   }
 }
+
+function Select-RecommendedApplications {
+  $RecommendedCount = 0
+
+  foreach ($Application in $script:Applications) {
+    $IsRecommended = (
+      $Application.Recommended -eq $true
+    )
+
+    $Application.Selected = $IsRecommended
+
+    if ($IsRecommended) {
+      $RecommendedCount++
+    }
+  }
+
+  return $RecommendedCount
+}
