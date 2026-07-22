@@ -8,7 +8,7 @@ Instead of manually downloading and installing applications one at a time, the t
 
 ## Current Version
 
-`0.9.0`
+`1.0.0`
 
 ---
 
@@ -32,6 +32,11 @@ Instead of manually downloading and installing applications one at a time, the t
 - Supports automatic selection of recommended applications
 - Validates configured WinGet package IDs
 - Tracks selections using interactive checkboxes
+- Displays the installed status of each configured application
+- Marks recommended applications in the application list
+- Displays the total number of selected applications
+- Supports previewing manually selected applications before installation
+- Requires confirmation before processing selected applications
 
 ### Installation Automation
 
@@ -48,16 +53,17 @@ Instead of manually downloading and installing applications one at a time, the t
 - Displays a final installation summary
 - Supports company applications such as SAP GUI
 
-### Recommended Applications Setup
+### Application Selection and Preview
 
-- Uses the `Recommended` property from `Config/Applications.json`
-- Automatically selects applications marked as recommended
-- Displays a preview before processing
-- Shows each application's category and installation type
-- Requires confirmation before installation
+- Displays all configured applications
+- Shows whether each application is installed or not installed
+- Marks applications configured as recommended
+- Supports individual, recommended, and select-all options
+- Displays the total number of selected applications
+- Previews all selected applications before processing
+- Shows each application's category, installation type, and installed status
+- Requires confirmation before starting the installation queue
 - Supports safe cancellation
-- Uses the standard installation queue
-- Uses existing installed-application detection
 
 ### Deployment Logs
 
@@ -88,13 +94,12 @@ Instead of manually downloading and installing applications one at a time, the t
 
 | Option | Action |
 |:------:|--------|
+| Number | Select or deselect an individual application |
 | `A` | Select all applications |
 | `R` | Select recommended applications |
-| `P` | Preview and process the recommended setup |
 | `C` | Clear all selections |
-| `I` | Install selected applications |
+| `I` | Preview and install selected applications |
 | `Q` | Return to the main menu |
-| Number | Toggle an individual application |
 
 ---
 
@@ -122,7 +127,7 @@ IT Deployment Tool/
 │   ├── Logging.ps1
 │   ├── Menu.ps1
 │   ├── OfflineInstaller.ps1
-│   ├── RecommendedSetup.ps1
+│   ├── SelectedApplicationsSetup.ps1
 │   ├── SystemChecks.ps1
 │   ├── SystemInformation.ps1
 │   ├── UI.ps1

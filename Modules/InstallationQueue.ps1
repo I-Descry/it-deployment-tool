@@ -3,6 +3,10 @@
 # ============================================================
 
 function Install-SelectedApplications {
+  param(
+    [switch]$SkipPause
+  )
+
   $SelectedApplications = @(Get-SelectedApplications)
 
   if ($SelectedApplications.Count -eq 0) {
@@ -93,5 +97,7 @@ function Install-SelectedApplications {
 
   Write-DeploymentLog -Message $SummaryMessage -Level $SummaryLevel
 
+  if (-not $SkipPause) {
   Pause-Application
+  }
 }

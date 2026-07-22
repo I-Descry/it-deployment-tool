@@ -38,12 +38,3 @@ function Get-SelectedApplications {
   
   return $script:Applications | Where-Object { $_.Selected }
 }
-
-function Get-RecommendedApplications {
-  return @(
-    $script:Applications |
-    Where-Object {
-      $_.Recommended -eq $true
-    }
-  )
-}

@@ -40,3 +40,17 @@ function Test-ApplicationInstalled {
 
   return ($null -ne $InstalledApplication)
 }
+
+function Update-ApplicationInstallationStatus {
+  if ($null -eq $script:Applications) {
+    throw "The application catalog has not been initialized."
+  }
+
+  foreach ($Application in $script:Applications) {
+    $IsInstalled = [bool](
+      Test-ApplicationInstalled -Application $Application
+    )
+
+    $Application | Add-Member -MemberType NoteProperty -Name "Installed" -Value $IsInstalled -Force
+  }
+}

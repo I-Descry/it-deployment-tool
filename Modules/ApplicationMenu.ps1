@@ -3,53 +3,77 @@
 # ============================================================
 
 function Show-ApplicationMenu {
+  $Running = $true
 
-    $Running = $true
+  while ($Running) {
+    Clear-Host
+    Write-Title "INSTALL APPLICATIONS"
 
-    while ($Running) {
+    Show-ApplicationList
+    Show-ApplicationOptions
 
-        Clear-Host
+    $Choice = Read-ApplicationChoice
 
-        Write-Title "INSTALL APPLICATIONS"
-
-        Show-ApplicationList
-
-        Show-ApplicationOptions
-
-        $Choice = Read-ApplicationChoice
-
-        $Running = Process-ApplicationChoice -Choice $Choice
-    }
+    $Running = Process-ApplicationChoice -Choice $Choice
+  }
 }
 
 function Show-ApplicationList {
-
   $GroupedApplications = $script:Applications | Group-Object Category
 
   $ApplicationNumber = 1
 
-  # Rebuild the number-to-application lookup every time the menu is displayed
   $script:ApplicationMap = @{}
 
   foreach ($Group in $GroupedApplications) {
-
     Write-Host
-    Write-Section $Group.Name
-    
-    foreach ($Application in $Group.Group) {
+    Write-Section $Group.$Name
 
+    foreach ($Application in $Group.Group) {
       $script:ApplicationMap[$ApplicationNumber] = $Application
-      $CheckBox = if ($Application.Selected) {
+      $Checkbox = if ($Application.Selected) {
         "[X]"
       }
       else {
         "[ ]"
       }
 
-      Write-Host (" {0,2}. {1} {2}" -f $ApplicationNumber, $CheckBox, $Application.Name)
+      $InstallationStatus = if ($Application.Installed) {
+        "[Installed]"
+      }
+      else {
+        "[Not Installed]"
+      }
+
+      $RecommendedStatus = if (
+        $Application.Recommended -eq $true
+      ) {
+        "[Recommended]"
+      }
+      else {
+        ""
+      }
+
+      $StatusText = ($InstallationStatus, $RecommendedStatus | Where-Object {
+        -not [string]::IsNullOrWhiteSpace($_)
+      }
+      ) -join " "
+
+      Write-Host (
+        " {0,2}. {1} {2,-34} {3}" -f $ApplicationNumber, $CheckBox, $Application.Name, $StatusText
+      )
+
       $ApplicationNumber++
     }
   }
+
+  $SelectedCount = @($script:Applications | Where-Object {
+    $_.Selected -eq $true
+  }
+  ).Count
+
+  Write-Host
+  Write-Host ("Selected applications: {0}" -f $SelectedCount) -ForegroundColor Cyan
 }
 
 function Show-ApplicationOptions {
@@ -59,9 +83,8 @@ function Show-ApplicationOptions {
 
   Write-Host "[A] - Select All"
   Write-Host "[R] - Select Recommended"
-  Write-Host "[P] - Preview Recommended Setup"
   Write-Host "[C] - Clear All"
-  Write-Host "[I] - Install Selected"
+  Write-Host "[I] - Preview and Install Selected"
   Write-Host "[Q] - Back"
 }
 
@@ -99,12 +122,6 @@ function Process-ApplicationChoice {
         return $true
       }
 
-      "P" {
-        Start-RecommendedApplicationsSetup
-
-        return $true
-      }
-
       "C" {
         Clear-AllApplications
 
@@ -112,7 +129,7 @@ function Process-ApplicationChoice {
       }
 
       "I" {
-        Install-SelectedApplications
+        $InstallationStarted = Start-SelectedApplicationsSetup
 
         return $true
       }
