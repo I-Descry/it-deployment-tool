@@ -42,5 +42,13 @@
     "Category": "Company Applications",
     "Description": "SAP GUI client used by the company",
     "Recommended": true
+  },
+  {
+    "Name": "CrowdStrike Windows Sensor",
+    "DetectionName": "CrowdStrike Windows Sensor",
+    "InstallType": "CrowdStrike",
+    "Category": "Security",
+    "Description": "CrowdStrike Falcon endpoint security sensor",
+    "Recommended": true
   }
 ]

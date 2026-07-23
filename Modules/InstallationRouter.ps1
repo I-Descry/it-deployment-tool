@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # INSTALLATION ROUTER
 # ============================================================
 
@@ -26,6 +26,12 @@ function Test-ApplicationInstallerAvailable {
       return Test-OfflineInstallerFile -Application $Application
     }
 
+    "CROWDSTRIKE" {
+      $PackageTest = Test-CrowdStrikeDeploymentPackage
+
+      return [bool]$PackageTest.Valid
+    }
+
     default {
       return $false
     }
@@ -46,6 +52,24 @@ function Install-ApplicationByType {
 
     "EXE" {
       return Install-ApplicationWithExe -Application $Application
+    }
+
+    "CROWDSTRIKE" {
+      $CrowdStrikeResult = Start-CrowdStrikeInteractiveSetup
+
+      switch ($CrowdStrikeResult.Status) {
+        "Installed" {
+          return $true
+        }
+
+        "Skipped" {
+          return $true
+        }
+
+        default {
+          return $false
+        }
+      }
     }
 
     "MSI" {

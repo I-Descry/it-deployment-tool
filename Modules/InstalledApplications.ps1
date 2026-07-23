@@ -7,9 +7,25 @@ function Test-ApplicationInstalled {
     [PSCustomObject]$Application
   )
 
+  $InstallType = ([string]$Application.InstallType).Trim().ToUpper()
+
+  # CrowdStrike is detected through its Windows service.
+  if ($InstallType -eq "CROWDSTRIKE") {
+    $CrowdStrikeDetectionCommand = Get-Command -Name "Test-CrowdStrikeSensorInstalled" -ErrorAction SilentlyContinue
+
+    if ($null -eq $CrowdStrikeDetectionCommand) {
+      return $false
+    }
+
+    return [bool](
+      Test-CrowdStrikeSensorInstalled
+    )
+  }
+
+  # Other applications continue using registry detection.
   $DetectionName = ([string]$Application.DetectionName).Trim()
 
-  if ([string]::IsNullOrWhiteSpace($DetectionName)) {
+  if ([string]::IsNullOrWhiteSpace($Detectionname)) {
     $DetectionName = ([string]$Application.Name).Trim()
   }
 
@@ -23,8 +39,7 @@ function Test-ApplicationInstalled {
     "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
   )
 
-  $InstalledApplication = Get-ItemProperty -Path $RegistryPaths -ErrorAction SilentlyContinue |
-  Where-Object {
+  $InstalledApplication = Get-ItemProperty -Path $RegistryPaths -ErrorAction SilentlyContinue | Where-Object {
     $DisplayName = ([string]$_.DisplayName).Trim()
 
     if ([string]::IsNullOrWhiteSpace($DisplayName)) {
@@ -35,8 +50,7 @@ function Test-ApplicationInstalled {
       $DetectionName,
       [System.StringComparison]::OrdinalIgnoreCase
     )
-  } |
-  Select-Object -First 1
+  } | Select-Object -first 1
 
   return ($null -ne $InstalledApplication)
 }

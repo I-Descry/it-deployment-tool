@@ -8,7 +8,9 @@ Instead of manually downloading and installing applications one at a time, the t
 
 ## Current Version
 
-`1.0.0`
+`1.1.0-dev`
+
+This development version adds CrowdStrike Falcon Sensor integration. The installed-device detection and skip workflow have been tested. The interactive installation and automatic credential population still require final testing on an authorized device where CrowdStrike is not installed.
 
 ---
 
@@ -26,44 +28,49 @@ Instead of manually downloading and installing applications one at a time, the t
 
 - Loads applications from `Config/Applications.json`
 - Groups applications by category
-- Supports individual application selection
-- Supports selecting multiple applications
-- Supports Select All and Clear All options
-- Supports automatic selection of recommended applications
-- Validates configured WinGet package IDs
+- Supports individual and multiple application selection
+- Supports Select All, Select Recommended, and Clear All
 - Tracks selections using interactive checkboxes
 - Displays the installed status of each configured application
-- Marks recommended applications in the application list
+- Marks recommended applications
 - Displays the total number of selected applications
-- Supports previewing manually selected applications before installation
-- Requires confirmation before processing selected applications
+- Previews manually selected applications before processing
+- Requires confirmation before starting the installation queue
+- Supports safe cancellation
 
 ### Installation Automation
 
 - Detects installed applications through the Windows Registry
+- Detects CrowdStrike through the `CSFalconService` Windows service
 - Skips applications that are already installed
+- Checks installed status before checking installer availability
 - Processes selected applications sequentially
 - Supports silent installation through WinGet
 - Supports local offline EXE installers
+- Supports dedicated application-specific installation types
 - Routes applications according to their configured installation type
 - Validates offline installer files before execution
 - Supports application-specific success exit codes
 - Detects when an installer recommends a system restart
 - Continues processing when an application is skipped or fails
 - Displays a final installation summary
-- Supports company applications such as SAP GUI
+- Supports company applications such as SAP GUI and CrowdStrike Falcon Sensor
 
-### Application Selection and Preview
+### CrowdStrike Falcon Sensor
 
-- Displays all configured applications
-- Shows whether each application is installed or not installed
-- Marks applications configured as recommended
-- Supports individual, recommended, and select-all options
-- Displays the total number of selected applications
-- Previews all selected applications before processing
-- Shows each application's category, installation type, and installed status
-- Requires confirmation before starting the installation queue
-- Supports safe cancellation
+- Locates the CrowdStrike Windows Sensor installer automatically
+- Reads the Customer ID and installation token from the local CrowdStrike package
+- Validates the Customer ID format
+- Does not display the actual Customer ID or token in the deployment interface
+- Does not write the Customer ID or token to deployment logs
+- Detects an existing installation using `CSFalconService`
+- Skips installation when the sensor is already installed
+- Opens the interactive CrowdStrike setup when installation is required
+- Supplies the Customer ID and installation token to the installer
+- Keeps acceptance of the Sensor Terms of Use as a manual technician action
+- Verifies installation by checking for the Falcon service
+
+The CrowdStrike installer and credential-containing README are excluded from Git.
 
 ### Deployment Logs
 
@@ -85,6 +92,7 @@ Instead of manually downloading and installing applications one at a time, the t
 - Displays applications using selectable checkboxes
 - Groups applications by category
 - Supports navigation between the main menu and submenus
+- Refreshes installed application status after processing
 - Refreshes menus after completing an action
 - Displays clear success, warning, and error messages
 
@@ -137,6 +145,8 @@ IT Deployment Tool/
 └── Start.ps1
 ```
 
+Installer packages and generated log files are excluded from the repository.
+
 ---
 
 ## Application Configuration
@@ -147,12 +157,13 @@ Applications are configured inside:
 Config/Applications.json
 ```
 
-Each application entry defines information such as:
+Each application entry may define:
 
 - Application name
 - Detection name
 - Installation type
-- WinGet package ID or offline installer path
+- WinGet package ID
+- Offline installer path
 - Silent installation arguments
 - Accepted success exit codes
 - Restart exit codes
@@ -160,21 +171,20 @@ Each application entry defines information such as:
 - Description
 - Recommended status
 
-Example WinGet application:
+### WinGet Application Example
 
 ```json
 {
   "Name": "Google Chrome",
-  "DetectionName": "Google Chrome",
   "InstallType": "Winget",
-  "WingetId": "Google.Chrome",
+  "Winget": "Google.Chrome",
   "Category": "Browsers",
-  "Description": "Google Chrome web browser",
+  "Description": "Google web browser",
   "Recommended": true
 }
 ```
 
-Example offline EXE application:
+### Offline EXE Application Example
 
 ```json
 {
@@ -191,6 +201,25 @@ Example offline EXE application:
 }
 ```
 
+### CrowdStrike Application Example
+
+```json
+{
+  "Name": "CrowdStrike Windows Sensor",
+  "DetectionName": "CrowdStrike Windows Sensor",
+  "InstallType": "CrowdStrike",
+  "Category": "Security",
+  "Description": "CrowdStrike Falcon endpoint security sensor",
+  "Recommended": true
+}
+```
+
+CrowdStrike does not require an installer path in `Applications.json`. Its dedicated module searches inside:
+
+```text
+Installers/CrowdStrike/
+```
+
 ---
 
 ## Offline Installers
@@ -203,21 +232,40 @@ These files are excluded from the Git repository because they may be:
 - Proprietary
 - Licensed
 - Company-specific
+- Security-sensitive
 
-After cloning the repository, required offline installer files must be manually placed inside the `Installers` directory using the folder structure configured in `Applications.json`.
+After cloning the repository, the required installer files must be manually placed inside `Installers` using the expected directory structure.
 
-Example:
+### SAP GUI Example
 
 ```text
 Installers/
-└── SAPGUI-7.70-WINDOWS_50152942_2/
-    └── BD_NW_7.0_Presentation_7.70_Comp._1_/
-        └── PRES1/
-            └── GUI/
-                └── Windows/
-                    └── Win32/
-                        └── SapGuiSetup.exe
+`-- SAPGUI-7.70-WINDOWS_50152942_2/
+    `-- BD_NW_7.0_Presentation_7.70_Comp._1_/
+        `-- PRES1/
+            `-- GUI/
+                `-- Windows/
+                    `-- Win32/
+                        `-- SapGuiSetup.exe
 ```
+
+### CrowdStrike Example
+
+```text
+Installers/
+`-- CrowdStrike/
+    |-- FalconSensor_Windows - 7.35.20709.exe
+    `-- Readme.txt
+```
+
+The CrowdStrike README is expected to contain:
+
+```text
+Customer ID: <company CID with checksum>
+Token: <installation token>
+```
+
+Do not commit or publicly share the real values.
 
 ---
 
@@ -241,6 +289,8 @@ Each session creates a separate `.log` file containing:
 
 Generated log files are excluded from Git.
 
+CrowdStrike credentials must never appear in deployment logs.
+
 ---
 
 ## Running the Tool
@@ -261,13 +311,27 @@ The tool automatically requests administrator privileges when elevation is requi
 2. Review the displayed system information and status checks.
 3. Open the Install Applications menu.
 4. Select applications individually, select all, or select recommended applications.
-5. Preview the recommended setup when needed.
-6. Start the installation queue.
-7. Review the installation summary.
-8. Open Deployment Logs to inspect session activity.
+5. Press `I` to preview the selected applications.
+6. Confirm or cancel the installation.
+7. Allow the installation queue to process each selected application.
+8. Review the installation summary.
+9. Open Deployment Logs to inspect session activity.
+
+For CrowdStrike installation, the technician must review the populated setup fields, manually accept the Sensor Terms of Use, and click Install.
+
+---
+
+## Security Notes
+
+- Do not store passwords, tokens, Customer IDs, or secrets inside tracked PowerShell files.
+- Do not place credentials inside `Applications.json`.
+- Do not commit CrowdStrike installer packages or credential files.
+- Do not write CrowdStrike installation arguments to deployment logs.
+- Restrict access to the local CrowdStrike package directory.
+- Test CrowdStrike installation only on authorized company devices.
 
 ---
 
 ## Purpose
 
-This project was created to improve the consistency and efficiency of Windows device deployment by combining application selection, installation automation, installed-application detection, offline installer support, recommended setup workflows, and deployment logging into one modular PowerShell tool.
+This project was created to improve the consistency and efficiency of Windows device deployment by combining application selection, installation automation, installed-application detection, offline installer support, company application support, and deployment logging into one modular PowerShell tool.

@@ -28,7 +28,6 @@ function Install-SelectedApplications {
 
   Write-Host
   Write-Host "Starting installation queue..." -ForegroundColor Cyan
-
   Write-DeploymentLog -Message ("Installation queue started. Selected applications: {0}" -f $SelectedApplications.Count)
 
   foreach ($Application in $SelectedApplications) {
@@ -36,33 +35,37 @@ function Install-SelectedApplications {
 
     Write-Host
     Write-Host ("[{0}/{1}] {2}" -f $CurrentNumber, $SelectedApplications.Count, $Application.Name) -ForegroundColor Cyan
+
+    $AlreadyInstalled = Test-ApplicationInstalled -Application $Application
+
+    if ($AlreadyInstalled) {
+      Write-Host ("{0} is already installed. Skipping." -f $Application.Name) -ForegroundColor Yellow
+
+      $SkippedCount++
+
+      Write-DeploymentLog -Message ("{0} is already installed. Skipped." -f $Application.Name) -Level "INFO"
+
+      continue
+    }
+
     Write-Host "Checking installer..." -NoNewline
 
     $InstallerAvailable = Test-ApplicationInstallerAvailable -Application $Application
 
     if (-not $InstallerAvailable) {
       Write-Host " [ NOT FOUND ]" -ForegroundColor Red
+
       $NotFoundCount++
 
       Write-DeploymentLog -Message ("Installer not found or unavailable: {0}" -f $Application.Name) -Level "ERROR"
+
       continue
     }
 
     Write-Host " [ OK ]" -ForegroundColor Green
-    
-    $AlreadyInstalled = Test-ApplicationInstalled -Application $Application
-
-    if ($AlreadyInstalled) {
-      Write-Host ("$($Application.Name) is already installed. Skipping.") -ForegroundColor Yellow
-      $SkippedCount++
-
-      Write-DeploymentLog -Message "$($Application.Name) is already installed. Skipped." -Level "WARNING"
-
-      continue
-    }
 
     $InstallSucceeded = Install-ApplicationByType -Application $Application
-    
+
     if ($InstallSucceeded) {
       $InstalledCount++
     }
@@ -98,6 +101,6 @@ function Install-SelectedApplications {
   Write-DeploymentLog -Message $SummaryMessage -Level $SummaryLevel
 
   if (-not $SkipPause) {
-  Pause-Application
+    Pause-Application
   }
 }
