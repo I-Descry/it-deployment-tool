@@ -50,5 +50,13 @@
     "Category": "Security",
     "Description": "CrowdStrike Falcon endpoint security sensor",
     "Recommended": true
+  },
+  {
+    "Name": "Microsoft Office LTSC Standard 2024",
+    "DetectionName": "Microsoft Office LTSC Standard 2024",
+    "InstallType": "OfficeIso",
+    "Category": "Company Applications",
+    "Description": "Microsoft Office LTSC Standard 2024 desktop applications",
+    "Recommended": true
   }
 ]

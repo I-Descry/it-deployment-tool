@@ -32,6 +32,17 @@ function Test-ApplicationInstallerAvailable {
       return [bool]$PackageTest.Valid
     }
 
+    "OFFICEISO" {
+      try {
+        $OfficeIsoPath = Get-OfficeIsoPath
+
+        return (Test-Path -LiteralPath $OfficeIsoPath -PathType Leaf)
+      }
+      catch {
+        return $false
+      }
+    }
+
     default {
       return $false
     }
@@ -58,6 +69,24 @@ function Install-ApplicationByType {
       $CrowdStrikeResult = Start-CrowdStrikeInteractiveSetup
 
       switch ($CrowdStrikeResult.Status) {
+        "Installed" {
+          return $true
+        }
+
+        "Skipped" {
+          return $true
+        }
+
+        default {
+          return $false
+        }
+      }
+    }
+
+    "OFFICEISO" {
+      $OfficeResult = Start-Office2024Installation
+
+      switch ($OfficeResult.Status) {
         "Installed" {
           return $true
         }

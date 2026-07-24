@@ -72,6 +72,31 @@ This development version adds CrowdStrike Falcon Sensor integration. The install
 
 The CrowdStrike installer and credential-containing README are excluded from Git.
 
+### Microsoft Office 2024
+
+- Uses a company-provided Office 2024 ISO installer
+- Mounts the ISO automatically without opening it manually
+- Copies the installation files to a temporary local directory
+- Removes Windows downloaded-file security blocks from the copied files
+- Runs the authorized `Easy Install.bat` file from an elevated deployment session
+- Waits for the Office installation process to complete
+- Verifies whether Microsoft Office was installed successfully
+- Dismounts the ISO and removes temporary installation files after processing
+
+#### Office Activation Notice
+
+Microsoft Office product activation is currently performed manually after installation.
+
+The existing product keys have limited remaining activation availability, so they will not be stored in or automatically applied by the deployment tool. After the remaining authorized activations have been used and new company-approved product keys are provided, secure activation automation may be added in a future version.
+
+Until then, the technician must activate Office manually from an Office application such as Excel:
+
+```text
+Excel > File > Account > Change Product Key
+```
+
+---
+
 ### Deployment Logs
 
 - Creates a separate deployment log for every session
@@ -316,6 +341,7 @@ The tool automatically requests administrator privileges when elevation is requi
 7. Allow the installation queue to process each selected application.
 8. Review the installation summary.
 9. Open Deployment Logs to inspect session activity.
+10. Activate Microsoft Office manually using an authorized company product key when Office installation is included.
 
 For CrowdStrike installation, the technician must review the populated setup fields, manually accept the Sensor Terms of Use, and click Install.
 
@@ -329,6 +355,9 @@ For CrowdStrike installation, the technician must review the populated setup fie
 - Do not write CrowdStrike installation arguments to deployment logs.
 - Restrict access to the local CrowdStrike package directory.
 - Test CrowdStrike installation only on authorized company devices.
+```markdown
+- Microsoft Office product-key activation remains manual until new company-approved keys are available for secure automation.
+```
 
 ---
 

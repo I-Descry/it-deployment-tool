@@ -17,9 +17,17 @@ function Test-ApplicationInstalled {
       return $false
     }
 
-    return [bool](
-      Test-CrowdStrikeSensorInstalled
-    )
+    return [bool](Test-CrowdStrikeSensorInstalled)
+  }
+
+  if ($InstallType -eq "OFFICEISO") {
+    $OfficeDetectionCommand = Get-Command -Name "Test-Office2024Installed" -ErrorAction SilentlyContinue
+
+    if ($null -eq $OfficeDetectionCommand) {
+      return $false
+    }
+
+    return [bool](Test-Office2024Installed)
   }
 
   # Other applications continue using registry detection.
