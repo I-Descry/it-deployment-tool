@@ -95,6 +95,31 @@ Until then, the technician must activate Office manually from an Office applicat
 Excel > File > Account > Change Product Key
 ```
 
+### Microsoft Office Professional Plus 2021 — LOP
+
+The deployment tool supports installing Microsoft Office Professional Plus
+2021 Retail on authorized LOP laptops from a local disc image.
+
+Installation workflow:
+
+1. Locate `ProPlus2021Retail.img`.
+2. Confirm the image is available.
+3. Block installation when another Click-to-Run Office edition is installed.
+4. Mount the disc image.
+5. Verify that `Setup.exe` has a valid Microsoft digital signature.
+6. Run `Setup.exe /AUTORUN`.
+7. Wait for setup to complete.
+8. Verify that `ProPlus2021Retail` is installed.
+9. Dismount the disc image.
+
+Office activation remains manual and is not performed, stored, or logged by
+the deployment tool.
+
+Installer location:
+
+```text
+Installers\Office2021LOP\ProPlus2021Retail.img
+
 ---
 
 ### Deployment Logs

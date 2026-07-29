@@ -58,5 +58,13 @@
     "Category": "Company Applications",
     "Description": "Microsoft Office LTSC Standard 2024 desktop applications",
     "Recommended": true
+  },
+  {
+    "Name": "Microsoft Office Professional Plus 2021 - LOP",
+    "DetectionName": "Microsoft Office Professional Plus 2021",
+    "InstallType": "Office2021Img",
+    "Category": "Company Applications",
+    "Description": "Microsoft Office Professional Plus 2021 Retail for LOP laptops",
+    "Recommended": false
   }
 ]

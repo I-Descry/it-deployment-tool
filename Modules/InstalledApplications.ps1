@@ -20,6 +20,7 @@ function Test-ApplicationInstalled {
     return [bool](Test-CrowdStrikeSensorInstalled)
   }
 
+  # Office 2024 is detected through its Windows service.
   if ($InstallType -eq "OFFICEISO") {
     $OfficeDetectionCommand = Get-Command -Name "Test-Office2024Installed" -ErrorAction SilentlyContinue
 
@@ -28,6 +29,17 @@ function Test-ApplicationInstalled {
     }
 
     return [bool](Test-Office2024Installed)
+  }
+
+  # Office 2021 is detected through its Windows service.
+  if ($InstallType -eq "OFFICE2021IMG") {
+    $Office2021DetectionCommand = Get-Command -Name "Test-Office2021ProPlusRetailInstalled" -ErrorAction SilentlyContinue
+
+    if ($null -eq $Office2021DetectionCommand) {
+      return $false
+    }
+
+    return [bool](Test-Office2021ProPlusRetailInstalled)
   }
 
   # Other applications continue using registry detection.

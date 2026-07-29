@@ -43,6 +43,12 @@ function Test-ApplicationInstallerAvailable {
       }
     }
 
+    "OFFICE2021IMG" {
+      $PackageTest = Test-Office2021DeploymentPackage
+
+      return [bool]$PackageTest.Valid
+    }
+
     default {
       return $false
     }
@@ -100,6 +106,28 @@ function Install-ApplicationByType {
         }
       }
     }
+
+    "OFFICE2021IMG" {
+      $Office2021Result = Start-Office2021LOPInstallation
+
+      switch ($Office2021Result.Status) {
+        "Installed" {
+          return $true
+        }
+
+        "Skipped" {
+          return $true
+        }
+
+        default {
+          Write-Host
+          Write-Host $Office2021Result.Message -ForegroundColor Red
+
+          return $false
+        }
+      }
+    }
+
 
     "MSI" {
       Write-Host
