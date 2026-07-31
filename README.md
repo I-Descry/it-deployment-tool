@@ -247,8 +247,11 @@ Current checks:
 - Supported Microsoft Office installation
 - Pending Windows restart
 
-A failed check does not change the computer. It identifies an item that
-requires technician attention before device issuance.
+A failed check does not change the computer. It identifies an item that requires technician attention before device issuance.
+
+Validation results are also written to the active deployment log. Passed checks are recorded as `SUCCESS`, while failed readiness checks are recorded as `WARNING`.
+
+Failed validation checks do not mean the validation process failed. They identify items that require technician attention before device issuance.
 
 ### Deployment Logs
 

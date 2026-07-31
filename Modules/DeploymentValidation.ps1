@@ -231,6 +231,51 @@ function Get-DeploymentValidationResults {
   return $Results.ToArray()
 }
 
+function Write-DeploymentValidationResultsToLog {
+  param(
+    [Parameter(Mandatory)]
+    [object[]]$Results
+  )
+
+  $LoggingCommand = Get-Command -Name "Write-DeploymentLog" -ErrorAction SilentlyContinue
+
+  if ($null -eq $LoggingCommand) {
+    return
+  }
+
+  Write-DeploymentLog -Message "Deployment validation started." -Level "INFO"
+
+  foreach ($Result in $Results) {
+    if ($Result.Passed) {
+      $ResultStatus = "Passed"
+      $LogLevel = "SUCCESS"
+    }
+    else {
+      $ResultStatus = "Failed"
+      $LogLevel = "WARNING"
+    }
+
+    $LogMessage = ("Validation | {0} | {1} | {2}" -f $Result.Name, $ResultStatus, $Result.Detail)
+
+    Write-DeploymentLog -Message $LogMessage -Level $LogLevel
+  }
+
+  $PassedCount = @($Results | Where-Object {
+    $_.Passed
+  }).Count
+
+  $FailedCount = $Results.Count - $PassedCount
+
+  if ($FailedCount -eq 0) {
+    $SummaryLevel = "SUCCESS"
+  }
+  else {
+    $SummaryLevel = "WARNING"
+  }
+
+  Write-DeploymentLog -Message ("Validation Summary | Passed: {0} | Failed: {1} | Total: {2}" -f $PassedCount, $FailedCount, $Results.Count) -Level $SummaryLevel
+}
+
 function Show-DeploymentValidationReport {
   [CmdletBinding()]
   param(
@@ -244,6 +289,8 @@ function Show-DeploymentValidationReport {
   Write-Section -Title "Device Readiness Checks"
 
   $Results = @(Get-DeploymentValidationResults)
+
+  Write-DeploymentValidationResultsToLog -Results $Results
 
   foreach ($Result in $Results) {
     Write-Host ("{0,-20}: " -f $Result.Name) -NoNewLine

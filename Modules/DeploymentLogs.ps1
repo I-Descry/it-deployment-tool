@@ -29,7 +29,7 @@ function Get-DeploymentLogContent {
   if (-not (
     Test-Path -LiteralPath $LogFile.FullName -PathType Leaf
   )) {
-    throw "Deployment log filewas not found."
+    throw "Deployment log file was not found."
   }
 
   return @(
