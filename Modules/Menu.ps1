@@ -1,17 +1,15 @@
 function Show-MainMenu {
-  Write-Host ""
-  Write-Host "============================================================" -ForegroundColor Cyan
-  Write-Host "MAIN MENU" -ForegroundColor Yellow
-  Write-Host "============================================================" -ForegroundColor Cyan
+  Write-Title -Title "MAIN MENU"
 
-  Write-Host "[1] Install Applications"
-  Write-Host "[2] Configure Windows"
-  Write-Host "[3] Deployment Logs"
-  Write-Host "[4] About"
-  Write-Host ""
-  Write-Host "[0] Exit"
+  Write-Section -Title "Deployment Status"
 
-  Write-Host ""
+  Write-Host " [1] Install Applications"
+  Write-Host " [2] Configure Windows"
+  Write-Host " [3] Deployment Logs"
+  Write-Host " [4] About"
+  Write-Host
+  Write-Host " [0] Exit"
+  Write-Host
 }
 
 function Get-MenuSelection {
@@ -32,9 +30,11 @@ function Start-MainMenu {
         Show-SystemInformation
       }
       "2" {
-        Write-Host ""
-        Write-Host "Opening Windows Configuration..."
-        Pause-Application
+        Show-WindowsConfigurationMenu
+
+        Clear-Host
+        Show-Banner
+        Show-SystemInformation
       }
       "3" {
         Show-DeploymentLogsMenu

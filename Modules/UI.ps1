@@ -18,8 +18,8 @@ function Write-Status {
     [bool]$Status
   )
 
-  Write-Host("{0,-14}: " -f $Name) -NoNewline
-  
+  Write-Host ("{0,-16}: " -f $Name) -NoNewline
+
   if ($Status) {
     Write-Host "[ OK ]" -ForegroundColor Green
   }
@@ -60,7 +60,18 @@ function Write-Title {
     [string]$Title
   )
 
+  $LineWidth = 60
+
+  $LeftPadding = [Math]::Max(
+    0,
+    [Math]::Floor(
+      ($LineWidth - $Title.Length) / 2
+    )
+  )
+
   Write-Line
-  Write-Host ("{0,30}" -f $Title) -ForegroundColor Cyan
+
+  Write-Host ((" " * $LeftPadding) + $Title) -ForegroundColor Cyan
+
   Write-Line
 }

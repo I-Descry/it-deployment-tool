@@ -10,7 +10,10 @@ Instead of manually downloading and installing applications one at a time, the t
 
 `1.1.0-dev`
 
-This development version adds CrowdStrike Falcon Sensor integration. The installed-device detection and skip workflow have been tested. The interactive installation and automatic credential population still require final testing on an authorized device where CrowdStrike is not installed.
+This development version adds CrowdStrike deployment, Microsoft Office 2024 and Office 2021 LOP installation, and Windows device configuration features.
+
+Fresh installations and final clean-device testing are still required before
+releasing version `1.1.0`.
 
 ---
 
@@ -119,8 +122,114 @@ Installer location:
 
 ```text
 Installers\Office2021LOP\ProPlus2021Retail.img
+```
 
 ---
+
+### Windows Configuration
+
+The IT Deployment Tool includes a Windows Configuration menu for common device-preparation tasks.
+
+```text
+Configure Windows
+├── Rename Computer
+├── Create Local Standard User
+├── Configure Power and Sleep Settings
+└── View Current Windows Configuration
+```
+
+#### View Current Windows Configuration
+
+Displays read-only information about the current Windows device:
+
+- Computer name
+- Manufacturer and model
+- Serial number
+- Domain or workgroup
+- Windows edition, version, build, and architecture
+- Logged-in user
+- Administrator status
+- Active power plan
+- Plugged-in sleep timeout
+- Battery sleep timeout
+
+This feature does not modify the device.
+
+#### Rename Computer
+
+Allows the technician to rename the computer using the company naming standard:
+
+```text
+POSITION-NAME
+```
+
+Example:
+
+```text
+IT04-JP
+```
+
+Validation and safety features:
+
+- Maximum of 15 characters
+- Letters and numbers are allowed
+- One hyphen is required
+- Names are converted to uppercase
+- Invalid names are rejected
+- Administrator permission is required
+- The computer is not restarted automatically
+
+A Windows restart is required before the new computer name is fully applied.
+
+#### Create Local Standard User
+
+Creates a local Windows account configured as a standard user.
+
+Security and validation features:
+
+- Secure password input
+- Password confirmation
+- Passwords are not displayed, stored, or logged
+- Existing usernames are rejected
+- Reserved Windows usernames are rejected
+- Invalid username characters are rejected
+- The account is added to the built-in Users group
+- The account is verified not to belong to Administrators
+- Incomplete accounts are removed when configuration fails
+- Administrator permission is required
+
+Supported username characters:
+
+```text
+Letters, numbers, periods, underscores, and hyphens
+```
+
+Maximum username length:
+
+```text
+20 characters
+```
+
+#### Configure Power and Sleep Settings
+
+Allows the technician to configure sleep timeouts for:
+
+- Plugged-in power
+- Battery power
+
+Timeout values are entered in whole minutes.
+
+```text
+0 minutes = Never
+```
+
+Supported timeout range:
+
+```text
+0 to 1440 minutes
+```
+
+The deployment tool displays the current settings, validates new values, shows a confirmation preview, skips settings that are already applied, and verifies successful changes.
 
 ### Deployment Logs
 
@@ -168,7 +277,12 @@ IT Deployment Tool/
 ├── Config/
 │   └── Applications.json
 ├── Installers/
-│   └── .gitkeep
+│   ├── CrowdStrike/
+│   ├── Office2021LOP/
+│   │   └── ProPlus2021Retail.img
+│   ├── Office2024/
+│   │   └── ODT2024s.ISO
+│   └── SAP/
 ├── Logs/
 │   └── .gitkeep
 ├── Modules/
@@ -176,19 +290,27 @@ IT Deployment Tool/
 │   ├── ApplicationCatalog.ps1
 │   ├── ApplicationMenu.ps1
 │   ├── ApplicationSelection.ps1
+│   ├── ComputerNameConfiguration.ps1
+│   ├── CrowdStrikeInstaller.ps1
 │   ├── DeploymentLogs.ps1
 │   ├── DeploymentLogsMenu.ps1
 │   ├── Elevation.ps1
 │   ├── InstallationQueue.ps1
 │   ├── InstallationRouter.ps1
 │   ├── InstalledApplications.ps1
+│   ├── LocalUserConfiguration.ps1
 │   ├── Logging.ps1
 │   ├── Menu.ps1
+│   ├── Office2021ImgInstaller.ps1
+│   ├── OfficeIsoInstaller.ps1
 │   ├── OfflineInstaller.ps1
+│   ├── PowerConfiguration.ps1
 │   ├── SelectedApplicationsSetup.ps1
 │   ├── SystemChecks.ps1
 │   ├── SystemInformation.ps1
 │   ├── UI.ps1
+│   ├── WindowsConfiguration.ps1
+│   ├── WindowsConfigurationMenu.ps1
 │   └── WingetInstaller.ps1
 ├── .gitignore
 ├── README.md
@@ -365,8 +487,13 @@ The tool automatically requests administrator privileges when elevation is requi
 6. Confirm or cancel the installation.
 7. Allow the installation queue to process each selected application.
 8. Review the installation summary.
-9. Open Deployment Logs to inspect session activity.
-10. Activate Microsoft Office manually using an authorized company product key when Office installation is included.
+9. Open Configure Windows when device preparation is required.
+10. Review the current Windows configuration.
+11. Rename the computer using the `POSITION-NAME` standard when required.
+12. Create the employee's local standard user.
+13. Configure the plugged-in and battery sleep settings.
+14. Open Deployment Logs to inspect session activity.
+15. Activate Microsoft Office manually using an authorized product key when Office installation is included.
 
 For CrowdStrike installation, the technician must review the populated setup fields, manually accept the Sensor Terms of Use, and click Install.
 
@@ -380,9 +507,7 @@ For CrowdStrike installation, the technician must review the populated setup fie
 - Do not write CrowdStrike installation arguments to deployment logs.
 - Restrict access to the local CrowdStrike package directory.
 - Test CrowdStrike installation only on authorized company devices.
-```markdown
 - Microsoft Office product-key activation remains manual until new company-approved keys are available for secure automation.
-```
 
 ---
 
