@@ -231,6 +231,25 @@ Supported timeout range:
 
 The deployment tool displays the current settings, validates new values, shows a confirmation preview, skips settings that are already applied, and verifies successful changes.
 
+### Deployment Validation
+
+The deployment validation report performs read-only checks to determine
+whether a device is ready for issuance.
+
+Current checks:
+
+- Administrator access
+- Internet connectivity
+- Winget availability
+- Computer naming
+- Power and sleep configuration
+- CrowdStrike sensor installation
+- Supported Microsoft Office installation
+- Pending Windows restart
+
+A failed check does not change the computer. It identifies an item that
+requires technician attention before device issuance.
+
 ### Deployment Logs
 
 - Creates a separate deployment log for every session
@@ -294,6 +313,7 @@ IT Deployment Tool/
 │   ├── CrowdStrikeInstaller.ps1
 │   ├── DeploymentLogs.ps1
 │   ├── DeploymentLogsMenu.ps1
+│   ├── DeploymentValidation.ps1
 │   ├── Elevation.ps1
 │   ├── InstallationQueue.ps1
 │   ├── InstallationRouter.ps1

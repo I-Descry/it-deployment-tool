@@ -7,6 +7,7 @@ function Show-MainMenu {
   Write-Host " [2] Configure Windows"
   Write-Host " [3] Deployment Logs"
   Write-Host " [4] About"
+  Write-Host " [5] Deployment Validation"
   Write-Host
   Write-Host " [0] Exit"
   Write-Host
@@ -48,6 +49,15 @@ function Start-MainMenu {
         Write-Host "IT DEPLOYMENT TOOL"
         Write-Host "Version $AppVersion"
         Pause-Application
+      }
+      "5" {
+        Show-DeploymentValidationReport
+
+        Pause-Application
+
+        Clear-Host
+        Show-Banner
+        Show-SystemInformation
       }
       "0" {
         Write-Host ""
