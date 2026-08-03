@@ -101,8 +101,11 @@ Record the device used for testing:
 - [x] Local standard user creation works
 - [ ] Created account is not an administrator
 - [ ] Password is not displayed or logged
-- [x] Power and sleep configuration works
+- [ ] Power and sleep configuration works
 - [x] Current Windows configuration report displays correctly
+
+> These tests require an authorized clean deployment device and will remain
+> unchecked until a suitable test device is available.
 
 ---
 
