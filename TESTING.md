@@ -138,6 +138,6 @@ Record the device used for testing:
 
 - [ ] All critical tests passed
 - [ ] Failed tests were corrected and retested
-- [ ] No credentials or installer packages are tracked by Git
+- [x] No credentials or installer packages are tracked by Git
 - [ ] README documentation is current
 - [ ] Version is ready to change from `1.1.0-dev` to `1.1.0`
