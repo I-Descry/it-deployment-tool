@@ -22,6 +22,27 @@ Record the device used for testing:
 
 ---
 
+## Current Testing Limitation
+
+Local, non-destructive testing is complete.
+
+The remaining acceptance tests require an authorized clean Windows test device. These tests are currently pending because no suitable test device is available.
+
+Pending real-device tests include:
+
+- Fresh WinGet application installation
+- SAP GUI installation
+- CrowdStrike installation
+- Microsoft Office 2024 installation
+- Microsoft Office 2021 LOP installation
+- Computer rename
+- Local standard user creation and group verification
+- Actual power and sleep configuration changes
+
+These items are pending, not failed. Version `1.1.0-dev` will remain unchanged until the required tests are completed.
+
+---
+
 ## Startup and Interface
 
 - [x] Tool requests administrator elevation when required
