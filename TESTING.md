@@ -57,6 +57,7 @@ Record the device used for testing:
 - [x] Missing installers are reported correctly
 - [x] Installation summary displays correct results
 
+> Local, non-destructive acceptance testing is complete. The remaining installation and system-change tests require an authorized clean deployment device. Version `1.1.0-dev` will remain unchanged until those tests pass.
 ---
 
 ## CrowdStrike
@@ -68,6 +69,8 @@ Record the device used for testing:
 - [ ] Existing CrowdStrike installation is skipped
 - [ ] Falcon service is detected after installation
 
+> Package preflight passed on the current device. Fresh installation remains untested and requires an authorized clean deployment device.
+
 ---
 
 ## Microsoft Office 2024
@@ -78,6 +81,8 @@ Record the device used for testing:
 - [ ] Office 2024 installation is detected afterward
 - [ ] ISO is dismounted after processing
 - [ ] Product activation remains manual
+
+> Package preflight passed on the current device. Fresh installation remains untested and requires an authorized clean deployment device.
 
 ---
 
@@ -92,6 +97,8 @@ Record the device used for testing:
 - [ ] Conflicting Office installation is blocked
 - [ ] Product activation remains manual
 
+> Package preflight passed on the current device. Fresh installation remains untested and requires an authorized clean deployment device.
+
 ---
 
 ## Windows Configuration
@@ -104,8 +111,7 @@ Record the device used for testing:
 - [ ] Power and sleep configuration works
 - [x] Current Windows configuration report displays correctly
 
-> These tests require an authorized clean deployment device and will remain
-> unchecked until a suitable test device is available.
+> These tests require an authorized clean deployment device and will remain unchecked until a suitable test device is available.
 
 ---
 
