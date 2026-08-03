@@ -108,29 +108,29 @@ Record the device used for testing:
 
 ## Deployment Validation
 
-- [ ] Administrator validation works
-- [ ] Internet validation works
-- [ ] WinGet validation works
-- [ ] Computer-name validation works
-- [ ] Local-standard-user validation works
-- [ ] Required-application validation works
-- [ ] Power-setting validation works
-- [ ] CrowdStrike validation works
-- [ ] Microsoft Office validation works
-- [ ] Pending-restart validation works
-- [ ] Passed, failed, and total counts are correct
+- [x] Administrator validation works
+- [x] Internet validation works
+- [x] WinGet validation works
+- [x] Computer-name validation works
+- [x] Local-standard-user validation works
+- [x] Required-application validation works
+- [x] Power-setting validation works
+- [x] CrowdStrike validation works
+- [x] Microsoft Office validation works
+- [x] Pending-restart validation works
+- [x] Passed, failed, and total counts are correct
 
 ---
 
 ## Deployment Logs
 
-- [ ] Session log is created
+- [x] Session log is created
 - [ ] Application results are logged
-- [ ] Validation results are logged
-- [ ] Validation summary is logged
-- [ ] Credentials and product keys are not logged
-- [ ] Session completion is logged
-- [ ] Recent logs can be viewed from the tool
+- [x] Validation results are logged
+- [x] Validation summary is logged
+- [x] Credentials and product keys are not logged
+- [x] Session completion is logged
+- [x] Recent logs can be viewed from the tool
 
 ---
 
