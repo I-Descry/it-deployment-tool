@@ -1,3 +1,7 @@
+# ============================================================
+# MAIN MENU
+# ============================================================
+
 function Show-MainMenu {
   Write-Title -Title "MAIN MENU"
 
@@ -14,61 +18,75 @@ function Show-MainMenu {
 }
 
 function Get-MenuSelection {
-  $choice = Read-Host "Select an option"
-  return $choice
+  $Choice = Read-Host "Select an option"
+
+  if ([string]::IsNullOrWhiteSpace($Choice)) {
+    return ""
+  }
+
+  return $Choice.Trim().ToUpper()
 }
 
 function Start-MainMenu {
-  do {
+  while ($true) {
+    Clear-Host
+
+    Show-Banner
+    Show-SystemInformation
     Show-MainMenu
-    $choice = Get-MenuSelection
-    switch ($choice) {
+
+    $Choice = Get-MenuSelection
+
+    if ([string]::IsNullOrWhiteSpace($Choice)) {
+      continue
+    }
+
+    switch ($Choice) {
       "1" {
         Show-ApplicationMenu
-
-        Clear-Host
-        Show-Banner
-        Show-SystemInformation
       }
+
       "2" {
         Show-WindowsConfigurationMenu
-
-        Clear-Host
-        Show-Banner
-        Show-SystemInformation
       }
+
       "3" {
         Show-DeploymentLogsMenu
-
-        Clear-Host
-        Show-Banner
-        Show-SystemInformation
       }
+
       "4" {
-        Write-Host ""
-        Write-Host "IT DEPLOYMENT TOOL"
-        Write-Host "Version $AppVersion"
+        Clear-Host
+
+        Write-Title -Title "ABOUT"
+
+        Write-Section -Title "Application Information"
+
+        Write-Info -Name "Application" -Value $AppName
+        Write-Info -Name "Version" -Value $AppVersion
+
         Pause-Application
       }
+
       "5" {
         Show-DeploymentValidationReport
 
         Pause-Application
-
-        Clear-Host
-        Show-Banner
-        Show-SystemInformation
       }
+
       "0" {
-        Write-Host ""
+        Write-Host
         Write-Host "Thank you for using $AppName."
         Write-Host "Goodbye!"
+
+        return
       }
+
       default {
-        Write-Host ""
+        Write-Host
         Write-Host "Invalid selection." -ForegroundColor Red
+
         Pause-Application
       }
     }
-  } while ($choice -ne "0")
+  }
 }

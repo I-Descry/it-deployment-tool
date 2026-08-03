@@ -149,6 +149,46 @@ function Get-OfficeValidationResult {
   return New-DeploymentValidationResult -Name "Microsoft Office" -Passed $false -Detail "Supported Office installation was not detected."
 }
 
+function Get-LocalStandardUserValidationResult {
+  $DetectionCommand = Get-Command -Name "Get-DeploymentLocalStandardUsers" -ErrorAction SilentlyContinue
+
+  if ($null -eq $DetectionCommand) {
+    return New-DeploymentValidationResult -Name "Local Standard User" -Passed $false -Detail "Local standard user validation is unavailable."
+  }
+
+  try {
+    $DeploymentUsers = @(Get-DeploymentLocalStandardUsers)
+  }
+
+  catch {
+    return New-DeploymentValidationResult -Name "Local Standard User" -Passed $false -Detail "Local standard user validation could not be completed."
+  }
+
+  if ($DeploymentUsers.Count -eq 0) {
+    return New-DeploymentValidationResult -Name "Local Standard User" -Passed $false -Detail "No deployment standard user was detected."
+  }
+
+  $UserLabels = @($DeploymentUsers | ForEach-Object {
+    if ([string]::IsNullOrWhiteSpace([string]$_.FullName)) {
+      [string]$_.Name
+    }
+    else {
+      "{0} ({1})" -f $_.Name, $_.FullName
+    }
+  })
+
+  $UserList = $UserLabels -join ", "
+
+  if ($DeploymentUsers.Count -eq 1) {
+    $Detail = ("Deployment standard user detected: {0}." -f $UserList)
+  }
+  else {
+    $Detail = ("Deployment standard users detected: {0}." -f $UserList)
+  }
+
+  return New-DeploymentValidationResult -Name "Local Standard User" -Passed $true -Detail $Detail
+}
+
 function Get-DeploymentValidationResults {
   $Results = New-Object "System.Collections.Generic.List[object]"
 
@@ -198,6 +238,11 @@ function Get-DeploymentValidationResults {
   $ComputerNameResult = Get-ComputerNameValidationResult
 
   [void]$Results.Add($ComputerNameResult)
+
+  # Local Standard User Check
+  $LocalUserResult = Get-LocalStandardUserValidationResult
+
+  [void]$Results.Add($LocalUserResult)
 
   # Power Configuration Check
   $PowerResult = Get-PowerConfigurationValidationResult

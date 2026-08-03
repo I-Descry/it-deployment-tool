@@ -242,6 +242,7 @@ Current checks:
 - Internet connectivity
 - Winget availability
 - Computer naming
+- Local standard user created by the deployment tool
 - Power and sleep configuration
 - CrowdStrike sensor installation
 - Supported Microsoft Office installation
@@ -252,6 +253,8 @@ A failed check does not change the computer. It identifies an item that requires
 Validation results are also written to the active deployment log. Passed checks are recorded as `SUCCESS`, while failed readiness checks are recorded as `WARNING`.
 
 Failed validation checks do not mean the validation process failed. They identify items that require technician attention before device issuance.
+
+The local standard user check verifies that at least one enabled, non-administrator local account created by the deployment tool exists. Accounts are identified using the description `Created by IT Deployment Tool`.
 
 ### Application Conflict Validation
 
@@ -295,6 +298,8 @@ This validation prevents conflicting Office editions from being processed during
 - Refreshes installed application status after processing
 - Refreshes menus after completing an action
 - Displays clear success, warning, and error messages
+- Clears and redraws the main menu after returning from a submenu
+- Ignores empty menu input instead of displaying an invalid-selection error
 
 ---
 

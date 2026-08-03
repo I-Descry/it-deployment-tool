@@ -62,6 +62,42 @@ function Test-LocalUserExists {
   return ($null -ne $ExistingUser)
 }
 
+function Get-DeploymentLocalStandardUsers {
+  [CmdletBinding()]
+  param()
+
+  try {
+    $ReservedUserNames = @("Administrator", "DefaultAccount", "Guest", "WDAGUtilityAccount")
+
+    $LocalGroups = @(Get-LocalGroup -ErrorAction Stop)
+
+    $AdministratorsGroup = $LocalGroups | Where-Object {
+      ([string]$_.SID.Value) -eq "S-1-5-32-544"
+    } | Select-Object -First 1
+
+    if ($null -eq $AdministratorsGroup) {
+      return @()
+    }
+
+    $AdministratorMemberSids = @(Get-LocalGroupMember -Group $AdministratorsGroup.Name -ErrorAction Stop | Foreach-Object {
+      [string]$_.SID.Value
+    })
+
+    $DeploymentUsers = @(Get-LocalUser -ErrorAction Stop | Where-Object {
+      $UserSid = [string]$_.SID.Value
+
+      $_.Enabled -and
+      $_.Description -eq "Created by IT Deployment Tool" -and $ReservedUserNames -notcontains $_.Name -and $AdministratorMemberSids -notcontains $UserSid
+    } | Select-Object Name, FullName, Enabled, Description, SID)
+
+    return $DeploymentUsers
+  }
+
+  catch {
+    return @()
+  }
+}
+
 function Test-SecurePasswordMatch {
   param(
     [Parameter(Mandatory)]
