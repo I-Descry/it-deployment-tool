@@ -39,7 +39,7 @@ function Show-SelectedApplicationsPreview {
 function Confirm-SelectedApplicationsInstallation {
   while ($true) {
     Write-Host
-    
+
     $Confirmation = Read-Host "Continue with the selected applications? (Y/N)"
 
     switch ($Confirmation.Trim().ToUpper()) {
@@ -58,6 +58,31 @@ function Confirm-SelectedApplicationsInstallation {
   }
 }
 
+function Get-SelectedApplicationConflicts {
+  param(
+    [Parameter(Mandatory)]
+    [object[]]$Applications
+  )
+
+  $Conflicts = @()
+
+  $SelectedInstallTypes = @($Applications | ForEach-Object {
+    ([string]$_.InstallType).Trim().ToUpper()
+  })
+
+  $Office2024Selected = ($SelectedInstallTypes -contains "OFFICEISO")
+  $Office2021Selected = ($SelectedInstallTypes -contains "OFFICE2021IMG")
+
+  if ($Office2024Selected -and $Office2021Selected) {
+    $Conflicts = [PSCustomObject]@{
+      Name = "Microsoft Office"
+      Message = ("Office LTSC Standard 2024 and Office Professional " + "Plus 2021 - LOP cannot be installed together. " + "Select only one Office edition.")
+    }
+  }
+
+  return $Conflicts
+}
+
 function Start-SelectedApplicationsSetup {
   $SelectedApplications = @(Get-SelectedApplications)
 
@@ -68,9 +93,33 @@ function Start-SelectedApplicationsSetup {
     Write-DeploymentLog -Level "WARNING" -Message "Installation requested with no applications selected."
 
     Pause-Application
-    
+
     return $false
   }
+
+  $SelectionConflicts = @(Get-SelectedApplicationConflicts -Applications $SelectedApplications)
+
+  if ($SelectionConflicts.Count -gt 0) {
+    Clear-Host
+
+    Write-Title -Title "APPLICATION SELECTION CONFLICT"
+    Write-Section -Title "Conflicting Applications"
+
+    foreach ($Conflict in $SelectionConflicts) {
+      Write-Host $Conflict.Name -ForegroundColor Red
+      Write-Host ("  {0}" -f $Conflict.Message) -ForegroundColor Yellow
+
+      Write-DeploymentLog -Level "WARNING" -Message ("Application selection conflict | {0} | {1}" -f $Conflict.Name, $Conflict.Message)
+    }
+
+    Write-Host
+  }
+
+  Write-Host "The installation queue was not started." -ForegroundColor Yellow
+
+  Pause-Application
+
+  return $false
 
   Show-SelectedApplicationsPreview -Applications $SelectedApplications
     $Confirmed = Confirm-SelectedApplicationsInstallation

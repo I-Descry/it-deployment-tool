@@ -253,6 +253,25 @@ Validation results are also written to the active deployment log. Passed checks 
 
 Failed validation checks do not mean the validation process failed. They identify items that require technician attention before device issuance.
 
+### Application Conflict Validation
+
+Before starting the installation queue, the deployment tool checks the selected applications for incompatible combinations.
+
+Currently, the tool prevents these Office editions from being selected together:
+
+- Microsoft Office LTSC Standard 2024
+- Microsoft Office Professional Plus 2021 — LOP
+
+When a conflict is detected:
+
+- The selected applications preview is not opened.
+- The installation queue does not start.
+- No Office installer is mounted or executed.
+- A warning is written to the deployment log.
+- The technician must select only one Office edition.
+
+This validation prevents conflicting Office editions from being processed during the same deployment operation.
+
 ### Deployment Logs
 
 - Creates a separate deployment log for every session
