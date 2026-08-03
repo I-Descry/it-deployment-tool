@@ -53,9 +53,9 @@ Record the device used for testing:
 - [ ] UltraViewer installation works
 - [ ] AnyDesk installation works
 - [ ] SAP GUI installation works
-- [ ] Installed applications are skipped correctly
-- [ ] Missing installers are reported correctly
-- [ ] Installation summary displays correct results
+- [x] Installed applications are skipped correctly
+- [x] Missing installers are reported correctly
+- [x] Installation summary displays correct results
 
 ---
 
@@ -125,7 +125,7 @@ Record the device used for testing:
 ## Deployment Logs
 
 - [x] Session log is created
-- [ ] Application results are logged
+- [x] Application results are logged
 - [x] Validation results are logged
 - [x] Validation summary is logged
 - [x] Credentials and product keys are not logged

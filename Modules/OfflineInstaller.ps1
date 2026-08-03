@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # OFFLINE INSTALLER
 # ============================================================
 
@@ -18,7 +18,7 @@ function Test-OfflineInstallerFile {
   )
 
   $InstallerPath = Get-OfflineInstallerPath -Application $Application
-  
+
   return Test-Path -LiteralPath $InstallerPath -PathType Leaf
 }
 
@@ -92,8 +92,8 @@ function Install-ApplicationWithExe {
     ErrorAction      = "Stop"
   }
 
-  $SilentArguments = [string]$Application.$SilentArguments
-  
+  $SilentArguments = [string]$Application.SilentArguments
+
   if (-not [string]::IsNullOrWhiteSpace($SilentArguments)) {
     $ProcessParameters.ArgumentList = $SilentArguments
   }
