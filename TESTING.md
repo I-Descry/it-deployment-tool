@@ -96,13 +96,13 @@ Record the device used for testing:
 
 ## Windows Configuration
 
-- [ ] Computer rename preview works
+- [x] Computer rename preview works
 - [ ] Computer rename works on an authorized test device
 - [ ] Local standard user creation works
 - [ ] Created account is not an administrator
 - [ ] Password is not displayed or logged
-- [ ] Power and sleep configuration works
-- [ ] Current Windows configuration report displays correctly
+- [x] Power and sleep configuration works
+- [x] Current Windows configuration report displays correctly
 
 ---
 

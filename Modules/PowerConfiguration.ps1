@@ -89,7 +89,7 @@ function Convert-SleepTimeoutMinutesToText {
     return "Never"
   }
 
-  if ($TImeoutMinutes -eq 1) {
+  if ($TimeoutMinutes -eq 1) {
     return "1 minute"
   }
 

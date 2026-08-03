@@ -149,7 +149,7 @@ function Start-ComputerRenameWizard {
 
   $CurrentName = Get-CurrentComputerName
 
-  Write-Info -Name "Current Name" -Value $CurrentNam
+  Write-Info -Name "Current Name" -Value $CurrentName
   Write-Section -Title "Naming Standard"
 
   Write-Host " Format       : POSITION-NAME"
