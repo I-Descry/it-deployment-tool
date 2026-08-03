@@ -98,7 +98,7 @@ Record the device used for testing:
 
 - [x] Computer rename preview works
 - [ ] Computer rename works on an authorized test device
-- [ ] Local standard user creation works
+- [x] Local standard user creation works
 - [ ] Created account is not an administrator
 - [ ] Password is not displayed or logged
 - [x] Power and sleep configuration works
