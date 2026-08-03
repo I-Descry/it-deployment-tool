@@ -149,6 +149,52 @@ function Get-OfficeValidationResult {
   return New-DeploymentValidationResult -Name "Microsoft Office" -Passed $false -Detail "Supported Office installation was not detected."
 }
 
+function Get-RequiredApplicationsValidationResult {
+  $ExcludedInstallTypes = @("CROWDSTRIKE", "OFFICEISO", "OFFICE2021IMG")
+
+  try {
+    $RequiredApplications = @(Get-RequiredApplications | Where-Object {
+      $InstallType = ([string]$_.InstallType).Trim().ToUpper()
+
+      $ExcludedInstallTypes -notcontains $InstallType
+    })
+  }
+
+  catch {
+    return New-DeploymentValidationResult -Name "Required Applications" -Passed $false -Detail ("Required application validation could not load the " + "application catalog. $($_.Exception.Message)")
+  }
+
+  if ($RequiredApplication.Count -eq 0) {
+    return New-DeploymentValidationResult -Name "Required Applications" -Passed $true -Detail "No additional required applications are configured."
+  }
+
+  $MissingApplications = New-Object "System.Collections.Generic.List[string]"
+
+  foreach ($Application in $RequiredApplications) {
+    try {
+      $Installed = [bool](Test-ApplicationInstalled -Application $Application)
+    }
+
+    catch {
+      $Installed = $false
+    }
+
+    if (-not $Installed) {
+      [void]$MissingApplications.Add([string]$Application.Name)
+    }
+  }
+
+  if ($MissingApplications.Count -eq 0) {
+    $Detail = ("All {0} required application(s) are installed." -f $RequiredApplications.Count)
+
+    return New-DeploymentValidationResult -Name "Required Applications" -Passed $true -Detail $Detail
+  }
+
+  $MissingList = ($MissingApplications.ToArray() -join ", ")
+
+  return New-DeploymentValidationResult -Name "Required Applications" -Passed $false -Detail ("Missing: {0}." -f $MissingList)
+}
+
 function Get-LocalStandardUserValidationResult {
   $DetectionCommand = Get-Command -Name "Get-DeploymentLocalStandardUsers" -ErrorAction SilentlyContinue
 
@@ -243,6 +289,11 @@ function Get-DeploymentValidationResults {
   $LocalUserResult = Get-LocalStandardUserValidationResult
 
   [void]$Results.Add($LocalUserResult)
+
+  # Required Applications Check
+  $RequiredApplicationsResult = Get-RequiredApplicationsValidationResult
+
+  [void]$Results.Add($RequiredApplicationsResult)
 
   # Power Configuration Check
   $PowerResult = Get-PowerConfigurationValidationResult

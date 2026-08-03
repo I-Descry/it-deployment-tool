@@ -233,8 +233,7 @@ The deployment tool displays the current settings, validates new values, shows a
 
 ### Deployment Validation
 
-The deployment validation report performs read-only checks to determine
-whether a device is ready for issuance.
+The deployment validation report performs read-only checks to determine whether a device is ready for issuance.
 
 Current checks:
 
@@ -247,6 +246,7 @@ Current checks:
 - CrowdStrike sensor installation
 - Supported Microsoft Office installation
 - Pending Windows restart
+- Additional applications marked as required for issuance
 
 A failed check does not change the computer. It identifies an item that requires technician attention before device issuance.
 
@@ -255,6 +255,8 @@ Validation results are also written to the active deployment log. Passed checks 
 Failed validation checks do not mean the validation process failed. They identify items that require technician attention before device issuance.
 
 The local standard user check verifies that at least one enabled, non-administrator local account created by the deployment tool exists. Accounts are identified using the description `Created by IT Deployment Tool`.
+
+The required application check reads the `RequiredForIssuance` property from `Config/Applications.json`. It reports any configured required applications that are not detected on the device.
 
 ### Application Conflict Validation
 
@@ -389,6 +391,23 @@ Each application entry may define:
 - Category
 - Description
 - Recommended status
+- Required-for-issuance status
+
+The optional `RequiredForIssuance` property identifies applications that must be installed before a device is considered ready for issuance.
+
+Applications without this property default to `false`.
+
+```json
+{
+  "Name": "Example Application",
+  "InstallType": "Winget",
+  "Winget": "Vendor.Application",
+  "Recommended": true,
+  "RequiredForIssuance": true
+}
+```
+
+CrowdStrike and Microsoft Office are excluded from the general required application check because they have dedicated deployment validation checks.
 
 ### WinGet Application Example
 

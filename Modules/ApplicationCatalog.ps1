@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # APPLICATION CATALOG
 # ============================================================
 
@@ -15,7 +15,11 @@ function Initialize-Applications {
   $script:Applications = Get-Content $ApplicationPath -Raw | ConvertFrom-Json
 
   foreach ($Application in $script:Applications) {
-    $Application | Add-Member -MemberType NoteProperty -Name Selected -Value $false
+    $Application | Add-Member -MemberType NoteProperty -Name "Selected" -Value $false -Force
+
+    if ($null -eq $Application.PSObject.Properties["RequiredForIssuance"]) {
+      $Application | Add-Member -MemberType NoteProperty -Name "RequiredForIssuance" -Value $false
+    }
   }
 
   return $script:Applications
@@ -35,6 +39,16 @@ function Get-ApplicationByNumber {
 }
 
 function Get-SelectedApplications {
-  
+
   return $script:Applications | Where-Object { $_.Selected }
+}
+
+function Get-RequiredApplications {
+  if ($null -eq $script:Applications) {
+    return @()
+  }
+
+  return @($script:Applications | Where-Object {
+    $_.RequiredForIssuance -eq $true
+  })
 }
