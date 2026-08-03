@@ -24,25 +24,25 @@ Record the device used for testing:
 
 ## Startup and Interface
 
-- [ ] Tool requests administrator elevation when required
-- [ ] Main menu loads automatically
-- [ ] Empty menu input does not show an invalid-selection error
-- [ ] Returning from a submenu clears the previous screen
-- [ ] System information displays correctly
-- [ ] Administrator, internet, and WinGet checks display correctly
+- [x] Tool requests administrator elevation when required
+- [x] Main menu loads automatically
+- [x] Empty menu input does not show an invalid-selection error
+- [x] Returning from a submenu clears the previous screen
+- [x] System information displays correctly
+- [x] Administrator, internet, and WinGet checks display correctly
 
 ---
 
 ## Application Selection
 
-- [ ] Individual application selection works
-- [ ] Select All works
-- [ ] Select Recommended works
-- [ ] Clear All works
-- [ ] Selected applications preview displays correctly
-- [ ] Installation cancellation works
-- [ ] Empty application selection is handled correctly
-- [ ] Conflicting Office selections are blocked before the queue starts
+- [x] Individual application selection works
+- [x] Select All works
+- [x] Select Recommended works
+- [x] Clear All works
+- [x] Selected applications preview displays correctly
+- [x] Installation cancellation works
+- [x] Empty application selection is handled correctly
+- [x] Conflicting Office selections are blocked before the queue starts
 
 ---
 

@@ -103,6 +103,7 @@ function Start-SelectedApplicationsSetup {
     Clear-Host
 
     Write-Title -Title "APPLICATION SELECTION CONFLICT"
+
     Write-Section -Title "Conflicting Applications"
 
     foreach ($Conflict in $SelectionConflicts) {
@@ -110,45 +111,44 @@ function Start-SelectedApplicationsSetup {
       Write-Host ("  {0}" -f $Conflict.Message) -ForegroundColor Yellow
 
       Write-DeploymentLog -Level "WARNING" -Message ("Application selection conflict | {0} | {1}" -f $Conflict.Name, $Conflict.Message)
-    }
-
-    Write-Host
-  }
-
-  Write-Host "The installation queue was not started." -ForegroundColor Yellow
-
-  Pause-Application
-
-  return $false
-
-  Show-SelectedApplicationsPreview -Applications $SelectedApplications
-    $Confirmed = Confirm-SelectedApplicationsInstallation
-
-    if (-not $Confirmed) {
-      Write-DeploymentLog -Level "INFO" -Message "Selected applications installation was cancelled."
 
       Write-Host
-      Write-Host "Installation cancelled." -ForegroundColor Yellow
-
-      Pause-Application
-
-      return $false
     }
 
-    Write-DeploymentLog -Level "INFO" -Message (
-      "Selected applications installation confirmed with {0} application(s)." -f $SelectedApplications.Count
-    )
-
-    Install-SelectedApplications -SkipPause
-
-    Write-Host
-    Write-Host "Refreshing installed application status..." -ForegroundColor DarkGray
-
-    Update-ApplicationInstallationStatus
-
-    Write-Host "Installed application status refreshed." -ForegroundColor Green
+    Write-Host "The installation queue was not started." -ForegroundColor Yellow
 
     Pause-Application
 
-    return $true
+    return $false
   }
+
+  Show-SelectedApplicationsPreview -Applications $SelectedApplications
+
+  $Confirmed = Confirm-SelectedApplicationsInstallation
+
+  if (-not $Confirmed) {
+    Write-DeploymentLog -Level "INFO" -Message "Selected applications installation was cancelled."
+
+    Write-Host
+    Write-Host "Installation cancelled." -ForegroundColor Yellow
+
+    Pause-Application
+
+    return $false
+  }
+
+  Write-DeploymentLog -Level "INFO" -Message ("Selected applications installation confirmed with {0} applicaitons(s)." -f $SelectedApplications.Count)
+
+  Install-SelectedApplications -SkipPause
+
+  Write-Host
+  Write-Host "Refreshing installed application status..." -ForegroundColor DarkGray
+
+  Update-ApplicationInstallationStatus
+
+  Write-Host "Installed application status refreshed." -ForegroundColor Green
+
+  Pause-Application
+
+  return $true
+}
