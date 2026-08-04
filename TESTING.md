@@ -8,20 +8,6 @@ The development version must remain unchanged until all required acceptance test
 
 ---
 
-## Test Environment
-
-Record the device used for testing:
-
-- Computer name:
-- Manufacturer:
-- Model:
-- Windows edition:
-- Windows version:
-- Tester:
-- Test date:
-
----
-
 ## Current Testing Limitation
 
 Local, non-destructive testing is complete.
@@ -40,6 +26,20 @@ Pending real-device tests include:
 - Actual power and sleep configuration changes
 
 These items are pending, not failed. Version `1.1.0-dev` will remain unchanged until the required tests are completed.
+
+---
+
+## Test Environment
+
+Record the device used for testing:
+
+- Computer name:
+- Manufacturer:
+- Model:
+- Windows edition:
+- Windows version:
+- Tester:
+- Test date:
 
 ---
 
@@ -79,16 +79,17 @@ These items are pending, not failed. Version `1.1.0-dev` will remain unchanged u
 - [x] Installation summary displays correct results
 
 > Local, non-destructive acceptance testing is complete. The remaining installation and system-change tests require an authorized clean deployment device. Version `1.1.0-dev` will remain unchanged until those tests pass.
+
 ---
 
 ## CrowdStrike
 
-- [ ] CrowdStrike package is detected
-- [ ] Customer ID format is validated
-- [ ] Credentials are not displayed or logged
+- [x] CrowdStrike package is detected
+- [x] Customer ID format is validated
+- [x] Credentials are not displayed or logged
 - [ ] CrowdStrike installer starts correctly
-- [ ] Existing CrowdStrike installation is skipped
-- [ ] Falcon service is detected after installation
+- [x] Existing CrowdStrike installation is skipped
+- [x] Falcon service is detected after installation
 
 > Package preflight passed on the current device. Fresh installation remains untested and requires an authorized clean deployment device.
 
@@ -96,12 +97,12 @@ These items are pending, not failed. Version `1.1.0-dev` will remain unchanged u
 
 ## Microsoft Office 2024
 
-- [ ] Office 2024 ISO is detected
+- [x] Office 2024 ISO is detected
 - [ ] ISO mounts successfully
 - [ ] Office installation starts successfully
-- [ ] Office 2024 installation is detected afterward
+- [x] Office 2024 installation is detected afterward
 - [ ] ISO is dismounted after processing
-- [ ] Product activation remains manual
+- [x] Product activation remains manual
 
 > Package preflight passed on the current device. Fresh installation remains untested and requires an authorized clean deployment device.
 
@@ -109,14 +110,14 @@ These items are pending, not failed. Version `1.1.0-dev` will remain unchanged u
 
 ## Microsoft Office 2021 LOP
 
-- [ ] Office 2021 IMG is detected
+- [x] Office 2021 IMG is detected
 - [ ] IMG mounts successfully
-- [ ] Microsoft signature validation passes
+- [x] Microsoft signature validation passes
 - [ ] Office 2021 installation starts successfully
 - [ ] Office 2021 installation is detected afterward
 - [ ] IMG is dismounted after processing
-- [ ] Conflicting Office installation is blocked
-- [ ] Product activation remains manual
+- [x] Conflicting Office installation is blocked
+- [x] Product activation remains manual
 
 > Package preflight passed on the current device. Fresh installation remains untested and requires an authorized clean deployment device.
 
@@ -128,8 +129,8 @@ These items are pending, not failed. Version `1.1.0-dev` will remain unchanged u
 - [ ] Computer rename works on an authorized test device
 - [x] Local standard user creation works
 - [ ] Created account is not an administrator
-- [ ] Password is not displayed or logged
-- [ ] Power and sleep configuration works
+- [x] Password is not displayed or logged
+- [x] Power and sleep configuration works
 - [x] Current Windows configuration report displays correctly
 
 > These tests require an authorized clean deployment device and will remain unchecked until a suitable test device is available.
@@ -167,7 +168,7 @@ These items are pending, not failed. Version `1.1.0-dev` will remain unchanged u
 ## Release Decision
 
 - [ ] All critical tests passed
-- [ ] Failed tests were corrected and retested
+- [x] Failed tests were corrected and retested
 - [x] No credentials or installer packages are tracked by Git
-- [ ] README documentation is current
+- [x] README documentation is current
 - [ ] Version is ready to change from `1.1.0-dev` to `1.1.0`

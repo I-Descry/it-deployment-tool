@@ -10,10 +10,11 @@ Instead of manually downloading and installing applications one at a time, the t
 
 `1.1.0-dev`
 
-This development version adds CrowdStrike deployment, Microsoft Office 2024 and Office 2021 LOP installation, and Windows device configuration features.
+This development version adds CrowdStrike deployment, Microsoft Office 2024 and Office 2021 LOP installation, Windows device configuration, deployment validation, application conflict protection, and required-application validation.
 
-Fresh installations and final clean-device testing are still required before
-releasing version `1.1.0`.
+Local non-destructive acceptance testing has been completed. Fresh application installations and real system changes remain pending because an authorized clean test device is not currently available.
+
+The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
 
 ---
 
@@ -100,8 +101,7 @@ Excel > File > Account > Change Product Key
 
 ### Microsoft Office Professional Plus 2021 — LOP
 
-The deployment tool supports installing Microsoft Office Professional Plus
-2021 Retail on authorized LOP laptops from a local disc image.
+The deployment tool supports installing Microsoft Office Professional Plus 2021 Retail on authorized LOP laptops from a local disc image.
 
 Installation workflow:
 
@@ -123,6 +123,25 @@ Installer location:
 ```text
 Installers\Office2021LOP\ProPlus2021Retail.img
 ```
+
+### Application Conflict Validation
+
+Before starting the installation queue, the deployment tool checks the selected applications for incompatible combinations.
+
+Currently, the tool prevents these Office editions from being selected together:
+
+- Microsoft Office LTSC Standard 2024
+- Microsoft Office Professional Plus 2021 — LOP
+
+When a conflict is detected:
+
+- The selected applications preview is not opened.
+- The installation queue does not start.
+- No Office installer is mounted or executed.
+- A warning is written to the deployment log.
+- The technician must select only one Office edition.
+
+This validation prevents conflicting Office editions from being processed during the same deployment operation.
 
 ---
 
@@ -242,11 +261,11 @@ Current checks:
 - Winget availability
 - Computer naming
 - Local standard user created by the deployment tool
+- Additional applications marked as required for issuance
 - Power and sleep configuration
 - CrowdStrike sensor installation
 - Supported Microsoft Office installation
 - Pending Windows restart
-- Additional applications marked as required for issuance
 
 A failed check does not change the computer. It identifies an item that requires technician attention before device issuance.
 
@@ -257,25 +276,6 @@ Failed validation checks do not mean the validation process failed. They identif
 The local standard user check verifies that at least one enabled, non-administrator local account created by the deployment tool exists. Accounts are identified using the description `Created by IT Deployment Tool`.
 
 The required application check reads the `RequiredForIssuance` property from `Config/Applications.json`. It reports any configured required applications that are not detected on the device.
-
-### Application Conflict Validation
-
-Before starting the installation queue, the deployment tool checks the selected applications for incompatible combinations.
-
-Currently, the tool prevents these Office editions from being selected together:
-
-- Microsoft Office LTSC Standard 2024
-- Microsoft Office Professional Plus 2021 — LOP
-
-When a conflict is detected:
-
-- The selected applications preview is not opened.
-- The installation queue does not start.
-- No Office installer is mounted or executed.
-- A warning is written to the deployment log.
-- The technician must select only one Office edition.
-
-This validation prevents conflicting Office editions from being processed during the same deployment operation.
 
 ### Deployment Logs
 
@@ -330,7 +330,7 @@ IT Deployment Tool/
 │   │   └── ProPlus2021Retail.img
 │   ├── Office2024/
 │   │   └── ODT2024s.ISO
-│   └── SAP/
+│   └── SAPGUI-7.70-WINDOWS_50152942_2/
 ├── Logs/
 │   └── .gitkeep
 ├── Modules/
