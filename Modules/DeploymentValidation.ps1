@@ -150,49 +150,60 @@ function Get-OfficeValidationResult {
 }
 
 function Get-RequiredApplicationsValidationResult {
-  $ExcludedInstallTypes = @("CROWDSTRIKE", "OFFICEISO", "OFFICE2021IMG")
+  [CmdletBinding()]
+  param()
 
   try {
     $RequiredApplications = @(Get-RequiredApplications | Where-Object {
-      $InstallType = ([string]$_.InstallType).Trim().ToUpper()
+      $InstallType = ([string]$_.InstallType).Trim().ToUpperInvariant()
 
-      $ExcludedInstallTypes -notcontains $InstallType
+      $InstallType -notin @("CROWDSTRIKE", "OFFICEISO", "OFFICE2021IMG")
     })
   }
 
   catch {
-    return New-DeploymentValidationResult -Name "Required Applications" -Passed $false -Detail ("Required application validation could not load the " + "application catalog. $($_.Exception.Message)")
+    return [PSCustomObject]@{
+      Name   = "Required Applications"
+      Passed = $false
+      Detail = ("Unable to read required applications: {0}" -f $_.Exception.message)
+    }
   }
 
-  if ($RequiredApplication.Count -eq 0) {
-    return New-DeploymentValidationResult -Name "Required Applications" -Passed $true -Detail "No additional required applications are configured."
+  if ($RequiredApplications.Count -eq 0) {
+    return [PSCustomObject]@{
+      Name   = "Required Applications"
+      Passed = $true
+      Detail = "No additional required applications are configured."
+    }
   }
 
-  $MissingApplications = New-Object "System.Collections.Generic.List[string]"
-
-  foreach ($Application in $RequiredApplications) {
+  $MissingApplications = @(foreach ($Application in $RequiredApplications) {
     try {
-      $Installed = [bool](Test-ApplicationInstalled -Application $Application)
+      $IsInstalled = [bool](Test-ApplicationInstalled -Application $Application)
     }
 
     catch {
-      $Installed = $false
+      $IsInstalled = $false
     }
 
-    if (-not $Installed) {
-      [void]$MissingApplications.Add([string]$Application.Name)
+    if (-not $IsInstalled) {
+      [string]$Application.Name
+    }
+  })
+
+  if ($MissingApplications.Count -gt 0) {
+    return [PSCustomObject]@{
+      Name   = "Required Applications"
+      Passed = $false
+      Detail = ("Missing: {0}" -f ($MissingApplications -join ", "))
     }
   }
 
-  if ($MissingApplications.Count -eq 0) {
-    $Detail = ("All {0} required application(s) are installed." -f $RequiredApplications.Count)
-
-    return New-DeploymentValidationResult -Name "Required Applications" -Passed $true -Detail $Detail
+  return [PSCustomObject]@{
+    Name   = "Required Applications"
+    Passed = $true
+    Detail = ("All {0} required applications are installed." -f $RequiredApplications.Count)
   }
-
-  $MissingList = ($MissingApplications.ToArray() -join ", ")
-
-  return New-DeploymentValidationResult -Name "Required Applications" -Passed $false -Detail ("Missing: {0}." -f $MissingList)
 }
 
 function Get-LocalStandardUserValidationResult {

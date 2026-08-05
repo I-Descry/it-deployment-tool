@@ -20,7 +20,8 @@
     "InstallType": "Teams",
     "Category": "Communication",
     "Description": "Microsoft Teams desktop collaboration applicaiton",
-    "Recommended": true
+    "Recommended": true,
+    "RequiredForIssuance": true
   },
   {
     "Name": "UltraViewer",
