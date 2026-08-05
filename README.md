@@ -62,6 +62,10 @@ The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
 - Supports Microsoft Teams deployment using the official Teams bootstrapper
 - Provisions Microsoft Teams for existing and future Windows users
 - Validates the Microsoft digital signature before running the bootstrapper
+- Supports optional browser deployment through WinGet:
+  - Microsoft Edge
+  - Brave Browser
+  - Firefox Developer Edition
 
 ### Microsoft Teams
 

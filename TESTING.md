@@ -187,6 +187,99 @@ Record the device used for testing:
 
 ---
 
+## Post-Teams Regression
+
+- [x] All PowerShell files pass syntax validation
+- [x] Applications JSON is valid
+- [x] Nine applications load successfully
+- [x] Microsoft Teams is required for issuance
+- [x] Existing provisioned Teams installation is detected
+- [x] Existing Teams installation is skipped
+- [x] Application preview and cancellation work
+- [x] Deployment validation runs successfully
+- [x] Validation results are written to the deployment log
+
+The following acceptance tests remain pending until an authorized clean device is available:
+
+- [ ] Microsoft Teams provisions successfully on a clean device
+- [ ] Microsoft Teams is available to a newly created local user
+
+---
+
+---
+
+## Microsoft Teams Clean-Device Acceptance Procedure
+
+Perform this test only on an authorized clean Windows deployment device.
+
+### Preconditions
+
+- [ ] PowerShell is running as Administrator
+- [ ] The repository is on the latest development commit
+- [ ] Microsoft Teams is not installed for the current user
+- [ ] Microsoft Teams is not provisioned on the device
+- [ ] Internet connectivity is available
+
+### Initial Detection
+
+- [ ] Current-user Teams detection returns `False`
+- [ ] Provisioned Teams detection returns `False`
+- [ ] Microsoft Teams appears as not installed in the application menu
+- [ ] Required-application validation reports `Missing: Microsoft Teams`
+
+### Installation
+
+- [ ] Microsoft Teams can be selected from the application menu
+- [ ] The installation preview displays Microsoft Teams
+- [ ] The latest official Teams bootstrapper downloads successfully
+- [ ] The bootstrapper Microsoft signature is valid
+- [ ] Microsoft Teams provisioning completes successfully
+- [ ] Temporary bootstrapper files are removed
+- [ ] The deployment log records a successful Teams installation
+
+### Post-Installation Verification
+
+- [ ] Current-user Teams detection returns `True`
+- [ ] Provisioned Teams detection returns `True`
+- [ ] Microsoft Teams appears as installed in the application menu
+- [ ] Required-application validation passes
+- [ ] Deployment validation reports Teams as ready for issuance
+
+### New-User Verification
+
+- [ ] A local standard user is created
+- [ ] The new local user can sign in successfully
+- [ ] Microsoft Teams is available to the new local user
+- [ ] Teams launches successfully for the new local user
+
+### Existing-Installation Skip Test
+
+- [ ] Running Teams deployment again returns `Skipped`
+- [ ] The bootstrapper is not downloaded unnecessarily
+- [ ] The existing Teams installation is not modified
+- [ ] The skip result is written to the deployment log
+
+---
+
+## Additional Browsers
+
+- [x] Microsoft Edge WinGet package is available
+- [x] Brave Browser WinGet package is available
+- [x] Firefox Developer Edition WinGet package is available
+- [x] All four browsers appear under the Browsers category
+- [x] Application catalog contains twelve applications
+- [x] Microsoft Edge, Brave Browser, and Firefox Developer Edition are optional
+- [x] Select Recommended does not select the optional browsers
+- [x] Browser installation preview works
+- [x] Microsoft Edge existing installation is skipped correctly
+- [x] Brave Browser installs successfully through the deployment tool
+- [x] Brave Browser existing installation is skipped correctly
+- [x] Firefox Developer Edition installs successfully through the deployment tool
+- [x] Firefox Developer Edition existing installation is skipped correctly
+- [x] Browser installation status refreshes after processing
+
+---
+
 ## Release Decision
 
 - [ ] All critical tests passed

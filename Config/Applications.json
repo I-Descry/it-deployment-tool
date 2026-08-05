@@ -8,6 +8,36 @@
     "Recommended": true
   },
   {
+    "Name": "Microsoft Edge",
+    "DetectionName": "Microsoft Edge",
+    "InstallType": "Winget",
+    "Winget": "Microsoft.Edge",
+    "Category": "Browsers",
+    "Description": "Microsoft Chromium-based web browser",
+    "Recommended": false,
+    "RequiredForIssuance": false
+  },
+  {
+    "Name": "Brave Browser",
+    "DetectionName": "Brave",
+    "InstallType": "Winget",
+    "Winget": "Brave.Brave",
+    "Category": "Browsers",
+    "Description": "Privacy-focused Chromium web browser",
+    "Recommended": false,
+    "RequiredForIssuance": false
+  },
+  {
+    "Name": "Firefox Developer Edition",
+    "DetectionName": "Firefox Developer Edition",
+    "InstallType": "Winget",
+    "Winget": "Mozilla.Firefox.DeveloperEdition",
+    "Category": "Browsers",
+    "Description": "Firefox browser for web development and testing",
+    "Recommended": false,
+    "RequiredForIssuance": false
+  },
+  {
     "Name": "Viber",
     "InstallType": "Winget",
     "Winget": "Rakuten.Viber",
@@ -19,7 +49,7 @@
     "Name": "Microsoft Teams",
     "InstallType": "Teams",
     "Category": "Communication",
-    "Description": "Microsoft Teams desktop collaboration applicaiton",
+    "Description": "Microsoft Teams desktop collaboration application",
     "Recommended": true,
     "RequiredForIssuance": true
   },
