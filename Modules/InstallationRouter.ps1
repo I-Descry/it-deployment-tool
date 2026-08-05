@@ -49,6 +49,18 @@ function Test-ApplicationInstallerAvailable {
       return [bool]$PackageTest.Valid
     }
 
+    "TEAMS" {
+      $TeamsPackageCommand = Get-Command -Name "Test-MicrosoftTeamsDeploymentPackage" -ErrorAction SilentlyContinue
+
+      if ($null -eq $TeamsPackageCommand) {
+        return $false
+      }
+
+      $PackageTest = Test-MicrosoftTeamsDeploymentPackage
+
+      return [bool]$PackageTest.Valid
+    }
+
     default {
       return $false
     }
@@ -128,6 +140,26 @@ function Install-ApplicationByType {
       }
     }
 
+    "TEAMS" {
+      $TeamsResult = Start-MicrosoftTeamsInstallation -Confirm:$false
+
+      switch ($TeamsResult.Status) {
+        "Installed" {
+          return $true
+        }
+
+        "Skipped" {
+          return $true
+        }
+
+        default {
+          Write-Host
+          Write-Host $TeamsResult.Message -ForegroundColor Red
+
+          return $false
+        }
+      }
+    }
 
     "MSI" {
       Write-Host

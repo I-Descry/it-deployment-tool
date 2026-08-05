@@ -42,6 +42,17 @@ function Test-ApplicationInstalled {
     return [bool](Test-Office2021ProPlusRetailInstalled)
   }
 
+  # Microsoft Teams is detected through its provisioned MSIX package.
+  if ($InstallType -eq "TEAMS") {
+    $TeamsDetectionCommand = Get-Command -Name "Test-MicrosoftTeamsInstalled" -ErrorAction SilentlyContinue
+
+    if ($null -eq $TeamsDetectionCommand) {
+      return $false
+    }
+
+    return [bool](Test-MicrosoftTeamsInstalled)
+  }
+
   # Other applications continue using registry detection.
   $DetectionName = ([string]$Application.DetectionName).Trim()
 

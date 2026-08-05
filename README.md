@@ -59,6 +59,22 @@ The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
 - Continues processing when an application is skipped or fails
 - Displays a final installation summary
 - Supports company applications such as SAP GUI and CrowdStrike Falcon Sensor
+- Supports Microsoft Teams deployment using the official Teams bootstrapper
+- Provisions Microsoft Teams for existing and future Windows users
+- Validates the Microsoft digital signature before running the bootstrapper
+
+### Microsoft Teams
+
+- Downloads the latest official Microsoft Teams bootstrapper
+- Validates the bootstrapper's Microsoft digital signature
+- Provisions Microsoft Teams for existing and future Windows users
+- Detects the current-user `MSTeams` MSIX package
+- Detects whether Microsoft Teams is provisioned on the device
+- Skips deployment when Teams is already provisioned
+- Removes the temporary bootstrapper after processing
+
+Actual Microsoft Teams provisioning remains pending clean-device acceptance
+testing.
 
 ### CrowdStrike Falcon Sensor
 

@@ -16,6 +16,13 @@
     "Recommended": true
   },
   {
+    "Name": "Microsoft Teams",
+    "InstallType": "Teams",
+    "Category": "Communication",
+    "Description": "Microsoft Teams desktop collaboration applicaiton",
+    "Recommended": true
+  },
+  {
     "Name": "UltraViewer",
     "InstallType": "Winget",
     "Winget": "DucFabulous.UltraViewer",

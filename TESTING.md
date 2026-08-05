@@ -82,6 +82,26 @@ Record the device used for testing:
 
 ---
 
+## Microsoft Teams
+
+- [x] Microsoft Teams appears in the application catalog
+- [x] Microsoft Teams appears under the Communication category
+- [x] Select Recommended includes Microsoft Teams
+- [x] Current-user Teams MSIX detection works
+- [x] Provisioned-package detection works from an elevated session
+- [x] Latest Teams bootstrapper downloads successfully
+- [x] Bootstrapper Microsoft signature validation passes
+- [x] Temporary bootstrapper files are removed after validation
+- [x] Teams provisioning preview works without changing the device
+- [x] Application-menu preview and cancellation work
+- [ ] Microsoft Teams provisions successfully on a clean device
+- [ ] Microsoft Teams is available to a newly created local user
+- [ ] Existing provisioned Microsoft Teams installation is skipped correctly
+
+> Local detection, package validation, and provisioning preview passed. Actual provisioning remains pending until an authorized clean deployment device is available.
+
+---
+
 ## CrowdStrike
 
 - [x] CrowdStrike package is detected
