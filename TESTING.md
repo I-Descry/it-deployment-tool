@@ -96,6 +96,7 @@ Record the device used for testing:
 - [x] Application-menu preview and cancellation work
 - [ ] Microsoft Teams provisions successfully on a clean device
 - [ ] Microsoft Teams is available to a newly created local user
+- [x] Existing provisioned Microsoft Teams installation is detected correctly
 - [x] Existing provisioned Microsoft Teams installation is skipped correctly
 
 

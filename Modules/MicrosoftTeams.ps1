@@ -25,20 +25,16 @@ function Get-MicrosoftTeamsProvisionedPackage {
   [CmdletBinding()]
   param()
 
-  $GetProvisionedPackageCommand = Get-Command -Name "Get-AppxProvisionedPackage" -ErrorAction SilentlyContinue
-
-  if ($null -eq $GetProvisionedPackageCommand) {
-    return $null
-  }
-
   try {
-    return Get-AppxProvisionedPackage -Online -ErrorAction Stop | Where-Object {
-      $_.DisplayName -eq "MSTeams"
-    } | Select-Object -First 1
+    $ProvisionedPackages = @(Get-AppxProvisionedPackage -Online -ErrorAction Stop | Where-Object {
+      $_.DisplayName -eq "MSTeams" -or $_.PackageName -like "MSTeams_*"
+    })
+
+    return $ProvisionedPackages
   }
 
   catch {
-    return $null
+    return @()
   }
 }
 
@@ -55,16 +51,16 @@ function Test-MicrosoftTeamsProvisioned {
   [CmdletBinding()]
   param()
 
-  $TeamsPackage = Get-MicrosoftTeamsProvisionedPackage
+  $ProvisionedPackages = @(Get-MicrosoftTeamsProvisionedPackage)
 
-  return ($null -ne $TeamsPackage)
+  return ($ProvisionedPackages.Count -gt 0)
 }
 
 function Test-MicrosoftTeamsInstalled {
   [CmdletBinding()]
   param()
 
-  # For deployment purposes, Teams must be provisioned for existing and future Windows users.
+  # Device issuance requires the Teams MSIX package to be provisioned for existing and future Windows users.
   return [bool](Test-MicrosoftTeamsProvisioned)
 }
 
