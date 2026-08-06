@@ -206,8 +206,6 @@ The following acceptance tests remain pending until an authorized clean device i
 
 ---
 
----
-
 ## Microsoft Teams Clean-Device Acceptance Procedure
 
 Perform this test only on an authorized clean Windows deployment device.
@@ -296,6 +294,52 @@ Perform this test only on an authorized clean Windows deployment device.
 - [x] Git machine installation is detected correctly
 - [x] Git existing installation is skipped correctly
 - [x] Installed-application status refresh completes normally
+
+---
+
+## Additional Deployment Tools
+
+- [x] Application catalog contains fifteen applications
+- [x] WinBox appears under Network Tools
+- [x] Visual Studio Code and Git appear under Development Tools
+- [x] WinBox installs successfully through WinGet
+- [x] Visual Studio Code installs successfullyx] Visual Studio Code installs successfully at machine scope
+- [x] Git existing installation is skipped correctly
+
+---
+
+## Running Application Pre-Check
+
+### Configuration and Process Detection
+
+- [x] Visual Studio Code includes `BlockingProcesses: ["Code"]` in `Config/Applications.json`
+- [x] `Get-BlockingApplicationProcesses` loads successfully from `ApplicationProcessCheck.ps1`
+- [x] Visual Studio Code process detection found 12 running `Code` processes
+- [x] Multiple processes belonging to the same configured application are returned
+- [x] An application without `BlockingProcesses` returns zero blocking processes
+- [x] An application without `BlockingProcesses` does not produce an error
+
+### Installation Queue Isolation Test
+
+- [x] The queue checks blocking processes when the application is not installed
+- [x] The queue stops before installer availability checking when a blocking process is found
+- [x] The installer function is not called when the application is blocked
+- [x] The blocked application displays the configured running process name
+- [x] The blocked application displays instructions to close the application and retry
+- [x] The blocked application increments `Blocked`
+- [x] The blocked application does not increment `Failed`
+- [x] The isolated summary displayed `Blocked: 1`
+- [x] The isolated summary displayed `Failed: 0`
+- [x] The isolated summary displayed `Not Found: 0`
+
+### Full Tool Integration
+
+- [ ] `Start.ps1` automatically loads `ApplicationProcessCheck.ps1`
+- [ ] An already-installed Visual Studio Code installation is skipped before process checking
+- [ ] Google Chrome continues through normal installed-application detection
+- [ ] The real installation summary displays the `Blocked` counter
+- [ ] A blocked installation writes a `WARNING` entry to the deployment log
+- [ ] Existing applications without `BlockingProcesses` continue working normally
 
 ---
 

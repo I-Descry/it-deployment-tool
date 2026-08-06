@@ -87,6 +87,9 @@
     "InstallType": "Winget",
     "Winget": "Microsoft.VisualStudioCode",
     "WingetScope": "machine",
+    "BlockingProcesses": [
+      "Code"
+    ],
     "Category": "Development Tools",
     "Description": "Source code editor for development and scripting",
     "Recommended": false,

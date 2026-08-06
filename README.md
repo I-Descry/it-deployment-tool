@@ -74,6 +74,10 @@ The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
   - WinBox
   - Visual Studio Code
   - Git
+- Checks configured blocking processes before launching an installer
+- Prevents silent installers from failing when the target application is running
+- Displays blocked applications separately in the installation summary
+- Records blocked installation attempts as warnings in the deployment log
 
 ### Microsoft Teams
 
@@ -422,6 +426,7 @@ Each application entry may define:
 - Required-for-issuance status
 - WinGet installation scope
 - Installed-application detection method
+- Blocking process names
 
 The optional `RequiredForIssuance` property identifies applications that must be installed before a device is considered ready for issuance.
 
@@ -451,6 +456,23 @@ CrowdStrike and Microsoft Office are excluded from the general required applicat
   "Recommended": true
 }
 ```
+
+### Blocking Process Example
+
+Applications may define processes that must be closed before installation:
+
+```json
+{
+  "Name": "Visual Studio Code",
+  "InstallType": "Winget",
+  "Winget": "Microsoft.VisualStudioCode",
+  "WingetScope": "machine",
+  "BlockingProcesses": [
+    "Code"
+  ]
+}
+```
+> The blocking-process check runs only when the application is not already installed. Already-installed applications are skipped before process detection.
 
 ### Offline EXE Application Example
 
