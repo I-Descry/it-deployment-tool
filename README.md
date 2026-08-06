@@ -475,6 +475,7 @@ Applications may define processes that must be closed before installation:
   ]
 }
 ```
+
 > The blocking-process check runs only when the application is not already installed. Already-installed applications are skipped before process detection.
 > When a configured process is running, the technician may close the application and retry the check or skip that application. Skipping does not stop the remaining installation queue.
 
