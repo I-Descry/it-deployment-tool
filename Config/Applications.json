@@ -69,6 +69,40 @@
     "Description": "Remote desktop software",
     "Recommended": true
   },
+    {
+    "Name": "WinBox",
+    "DetectionName": "WinBox",
+    "DetectionMethod": "Winget",
+    "InstallType": "Winget",
+    "Winget": "Mikrotik.Winbox",
+    "WingetScope": "machine",
+    "Category": "Network Tools",
+    "Description": "MikroTik RouterOS administration utility",
+    "Recommended": false,
+    "RequiredForIssuance": false
+  },
+  {
+    "Name": "Visual Studio Code",
+    "DetectionName": "Microsoft Visual Studio Code",
+    "InstallType": "Winget",
+    "Winget": "Microsoft.VisualStudioCode",
+    "WingetScope": "machine",
+    "Category": "Development Tools",
+    "Description": "Source code editor for development and scripting",
+    "Recommended": false,
+    "RequiredForIssuance": false
+  },
+  {
+    "Name": "Git",
+    "DetectionName": "Git",
+    "InstallType": "Winget",
+    "Winget": "Git.Git",
+    "WingetScope": "machine",
+    "Category": "Development Tools",
+    "Description": "Distributed version control system",
+    "Recommended": false,
+    "RequiredForIssuance": false
+  },
   {
     "Name": "SAP GUI for Windows 7.70",
     "DetectionName": "SAP GUI for Windows 7.70",

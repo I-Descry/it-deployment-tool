@@ -66,6 +66,14 @@ The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
   - Microsoft Edge
   - Brave Browser
   - Firefox Developer Edition
+- Supports configurable WinGet installation scope:
+  - Machine scope
+  - User scope
+- Supports exact WinGet detection for portable applications
+- Supports optional deployment of:
+  - WinBox
+  - Visual Studio Code
+  - Git
 
 ### Microsoft Teams
 
@@ -412,6 +420,8 @@ Each application entry may define:
 - Description
 - Recommended status
 - Required-for-issuance status
+- WinGet installation scope
+- Installed-application detection method
 
 The optional `RequiredForIssuance` property identifies applications that must be installed before a device is considered ready for issuance.
 

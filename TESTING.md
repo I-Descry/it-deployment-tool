@@ -280,6 +280,25 @@ Perform this test only on an authorized clean Windows deployment device.
 
 ---
 
+## Additional Deployment Tools
+
+- [x] Application catalog contains fifteen applications
+- [x] WinBox appears under Network Tools
+- [x] Visual Studio Code and Git appear under Development Tools
+- [x] WinBox, Visual Studio Code, and Git are optional
+- [x] Select Recommended does not select the three applications
+- [x] WinGet machine-scope package availability succeeds
+- [x] WinBox installs successfully through WinGet
+- [x] WinBox portable-package detection works
+- [x] WinBox existing installation is skipped correctly
+- [x] Visual Studio Code installs successfully at machine scope
+- [x] Visual Studio Code existing installation is skipped correctly
+- [x] Git machine installation is detected correctly
+- [x] Git existing installation is skipped correctly
+- [x] Installed-application status refresh completes normally
+
+---
+
 ## Release Decision
 
 - [ ] All critical tests passed

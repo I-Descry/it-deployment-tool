@@ -2,12 +2,31 @@
 # WINGET INSTALLER
 # ============================================================
 
-function Get-WingetInstallArguments {
+function Get-WingetScopeArguments {
   param(
     [PSCustomObject]$Application
   )
 
-  return @(
+  $ConfiguredScope = [string]$Application.WingetScope
+
+  if ([string]::IsNullOrWhiteSpace($ConfiguredScope)) {
+    return @()
+  }
+
+  $NormalizedScope = $ConfiguredScope.Trim().ToLowerInvariant()
+
+  if ($NormalizedScope -notin @("user", "machine")) {
+    throw ("Invalid WinGet scope for {0}: {1}. " + "Supported values are user and machine.") -f $Application.Name, $ConfiguredScope
+  }
+
+  return @("--scope"
+    $NormalizedScope)
+}
+
+function Get-WingetInstallArguments {
+  param([PSCustomObject]$Application)
+
+  $WingetArguments = @(
     "install"
     "--id"
     $Application.Winget
@@ -19,17 +38,19 @@ function Get-WingetInstallArguments {
     "--accept-source-agreements"
     "--disable-interactivity"
   )
+
+  $WingetArguments += @(Get-WingetScopeArguments -Application $Application)
+
+  return $WingetArguments
 }
 
 function Test-WingetPackage {
-  param(
-    [PSCustomObject]$Application
-  )
+  param([PSCustomObject]$Application)
 
   $WingetArguments = @(
     "show"
     "--id"
-    $Application.Winget
+    $Application.winget
     "--exact"
     "--source"
     "winget"
@@ -37,30 +58,41 @@ function Test-WingetPackage {
     "--disable-interactivity"
   )
 
+  $WingetArguments += @(Get-WingetScopeArguments -Application $Application)
+
   & winget @WingetArguments *> $null
 
   return ($LASTEXITCODE -eq 0)
 }
 
 function Install-ApplicationWithWinget {
-  param(
-    [PSCustomObject]$Application
-  )
+  param([PSCustomObject]$Application)
 
   Write-Host
   Write-Host "Installing $($Application.Name)..." -ForegroundColor Cyan
 
-  $WingetArguments = Get-WingetInstallArguments -Application $Application
+  try {
+    $WingetArguments = Get-WingetInstallArguments -Application $Application
+  }
 
-  Write-DeploymentLog -Message ("Installation started: {0} ({1})" -f $Application.Name, $Application.Widget)
+  catch {
+    Write-Host
+    Write-Host $_.Exception.Message -ForegroundColor Red
+
+    Write-DeploymentLog -Message $_.Exception.Message -Level "ERROR"
+
+    return $false
+  }
+
+  Write-DeploymentLog -Message ("Installation started: {0} ({1})" -f $Application.Name, $Application.Winget)
 
   & winget @WingetArguments | Out-Host
 
   $ExitCode = $LASTEXITCODE
- 
+
   if ($ExitCode -eq 0) {
     Write-Host
-    Write-Host "$($Application.Name) installed successfully." -ForegroundColor Green
+    Write-Host ("$($Application.Name) installed successfully.") -ForegroundColor Green
 
     Write-DeploymentLog -Message "$($Application.Name) installed successfully." -Level "SUCCESS"
 
@@ -68,9 +100,9 @@ function Install-ApplicationWithWinget {
   }
 
   Write-Host
-  Write-Host ("$($Application.Name) failed. Exit code: {0}" -f $ExitCode) -ForegroundColor Red
+  Write-Host ("{0} failed. Exit code: {1}" -f $Application.Name, $ExitCode) -ForegroundColor Red
 
-  Write-DeploymentLog -Message ("{0} installation failed. Exit code: {1}" -f $Application.Name, $ExitCode) -Level "ERROR"
+  Write-DeploymentLog -Message ("{0} installation failed. Exit Code: {1}" -f $Application.Name, $ExitCode) -Level "ERROR"
 
   return $false
 }

@@ -2,12 +2,54 @@
 # INSTALLED APPLICATION DETECTION
 # ============================================================
 
-function Test-ApplicationInstalled {
-  param(
-    [PSCustomObject]$Application
+function Test-WingetApplicationInstalled {
+  param([PSCustomObject]$Application)
+
+  $PackageId = ([string]$Application.Winget).Trim()
+
+  if ([string]::IsNullOrWhiteSpace($PackageId)) {
+    return $false
+  }
+
+  $WingetCommand = Get-Command -Name "winget" -ErrorAction SilentlyContinue
+
+  if ($null -eq $WingetCommand) {
+    return $false
+  }
+
+  $WingetArguments = @(
+    "list"
+    "--id"
+    $PackageId
+    "--exact"
+    "--source"
+    "winget"
+    "--accept-source-agreements"
+    "--disable-interactivity"
   )
 
-  $InstallType = ([string]$Application.InstallType).Trim().ToUpper()
+  $ConfiguredScope = ([string]$Application.WingetScope).Trim()
+
+  if (-not [string]::IsNullOrWhiteSpace($ConfiguredScope)) {
+    $NormalizedScope = $ConfiguredScope.ToLowerInvariant()
+
+    if ($NormalizedScope -in @("user", "machine")) {
+      $WingetArguments += @(
+        "--scope"
+        $NormalizedScope
+      )
+    }
+  }
+
+  & winget @WingetArguments *> $null
+
+  return ($LASTEXITCODE -eq 0)
+}
+
+function Test-ApplicationInstalled {
+  param([PSCustomObject]$Application)
+
+  $InstallType = ([string]$Application.InstallType).Trim().ToUpperInvariant()
 
   # CrowdStrike is detected through its Windows service.
   if ($InstallType -eq "CROWDSTRIKE") {
@@ -20,7 +62,7 @@ function Test-ApplicationInstalled {
     return [bool](Test-CrowdStrikeSensorInstalled)
   }
 
-  # Office 2024 is detected through its Windows service.
+  # Office 2024 uses its dedicated detection function.
   if ($InstallType -eq "OFFICEISO") {
     $OfficeDetectionCommand = Get-Command -Name "Test-Office2024Installed" -ErrorAction SilentlyContinue
 
@@ -31,7 +73,7 @@ function Test-ApplicationInstalled {
     return [bool](Test-Office2024Installed)
   }
 
-  # Office 2021 is detected through its Windows service.
+  # Office 2021 uses its dedicated detection function.
   if ($InstallType -eq "OFFICE2021IMG") {
     $Office2021DetectionCommand = Get-Command -Name "Test-Office2021ProPlusRetailInstalled" -ErrorAction SilentlyContinue
 
@@ -53,10 +95,19 @@ function Test-ApplicationInstalled {
     return [bool](Test-MicrosoftTeamsInstalled)
   }
 
-  # Other applications continue using registry detection.
+  # WinGet applications are checked by their exact package ID first.
+  if ($InstallType -eq "WINGET") {
+    $DetectionMethod = ([string]$Application.DetectionMethod).Trim().ToUpperInvariant()
+
+    if ($DetectionMethod -eq "WINGET") {
+      return [bool](Test-WingetApplicationInstalled -Application $Application)
+    }
+  }
+
+  # Registry detection remains the fallback.
   $DetectionName = ([string]$Application.DetectionName).Trim()
 
-  if ([string]::IsNullOrWhiteSpace($Detectionname)) {
+  if ([string]::IsNullOrWhiteSpace($DetectionName)) {
     $DetectionName = ([string]$Application.Name).Trim()
   }
 
@@ -64,24 +115,35 @@ function Test-ApplicationInstalled {
     return $false
   }
 
-  $RegistryPaths = @(
-    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
-    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
-    "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
-  )
+  $ConfiguredScope = ([string]$Application.WingetScope).Trim().ToLowerInvariant()
+
+  switch ($ConfiguredScope) {
+    "machine" {
+      $RegistryPaths = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+      )
+    }
+
+    "user" {
+      $RegistryPaths = @(
+        "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+      )
+    }
+
+    default {
+      $RegistryPaths = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+      )
+    }
+  }
 
   $InstalledApplication = Get-ItemProperty -Path $RegistryPaths -ErrorAction SilentlyContinue | Where-Object {
     $DisplayName = ([string]$_.DisplayName).Trim()
-
-    if ([string]::IsNullOrWhiteSpace($DisplayName)) {
-      return $false
-    }
-
-    return $DisplayName.StartsWith(
-      $DetectionName,
-      [System.StringComparison]::OrdinalIgnoreCase
-    )
-  } | Select-Object -first 1
+    (-not [string]::IsNullOrWhiteSpace($DisplayName)) -and ($DisplayName.StartsWith($DetectionName, [System.StringComparison]::OrdinalIgnoreCase))
+  } | Select-Object -First 1
 
   return ($null -ne $InstalledApplication)
 }
@@ -92,9 +154,7 @@ function Update-ApplicationInstallationStatus {
   }
 
   foreach ($Application in $script:Applications) {
-    $IsInstalled = [bool](
-      Test-ApplicationInstalled -Application $Application
-    )
+    $IsInstalled = [bool](Test-ApplicationInstalled -Application $Application)
 
     $Application | Add-Member -MemberType NoteProperty -Name "Installed" -Value $IsInstalled -Force
   }
