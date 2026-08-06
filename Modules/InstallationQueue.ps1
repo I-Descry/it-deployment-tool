@@ -49,16 +49,15 @@ function Install-SelectedApplications {
       continue
     }
 
-    $BlockingProcesses = @(Get-BlockingApplicationProcesses -Application $Application)
+    $BlockingResult = Resolve-BlockingApplicationProcesses -Application $Application
 
-    if ($BlockingProcesses.Count -gt 0) {
-      $BlockingProcessNames = @($BlockingProcesses | Select-Object -ExpandProperty ProcessName -Unique | Sort-Object)
+    if ($BlockingResult.Status -eq "Blocked") {
+      $BlockingProcessText = @($BlockingResult.ProcessNames) -join ", "
 
-      $BlockingProcessText = $BlockingProcessNames -join ", "
-      $BlockedMessage = ("{0} installation is blocked because these processes are running: {1}" -f $Application.Name, $BlockingProcessText)
+      $BlockedMessage = ("{0} was skipped because these processes are still running: {1}" -f $Application.Name, $BlockingProcessText)
 
+      Write-Host
       Write-Host $BlockedMessage -ForegroundColor Yellow
-      Write-Host "Close the application and run the installation again." -ForegroundColor Yellow
 
       $BlockedCount++
 
@@ -102,7 +101,7 @@ function Install-SelectedApplications {
   Write-Host ("Failed : {0}" -f $FailedCount) -ForegroundColor Red
   Write-Host ("Not Found : {0}" -f $NotFoundCount) -ForegroundColor Red
 
-  $SummaryMessage = ("Installation summary - Installed: {0}; Skipped: {1}; Failed: {2}; Not Found: {3}" -f
+  $SummaryMessage = ("Installation summary - Installed: {0}; Skipped: {1}; Blocked: {2}; Failed: {3}; Not Found: {4}" -f
     $InstalledCount,
     $SkippedCount,
     $BlockedCount,
@@ -110,9 +109,7 @@ function Install-SelectedApplications {
     $NotFoundCount
   )
 
-  $SummaryLevel = if (
-    ($FailedCount -gt 0) -or ($NotFoundCount -gt 0)
-  ) {
+  $SummaryLevel = if(($BlockedCount -gt 0) -or ($FailedCount -gt 0) -or ($NotFoundCount -gt 0)) {
     "WARNING"
   }
   else {

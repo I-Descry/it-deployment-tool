@@ -341,6 +341,24 @@ Perform this test only on an authorized clean Windows deployment device.
 - [ ] A blocked installation writes a `WARNING` entry to the deployment log
 - [ ] Existing applications without `BlockingProcesses` continue working normally
 
+### Retry and Skip Handling
+
+- [x] Blocked application displays Retry and Skip options
+- [x] Invalid input is rejected and the prompt is displayed again
+- [x] Skip returns a `Blocked` result
+- [x] Skip prevents installer availability checking
+- [x] Skip increments the `Blocked` counter
+- [x] Skip does not increment the `Failed` counter
+- [x] Skip writes an application warning to the deployment log
+- [x] A summary containing blocked applications is logged as `WARNING`
+- [x] Retry checks the configured processes again
+- [x] Retry continues after the blocking process is closed
+- [x] Retry proceeds to installer availability checking
+- [x] Retry proceeds to the normal installation workflow
+- [x] A successful retry increments the `Installed` counter
+- [x] A successful retry does not increment the `Blocked` counter
+- [x] A successful retry summary is logged as `SUCCESS`
+
 ---
 
 ## Release Decision
