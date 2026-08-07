@@ -81,6 +81,9 @@ The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
 - Allows the technician to retry after closing a blocking application
 - Allows the technician to skip a blocked application without stopping the remaining installation queue
 - Does not automatically terminate running applications
+- Normalizes installer results into `Installed`, `Skipped`, or `Failed`
+- Counts cancelled or skipped interactive installers separately from successful installations
+- Prevents skipped Office or CrowdStrike setup from being counted as installed
 
 ### Microsoft Teams
 
@@ -380,6 +383,7 @@ IT Deployment Tool/
 │   ├── DeploymentValidation.ps1
 │   ├── Elevation.ps1
 │   ├── InstallationQueue.ps1
+│   ├── InstallationResult.ps1
 │   ├── InstallationRouter.ps1
 │   ├── InstalledApplications.ps1
 │   ├── LocalUserConfiguration.ps1

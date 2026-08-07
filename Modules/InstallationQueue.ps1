@@ -82,13 +82,22 @@ function Install-SelectedApplications {
 
     Write-Host " [ OK ]" -ForegroundColor Green
 
-    $InstallSucceeded = Install-ApplicationByType -Application $Application
+    $InstallationResult = Install-ApplicationByType -Application $Application
 
-    if ($InstallSucceeded) {
-      $InstalledCount++
-    }
-    else {
-      $FailedCount++
+    switch ($InstallationResult.Status) {
+      "Installed" {
+        $InstalledCount++
+      }
+
+      "Skipped" {
+        $SkippedCount++
+
+        Write-DeploymentLog -Message $InstallationResult.Message -Level "INFO"
+      }
+
+      default {
+        $FailedCount++
+      }
     }
   }
 

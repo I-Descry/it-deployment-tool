@@ -359,6 +359,29 @@ Perform this test only on an authorized clean Windows deployment device.
 - [x] A successful retry does not increment the `Blocked` counter
 - [x] A successful retry summary is logged as `SUCCESS`
 
+## Structured Installation Results
+
+### Result Conversion
+
+- [x] Boolean `true` converts to `Installed`
+- [x] Boolean `false` converts to `Failed`
+- [x] An installer result with status `Skipped` remains `Skipped`
+- [x] Installer messages are preserved during conversion
+- [x] Invalid or unsupported installer results convert to `Failed`
+
+### Installation Queue Counting
+
+- [x] An `Installed` result increments `Installed`
+- [x] A `Skipped` result increments `Skipped`
+- [x] A `Failed` result increments `Failed`
+- [x] A skipped installer is not counted as installed
+- [x] A skipped installer is not counted as failed
+- [x] A skipped result is logged as `INFO`
+- [x] A queue containing a failed result logs its summary as `WARNING`
+- [x] Combined test displayed `Installed: 1`
+- [x] Combined test displayed `Skipped: 1`
+- [x] Combined test displayed `Failed: 1`
+
 ---
 
 ## Release Decision

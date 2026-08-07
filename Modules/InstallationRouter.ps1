@@ -69,114 +69,63 @@ function Test-ApplicationInstallerAvailable {
 
 function Install-ApplicationByType {
   param(
+    [Parameter(Mandatory)]
     [PSCustomObject]$Application
   )
 
-  $InstallType = ([string]$Application.InstallType).Trim().ToUpper()
+  $InstallType = ([string]$Application.InstallType).Trim().ToUpperInvariant()
 
   switch ($InstallType) {
     "WINGET" {
-      return Install-ApplicationWithWinget -Application $Application
+      $RawResult = Install-ApplicationWithWinget -Application $Application
+
+      return ConvertTo-ApplicationInstallationResult -Result $RawResult -ApplicationName $Application.Name
     }
 
     "EXE" {
-      return Install-ApplicationWithExe -Application $Application
+      $RawResult = Install-ApplicationWithExe -Application $Application
+
+      return ConvertTo-ApplicationInstallationResult -Result $RawResult -ApplicationName $Application.Name
     }
 
     "CROWDSTRIKE" {
-      $CrowdStrikeResult = Start-CrowdStrikeInteractiveSetup
+      $RawResult = Start-CrowdStrikeInteractiveSetup
 
-      switch ($CrowdStrikeResult.Status) {
-        "Installed" {
-          return $true
-        }
-
-        "Skipped" {
-          return $true
-        }
-
-        default {
-          return $false
-        }
-      }
+      return ConvertTo-ApplicationInstallationResult -Result $RawResult -ApplicationName $Application.Name
     }
 
     "OFFICEISO" {
-      $OfficeResult = Start-Office2024Installation
+      $RawResult = Start-Office2024Installation
 
-      switch ($OfficeResult.Status) {
-        "Installed" {
-          return $true
-        }
-
-        "Skipped" {
-          return $true
-        }
-
-        default {
-          return $false
-        }
-      }
+      return ConvertTo-ApplicationInstallationResult -Result $RawResult -ApplicationName $Application.Name
     }
 
     "OFFICE2021IMG" {
-      $Office2021Result = Start-Office2021LOPInstallation
+      $RawResult = Start-Office2021LOPInstallation
 
-      switch ($Office2021Result.Status) {
-        "Installed" {
-          return $true
-        }
-
-        "Skipped" {
-          return $true
-        }
-
-        default {
-          Write-Host
-          Write-Host $Office2021Result.Message -ForegroundColor Red
-
-          return $false
-        }
-      }
-    }
-
-    "TEAMS" {
-      $TeamsResult = Start-MicrosoftTeamsInstallation -Confirm:$false
-
-      switch ($TeamsResult.Status) {
-        "Installed" {
-          return $true
-        }
-
-        "Skipped" {
-          return $true
-        }
-
-        default {
-          Write-Host
-          Write-Host $TeamsResult.Message -ForegroundColor Red
-
-          return $false
-        }
-      }
+      return ConvertTo-ApplicationInstallationResult -Result $RawResult -ApplicationName $Application.Name
     }
 
     "MSI" {
+      $Message = ("{0} uses MSI, but MSI installation is not enabled yet." -f $Application.Name)
+
       Write-Host
-      Write-Host ("$($Application.Name) uses an MSI installer. MSI installation is not enabled yet.") -ForegroundColor Yellow
+      Write-Host $Message -ForegroundColor Yellow
 
-      Write-DeploymentLog -Message ("{0} uses MSI, but MSI installation is not enabled yet." -f $Application.Name) -Level "WARNING"
+      Write-DeploymentLog -Message $Message -Level "WARNING"
 
-      return $false
+      return New-ApplicationInstallationResult -Status "Failed" -ApplicationName $Application.Name -Message $Message
     }
 
     default {
+      $Message = ("Unsupported installation type for {0}: {1}" -f $Application.Name, $InstallType)
+
       Write-Host
-      Write-Host ("Unsupported installation type for $($Application.Name): $InstallType") -ForegroundColor Red
+      Write-Host $Message -ForegroundColor Red
 
-      Write-DeploymentLog -Message ("Unsupported installation type for {0}: {1}" -f $Application.Name, $InstallType) -Level "ERROR"
+      Write-DeploymentLog -Message $Message -Level "ERROR"
 
-      return $false
+      return New-ApplicationInstallationResult -Status "Failed" -ApplicationName $Application.Name -Message $Message
     }
   }
 }
