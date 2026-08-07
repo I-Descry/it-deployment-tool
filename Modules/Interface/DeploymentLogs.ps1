@@ -7,7 +7,7 @@ function Get-DeploymentLogs {
     [int]$MaximumResults = 10
   )
 
-  $LogsDirectory = Join-Path $PSScriptRoot "..\Logs"
+  $LogsDirectory = Join-Path $script:ITDeploymentToolRoot "Logs"
 
   if (-not (Test-Path -LiteralPath $LogsDirectory)) {
     return @()
@@ -38,7 +38,7 @@ function Get-DeploymentLogContent {
 }
 
 function Open-DeploymentLogsFolder {
-  $LogsDirectory = Join-Path $PSScriptRoot "..\Logs"
+  $LogsDirectory = Join-Path $script:ITDeploymentToolRoot "Logs"
 
   if (-not (
     Test-Path -LiteralPath $LogsDirectory -PathType Container

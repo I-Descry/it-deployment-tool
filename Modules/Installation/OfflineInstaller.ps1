@@ -7,7 +7,7 @@ function Get-OfflineInstallerPath {
     [PSCustomObject]$Application
   )
 
-  $InstallersDirectory = Join-Path $PSScriptRoot "..\Installers"
+  $InstallersDirectory = Join-Path $script:ITDeploymentToolRoot "Installers"
 
   return Join-Path $InstallersDirectory $Application.InstallerPath
 }

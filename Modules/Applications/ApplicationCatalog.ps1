@@ -10,7 +10,7 @@ $script:ApplicationMap = @{}
 
 function Initialize-Applications {
 
-  $ApplicationPath = Join-Path $PSScriptRoot "..\Config\Applications.json"
+  $ApplicationPath = Join-Path $script:ITDeploymentToolRoot "Config\Applications.json"
 
   $script:Applications = Get-Content $ApplicationPath -Raw | ConvertFrom-Json
 

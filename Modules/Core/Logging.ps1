@@ -34,7 +34,7 @@ function Initialize-DeploymentLog {
     [string]$Version
   )
 
-  $LogsDirectory = Join-Path $PSScriptRoot "..\Logs"
+  $LogsDirectory = Join-Path $script:ITDeploymentToolRoot "Logs"
 
   if (-not (Test-Path $LogsDirectory)) {
     New-Item -ItemType Directory -Path $LogsDirectory -Force | Out-Null

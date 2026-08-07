@@ -3,7 +3,7 @@
 # ============================================================
 
 function Get-Office2021ImageDirectory {
-  $ProjectRoot = Split-Path -Parent $PSScriptRoot
+  $ProjectRoot = $script:ITDeploymentToolRoot
 
   return Join-Path $ProjectRoot "Installers\Office2021LOP"
 }

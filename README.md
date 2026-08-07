@@ -372,40 +372,49 @@ IT Deployment Tool/
 ├── Logs/
 │   └── .gitkeep
 ├── Modules/
-│   ├── Application.ps1
-│   ├── ApplicationCatalog.ps1
-│   ├── ApplicationMenu.ps1
-│   ├── ApplicationSelection.ps1
-│   ├── ComputerNameConfiguration.ps1
-│   ├── CrowdStrikeInstaller.ps1
-│   ├── DeploymentLogs.ps1
-│   ├── DeploymentLogsMenu.ps1
-│   ├── DeploymentValidation.ps1
-│   ├── Elevation.ps1
-│   ├── InstallationQueue.ps1
-│   ├── InstallationResult.ps1
-│   ├── InstallationRouter.ps1
-│   ├── InstalledApplications.ps1
-│   ├── LocalUserConfiguration.ps1
-│   ├── Logging.ps1
-│   ├── Menu.ps1
-│   ├── Office2021ImgInstaller.ps1
-│   ├── OfficeIsoInstaller.ps1
-│   ├── OfflineInstaller.ps1
-│   ├── PowerConfiguration.ps1
-│   ├── SelectedApplicationsSetup.ps1
-│   ├── SystemChecks.ps1
-│   ├── SystemInformation.ps1
-│   ├── UI.ps1
-│   ├── WindowsConfiguration.ps1
-│   ├── WindowsConfigurationMenu.ps1
-│   └── WingetInstaller.ps1
+│   ├── Applications/
+│   │   ├── ApplicationCatalog.ps1
+│   │   ├── ApplicationProcessCheck.ps1
+│   │   ├── ApplicationSelection.ps1
+│   │   ├── InstalledApplications.ps1
+│   │   └── MicrosoftTeams.ps1
+│   ├── Core/
+│   │   ├── Elevation.ps1
+│   │   ├── Logging.ps1
+│   │   └── UI.ps1
+│   ├── Installation/
+│   │   ├── CrowdStrikeInstaller.ps1
+│   │   ├── InstallationQueue.ps1
+│   │   ├── InstallationResult.ps1
+│   │   ├── InstallationRouter.ps1
+│   │   ├── Office2021ImgInstaller.ps1
+│   │   ├── OfficeIsoInstaller.ps1
+│   │   ├── OfflineInstaller.ps1
+│   │   └── WingetInstaller.ps1
+│   ├── Interface/
+│   │   ├── Application.ps1
+│   │   ├── ApplicationMenu.ps1
+│   │   ├── DeploymentLogs.ps1
+│   │   ├── DeploymentLogsMenu.ps1
+│   │   ├── Menu.ps1
+│   │   ├── SelectedApplicationsSetup.ps1
+│   │   └── WindowsConfigurationMenu.ps1
+│   ├── Validation/
+│   │   ├── DeploymentValidation.ps1
+│   │   ├── SystemChecks.ps1
+│   │   └── SystemInformation.ps1
+│   └── Windows/
+│       ├── ComputerNameConfiguration.ps1
+│       ├── LocalUserConfiguration.ps1
+│       ├── PowerConfiguration.ps1
+│       └── WindowsConfiguration.ps1
 ├── .gitignore
 ├── README.md
 └── Start.ps1
 ```
 
-Installer packages and generated log files are excluded from the repository.
+> Installer packages and generated log files are excluded from the repository.
+> PowerShell modules are organized by responsibility and loaded by `Start.ps1` using an explicit dependency-aware order.
 
 ---
 
