@@ -1,15 +1,5 @@
 # IT Deployment Tool Testing
 
-## Deployment Tool Validation Mode
-
-- [x] `Start.ps1 -ValidateOnly` loads all 30 modules
-- [x] Validation checks the required deployment functions
-- [x] Validation confirms `Config\Applications.json` exists
-- [x] Successful validation returns exit code `0`
-- [x] Validation mode does not open the main menu
-- [x] Validation mode does not request administrator elevation
-- [x] Normal `Start.ps1` startup continues to work after validation mode was added
-
 ## Current Test Version
 
 `1.1.0-dev`
@@ -53,6 +43,19 @@ Record the device used for testing:
 
 ---
 
+
+## Deployment Tool Validation Mode
+
+- [x] `Start.ps1 -ValidateOnly` loads all 30 modules
+- [x] Validation checks the required deployment functions
+- [x] Validation confirms `Config\Applications.json` exists
+- [x] Successful validation returns exit code `0`
+- [x] Validation mode does not open the main menu
+- [x] Validation mode does not request administrator elevation
+- [x] Normal `Start.ps1` startup continues to work after validation mode was added
+
+---
+
 ## Startup and Interface
 
 - [x] Tool requests administrator elevation when required
@@ -74,6 +77,15 @@ Record the device used for testing:
 - [x] Installation cancellation works
 - [x] Empty application selection is handled correctly
 - [x] Conflicting Office selections are blocked before the queue starts
+
+---
+
+## Installed Application Detection Cache
+
+- [x] Registry-installed applications are collected once per status refresh
+- [x] Machine and user registry scopes are preserved
+- [x] Application installed status remains accurate
+- [x] Special detection for WinGet, Teams, CrowdStrike, and Microsoft Office remains unchanged
 
 ---
 
@@ -307,17 +319,6 @@ Perform this test only on an authorized clean Windows deployment device.
 
 ---
 
-## Additional Deployment Tools
-
-- [x] Application catalog contains fifteen applications
-- [x] WinBox appears under Network Tools
-- [x] Visual Studio Code and Git appear under Development Tools
-- [x] WinBox installs successfully through WinGet
-- [x] Visual Studio Code installs successfullyx] Visual Studio Code installs successfully at machine scope
-- [x] Git existing installation is skipped correctly
-
----
-
 ## Running Application Pre-Check
 
 ### Configuration and Process Detection
@@ -370,6 +371,18 @@ Perform this test only on an authorized clean Windows deployment device.
 - [x] A successful retry summary is logged as `SUCCESS`
 
 ## Structured Installation Results
+
+## Detailed Installation Queue Results
+
+- [x] Installed result displays status and reason
+- [x] Already-installed application displays `SKIPPED`
+- [x] Running application displays `BLOCKED`
+- [x] Missing installer displays `NOT FOUND`
+- [x] Failed installation displays `FAILED`
+- [x] Queue counters remain accurate
+- [x] Final summary severity remains correct
+- [x] Mocked queue test does not install applications
+- [x] Real already-installed application is skipped without launching an installer
 
 ### Result Conversion
 

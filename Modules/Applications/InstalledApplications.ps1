@@ -2,6 +2,68 @@
 # INSTALLED APPLICATION DETECTION
 # ============================================================
 
+$script:InstalledApplicationRegistryCache = @{
+  Machine = @()
+  user    = @()
+}
+
+function Update-InstalledApplicationRegistryCache {
+  $MachineRegistryPaths = @(
+    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+  )
+
+  $UserRegistryPaths = @(
+    "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+  )
+
+  $script:InstalledApplicationRegistryCache.Machine = @(Get-ItemProperty -Path $MachineRegistryPaths -ErrorAction SilentlyContinue | ForEach-Object {
+    ([string]$_.DisplayName).Trim()
+  } | Where-Object {
+    -not [string]::IsNullOrWhiteSpace($_)
+  })
+
+  $script:InstalledApplicationRegistryCache.User = @(Get-ItemProperty -Path $UserRegistryPaths -ErrorAction SilentlyContinue | ForEach-Object {
+    ([string]$_.DisplayName).Trim()
+  } | Where-Object {
+    -not [string]::IsNullOrWhiteSpace($_)
+  })
+}
+
+function Test-CacheRegistryApplicationInstalled {
+  param(
+    [Parameter(Mandatory)]
+    [string]$DetectionName,
+
+    [string]$Scope
+  )
+
+  $InstalledNames = switch ($Scope.Trim().ToLowerInvariant()) {
+    "machine" {
+      @($script:InstalledApplicationRegistryCache.Machine)
+    }
+
+    "user" {
+      @($script:InstalledApplicationRegistryCache.User)
+    }
+
+    default {
+      @(
+        $script:InstalledApplicationRegistryCache.Machine
+        $script:InstalledApplicationRegistryCache.User
+      )
+    }
+  }
+
+  foreach ($DisplayName in $InstalledNames) {
+    if ($DisplayName.StartsWith($DetectionName,[System.StringComparison]::OrdinalIgnoreCase)) {
+      return $true
+    }
+  }
+
+  return $false
+}
+
 function Test-WingetApplicationInstalled {
   param([PSCustomObject]$Application)
 
@@ -115,7 +177,9 @@ function Test-ApplicationInstalled {
     return $false
   }
 
-  $ConfiguredScope = ([string]$Application.WingetScope).Trim().ToLowerInvariant()
+  $ConfiguredScope = ([string]$Application.WingetScope).Trim()
+
+  return Test-CacheRegistryApplicationInstalled -DetectionName $DetectionName -Scope $ConfiguredScope
 
   switch ($ConfiguredScope) {
     "machine" {
@@ -152,6 +216,8 @@ function Update-ApplicationInstallationStatus {
   if ($null -eq $script:Applications) {
     throw "The application catalog has not been initialized."
   }
+
+  Update-InstalledApplicationRegistryCache
 
   foreach ($Application in $script:Applications) {
     $IsInstalled = [bool](Test-ApplicationInstalled -Application $Application)

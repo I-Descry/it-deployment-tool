@@ -84,6 +84,9 @@ The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
 - Normalizes installer results into `Installed`, `Skipped`, or `Failed`
 - Counts cancelled or skipped interactive installers separately from successful installations
 - Prevents skipped Office or CrowdStrike setup from being counted as installed
+- Displays a status and reason for each application processed by the installation queue
+- Distinguishes installed, skipped, blocked, failed, and missing-installer results
+- Caches installed application registry data during each status refresh to avoid repeated registry scans
 
 ### Microsoft Teams
 

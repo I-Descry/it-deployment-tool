@@ -2,6 +2,27 @@
 # INSTALLATION QUEUE
 # ============================================================
 
+function Write-ApplicationQueueResult {
+  param(
+    [Parameter(Mandatory)]
+    [ValidateSet("Installed", "Skipped", "Blocked", "Failed", "Not Found")]
+    [string]$Status,
+
+    [Parameter(Mandatory)]
+    [string]$Message
+  )
+
+  $StatusColor = switch ($Status) {
+    "Installed" { "Green" }
+    "Skipped"   { "Yellow" }
+    "Blocked"   { "Yellow" }
+    default     { "Red" }
+  }
+
+  Write-Host ("      Status : {0}" -f $Status.ToUpperInvariant()) -ForegroundColor $StatusColor
+  Write-Host ("      Reason : {0}" -f $Message)
+}
+
 function Install-SelectedApplications {
   param(
     [switch]$SkipPause
@@ -40,11 +61,13 @@ function Install-SelectedApplications {
     $AlreadyInstalled = Test-ApplicationInstalled -Application $Application
 
     if ($AlreadyInstalled) {
-      Write-Host ("{0} is already installed. Skipping." -f $Application.Name) -ForegroundColor Yellow
+      $SkippedMessage = ("{0} is already installed." -f $Application.Name)
+
+      Write-ApplicationQueueResult -Status "Skipped" -Message $SkippedMessage
 
       $SkippedCount++
 
-      Write-DeploymentLog -Message ("{0} is already installed. Skipped." -f $Application.Name) -Level "INFO"
+      Write-DeploymentLog -Message ("{0} Skipped." -f $SkippedMessage) -Level "INFO"
 
       continue
     }
@@ -56,8 +79,7 @@ function Install-SelectedApplications {
 
       $BlockedMessage = ("{0} was skipped because these processes are still running: {1}" -f $Application.Name, $BlockingProcessText)
 
-      Write-Host
-      Write-Host $BlockedMessage -ForegroundColor Yellow
+      Write-ApplicationQueueResult -Status "Blocked" -Message $BlockedMessage
 
       $BlockedCount++
 
@@ -73,9 +95,13 @@ function Install-SelectedApplications {
     if (-not $InstallerAvailable) {
       Write-Host " [ NOT FOUND ]" -ForegroundColor Red
 
+      $NotFoundMessage = ("Installer was not found or is unavailable for {0}." -f $Application.Name)
+
+      Write-ApplicationQueueResult -Status "Not Found" -Message $NotFoundMessage
+
       $NotFoundCount++
 
-      Write-DeploymentLog -Message ("Installer not found or unavailable: {0}" -f $Application.Name) -Level "ERROR"
+      Write-DeploymentLog -Message $NotFoundMessage -Level "ERROR"
 
       continue
     }
@@ -83,6 +109,8 @@ function Install-SelectedApplications {
     Write-Host " [ OK ]" -ForegroundColor Green
 
     $InstallationResult = Install-ApplicationByType -Application $Application
+
+    Write-ApplicationQueueResult -Status $InstallationResult.Status -Message $InstallationResult.Message
 
     switch ($InstallationResult.Status) {
       "Installed" {
