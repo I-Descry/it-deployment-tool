@@ -613,6 +613,16 @@ The tool automatically requests administrator privileges when elevation is requi
 
 ---
 
+### Validation Mode
+
+The deployment tool can perform a read-only startup validation without requesting administrator elevation or opening the main menu.
+
+```powershell
+.\Start.ps1 -ValidateOnly
+```
+
+---
+
 ## Typical Workflow
 
 1. Start the deployment tool.

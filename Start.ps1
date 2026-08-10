@@ -8,6 +8,9 @@
 # Application Information
 # ============================================================
 
+[CmdletBinding()]
+param([switch]$ValidateOnly)
+
 $AppName = "IT DEPLOYMENT TOOL"
 $AppVersion = "1.1.0-dev"
 $AppAuthor = "IT04 - John Paul Villacorta"
@@ -85,6 +88,60 @@ foreach ($ModulePath in $ModulePaths) {
   }
 
   . $FullModulePath
+}
+
+if ($ValidateOnly) {
+  $RequiredFunctions = @(
+    "Request-Administrator"
+    "Start-Application"
+    "Install-SelectedApplications"
+    "Install-ApplicationByType"
+    "New-ApplicationInstallationResult"
+    "ConvertTo-ApplicationInstallationResult"
+  )
+
+  $MissingFunctions = @(
+    foreach ($FunctionName in $RequiredFunctions) {
+      if (-not (Get-Command -Name $FunctionName -CommandType Function -ErrorAction SilentlyContinue)) {
+        $FunctionName
+      }
+    }
+  )
+
+  $ApplicationConfigPath = Join-Path $script:ITDeploymentToolRoot "Config\Applications.json"
+
+  $ValidationProblems = @()
+
+  if ($ModulePaths.Count -ne 30) {
+    $ValidationProblems += ("Expected 30 modules but the loader contains {0}." -f $ModulePaths.Count)
+  }
+
+  if ($MissingFunctions.Count -gt 0) {
+    $ValidationProblems += ("Missing functions: {0}" -f ($MissingFunctions -join ", "))
+  }
+
+  if (-not (Test-Path -LiteralPath $ApplicationConfigPath -PathType Leaf)) {
+    $ValidationProblems += ("Application configuration was not found: {0}" -f $ApplicationConfigPath)
+  }
+
+  if ($ValidationProblems.Count -gt 0) {
+    Write-Host
+    Write-Host "Deployment tool validation failed." -ForegroundColor Red
+
+    foreach ($Problem in $ValidationProblems) {
+      Write-Host ("- {0}" -f $Problem) -ForegroundColor Red
+    }
+
+    exit 1
+  }
+
+  Write-Host
+  Write-Host "Deployment tool validation passed." -ForegroundColor Green
+  Write-Host ("Modules loaded    : {0}" -f $ModulePaths.Count)
+  Write-Host ("Functions checked : {0}" -f $RequiredFunctions.Count)
+  Write-Host "Configuration     : Available"
+
+  exit 0
 }
 
 $AdministratorGranted = Request-Administrator -ScriptPath $PSCommandPath

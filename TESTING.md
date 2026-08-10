@@ -1,5 +1,15 @@
 # IT Deployment Tool Testing
 
+## Deployment Tool Validation Mode
+
+- [x] `Start.ps1 -ValidateOnly` loads all 30 modules
+- [x] Validation checks the required deployment functions
+- [x] Validation confirms `Config\Applications.json` exists
+- [x] Successful validation returns exit code `0`
+- [x] Validation mode does not open the main menu
+- [x] Validation mode does not request administrator elevation
+- [x] Normal `Start.ps1` startup continues to work after validation mode was added
+
 ## Current Test Version
 
 `1.1.0-dev`
