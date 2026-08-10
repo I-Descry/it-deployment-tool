@@ -5,7 +5,7 @@
 function Get-Office2021ImageDirectory {
   $ProjectRoot = $script:ITDeploymentToolRoot
 
-  return Join-Path $ProjectRoot "Installers\Office2021LOP"
+  return Join-Path $ProjectRoot "Installers\IMG\Office2021LOP"
 }
 
 function Get-Office2021ImagePath {

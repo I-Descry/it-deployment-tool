@@ -88,6 +88,19 @@ The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
 - Distinguishes installed, skipped, blocked, failed, and missing-installer results
 - Caches installed application registry data during each status refresh to avoid repeated registry scans
 
+### Installer Package Organization
+
+Offline installer packages are organized by primary package type:
+
+- `Installers\EXE` - Executable-based installers
+- `Installers\MSI` - Windows Installer packages
+- `Installers\ISO` - ISO-based installation media
+- `Installers\IMG` - IMG-based installation media
+- `Installers\ZIP` - Archived deployment packages
+- `Installers\Scripts` - Supporting deployment scripts
+
+Application packages that contain multiple dependent files remain together inside their application folder.
+
 ### Microsoft Teams
 
 - Downloads the latest official Microsoft Teams bootstrapper

@@ -110,7 +110,7 @@
     "Name": "SAP GUI for Windows 7.70",
     "DetectionName": "SAP GUI for Windows 7.70",
     "InstallType": "Exe",
-    "InstallerPath": "SAPGUI-7.70-WINDOWS_50152942_2\\BD_NW_7.0_Presentation_7.70_Comp._1_\\PRES1\\GUI\\Windows\\Win32\\SapGuiSetup.exe",
+    "InstallerPath": "EXE\\SAP\\SAPGUI-7.70-WINDOWS_50152942_2\\BD_NW_7.0_Presentation_7.70_Comp._1_\\PRES1\\GUI\\Windows\\Win32\\SapGuiSetup.exe",
     "SilentArguments": "",
     "SuccessExitCodes": [0, 129],
     "RebootExitCodes": [129],

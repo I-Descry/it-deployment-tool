@@ -384,6 +384,21 @@ Perform this test only on an authorized clean Windows deployment device.
 - [x] Mocked queue test does not install applications
 - [x] Real already-installed application is skipped without launching an installer
 
+## Installer Package Organization
+
+- [x] Standard installer type directories exist
+- [x] CrowdStrike package moved to `Installers\EXE\CrowdStrike`
+- [x] SAP package moved under `Installers\EXE\SAP`
+- [x] Office 2024 package moved to `Installers\ISO\Office2024`
+- [x] Office 2021 LOP package moved to `Installers\IMG\Office2021LOP`
+- [x] Application package dependencies remain together
+- [x] Updated installer paths resolve successfully
+- [x] Applications configuration remains valid JSON
+- [x] Old installer path references were removed
+- [x] PowerShell syntax validation passed
+- [x] Deployment validation mode passed
+- [x] Installation menu loads successfully after reorganization
+
 ### Result Conversion
 
 - [x] Boolean `true` converts to `Installed`

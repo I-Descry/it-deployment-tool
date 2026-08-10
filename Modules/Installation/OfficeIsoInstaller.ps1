@@ -3,7 +3,7 @@
 # ============================================================
 
 function Get-OfficeIsoDirectory {
-  return (Join-Path $script:ITDeploymentToolRoot "Installers\Office2024")
+  return (Join-Path $script:ITDeploymentToolRoot "Installers\ISO\Office2024")
 }
 
 function Get-OfficeIsoPath {

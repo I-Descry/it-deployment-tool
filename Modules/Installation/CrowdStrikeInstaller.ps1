@@ -3,7 +3,7 @@
 # ============================================================
 
 function Get-CrowdStrikePackageDirectory {
-  return (Join-Path $script:ITDeploymentToolRoot "Installers\CrowdStrike")
+  return (Join-Path $script:ITDeploymentToolRoot "Installers\EXE\CrowdStrike")
 }
 
 function Get-CrowdStrikeInstallerPath {
