@@ -101,6 +101,27 @@ Offline installer packages are organized by primary package type:
 
 Application packages that contain multiple dependent files remain together inside their application folder.
 
+### Automatic Installer Directory Initialization
+
+During normal startup, the deployment tool automatically checks the required offline installer directory structure and creates any missing directories.
+
+The following directories are maintained:
+
+- `Installers\EXE`
+- `Installers\EXE\CrowdStrike`
+- `Installers\EXE\SAP`
+- `Installers\MSI`
+- `Installers\ISO`
+- `Installers\ISO\Office2024`
+- `Installers\IMG`
+- `Installers\IMG\Office2021LOP`
+- `Installers\ZIP`
+- `Installers\Scripts`
+
+Existing directories and installer files are left unchanged.
+
+Directory initialization runs during normal deployment-tool startup. Validation mode does not create or modify installer directories.
+
 ### Microsoft Teams
 
 - Downloads the latest official Microsoft Teams bootstrapper

@@ -56,6 +56,7 @@ $ModulePaths = @(
   "Applications\MicrosoftTeams.ps1"
 
   "Installation\InstallationResult.ps1"
+  "Installation\InstallerDirectories.ps1"
   "Installation\WingetInstaller.ps1"
   "Installation\OfflineInstaller.ps1"
   "Installation\CrowdStrikeInstaller.ps1"
@@ -98,6 +99,7 @@ if ($ValidateOnly) {
     "Install-ApplicationByType"
     "New-ApplicationInstallationResult"
     "ConvertTo-ApplicationInstallationResult"
+    "Initialize-InstallerDirectories"
   )
 
   $MissingFunctions = @(
@@ -112,8 +114,8 @@ if ($ValidateOnly) {
 
   $ValidationProblems = @()
 
-  if ($ModulePaths.Count -ne 30) {
-    $ValidationProblems += ("Expected 30 modules but the loader contains {0}." -f $ModulePaths.Count)
+  if ($ModulePaths.Count -ne 31) {
+    $ValidationProblems += ("Expected 31 modules but the loader contains {0}." -f $ModulePaths.Count)
   }
 
   if ($MissingFunctions.Count -gt 0) {
@@ -148,6 +150,21 @@ $AdministratorGranted = Request-Administrator -ScriptPath $PSCommandPath
 
 if (-not $AdministratorGranted) {
   exit
+}
+
+# ============================================================
+# Initialize Installer Directories
+# ============================================================
+
+try {
+  [void](Initialize-InstallerDirectories)
+}
+
+catch {
+  Write-Host
+  Write-Host "Installer directory initialization failed." -ForegroundColor Red
+  Write-Host $_.Exception.Message -ForegroundColor Red
+  exit 1
 }
 
 # ============================================================
