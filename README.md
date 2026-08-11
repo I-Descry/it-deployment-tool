@@ -122,6 +122,22 @@ Existing directories and installer files are left unchanged.
 
 Directory initialization runs during normal deployment-tool startup. Validation mode does not create or modify installer directories.
 
+### Installer Package Readiness Validation
+
+The deployment tool can check whether required local installer packages are available before installation.
+
+The readiness check supports:
+
+- Offline EXE installers
+- MSI installer packages
+- CrowdStrike deployment packages
+- Microsoft Office 2024 ISO packages
+- Microsoft Office 2021 LOP IMG packages
+
+The main menu provides an `Installer Package Status` option that displays each local package as `READY` or `MISSING`.
+
+The readiness check is read-only and does not start any installation.
+
 ### Microsoft Teams
 
 - Downloads the latest official Microsoft Teams bootstrapper

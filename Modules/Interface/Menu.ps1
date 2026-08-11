@@ -12,6 +12,7 @@ function Show-MainMenu {
   Write-Host " [3] Deployment Logs"
   Write-Host " [4] About"
   Write-Host " [5] Deployment Validation"
+  Write-Host " [6] Installer Package Status"
   Write-Host
   Write-Host " [0] Exit"
   Write-Host
@@ -69,6 +70,18 @@ function Start-MainMenu {
 
       "5" {
         Show-DeploymentValidationReport
+
+        Pause-Application
+      }
+
+      "6" {
+        Clear-Host
+
+        Write-Title -Title "INSTALLER PACKAGE STATUS"
+
+        $ReadinessResults = Get-InstallerPackageReadiness -Applications $script:Applications
+
+        Show-InstallerPackageReadiness -Results $ReadinessResults
 
         Pause-Application
       }

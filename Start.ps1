@@ -71,6 +71,7 @@ $ModulePaths = @(
   "Windows\WindowsConfiguration.ps1"
 
   "Validation\DeploymentValidation.ps1"
+  "Validation\InstallerPackageReadiness.ps1"
 
   "Interface\DeploymentLogs.ps1"
   "Interface\DeploymentLogsMenu.ps1"
@@ -100,6 +101,8 @@ if ($ValidateOnly) {
     "New-ApplicationInstallationResult"
     "ConvertTo-ApplicationInstallationResult"
     "Initialize-InstallerDirectories"
+    "Get-InstallerPackageReadiness"
+    "Show-InstallerPackageReadiness"
   )
 
   $MissingFunctions = @(
@@ -114,8 +117,8 @@ if ($ValidateOnly) {
 
   $ValidationProblems = @()
 
-  if ($ModulePaths.Count -ne 31) {
-    $ValidationProblems += ("Expected 31 modules but the loader contains {0}." -f $ModulePaths.Count)
+  if ($ModulePaths.Count -ne 32) {
+    $ValidationProblems += ("Expected 32 modules but the loader contains {0}." -f $ModulePaths.Count)
   }
 
   if ($MissingFunctions.Count -gt 0) {
