@@ -432,6 +432,24 @@ Perform this test only on an authorized clean Windows deployment device.
 - [x] Deployment validation reports 32 modules and 9 required functions
 - [x] PowerShell syntax validation passes
 
+## MSI Installer Support
+
+- [x] MSI installer module loads successfully
+- [x] Existing `.msi` file is accepted
+- [x] Incorrect installer extension is rejected
+- [x] Missing MSI file is rejected
+- [x] Installation router recognizes MSI applications
+- [x] Installation router calls `Install-ApplicationWithMsi`
+- [x] MSI installer uses `msiexec.exe`
+- [x] MSI installer path is quoted correctly
+- [x] Default `/qn /norestart` arguments are supported
+- [x] Exit code `0` is handled as success
+- [x] Exit code `3010` is handled as success with restart recommended
+- [x] Exit code `1603` is handled as failure
+- [x] MSI result is normalized through the standard installation result system
+- [x] MSI process execution was validated using a mocked `Start-Process`
+- [ ] Real MSI installation on an authorized deployment package
+
 ### Result Conversion
 
 - [x] Boolean `true` converts to `Installed`

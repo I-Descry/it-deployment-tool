@@ -23,7 +23,7 @@ function Test-ApplicationInstallerAvailable {
     }
 
     "MSI" {
-      return Test-OfflineInstallerFile -Application $Application
+      return Test-MsiInstallerFile -Application $Application
     }
 
     "CROWDSTRIKE" {
@@ -107,14 +107,9 @@ function Install-ApplicationByType {
     }
 
     "MSI" {
-      $Message = ("{0} uses MSI, but MSI installation is not enabled yet." -f $Application.Name)
+      $RawResult = Install-ApplicationWithMsi -Application $Application
 
-      Write-Host
-      Write-Host $Message -ForegroundColor Yellow
-
-      Write-DeploymentLog -Message $Message -Level "WARNING"
-
-      return New-ApplicationInstallationResult -Status "Failed" -ApplicationName $Application.Name -Message $Message
+      return ConvertTo-ApplicationInstallationResult -Result $RawResult -ApplicationName $Application.Name
     }
 
     default {

@@ -88,6 +88,28 @@ The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
 - Distinguishes installed, skipped, blocked, failed, and missing-installer results
 - Caches installed application registry data during each status refresh to avoid repeated registry scans
 
+### MSI Installer Support
+
+The deployment tool supports Windows Installer packages using `msiexec.exe`.
+
+MSI applications are configured with `InstallType` set to `MSI` and an installer path relative to the `Installers` directory.
+
+Example:
+
+```json
+{
+  "Name": "Example MSI Application",
+  "DetectionName": "Example Application",
+  "InstallType": "MSI",
+  "InstallerPath": "MSI\\ExampleApp\\ExampleApp.msi",
+  "SilentArguments": "/qn /norestart",
+  "SuccessExitCodes": [0, 1641, 3010],
+  "RebootExitCodes": [1641, 3010],
+  "Category": "Company Applications",
+  "Recommended": false
+}
+```
+
 ### Installer Package Organization
 
 Offline installer packages are organized by primary package type:
