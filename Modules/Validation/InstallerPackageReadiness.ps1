@@ -11,6 +11,7 @@ function Get-InstallerPackageReadiness {
   $PackageInstallTypes = @(
     "EXE"
     "MSI"
+    "ZIP"
     "CROWDSTRIKE"
     "OFFICEISO"
     "OFFICE2021IMG"

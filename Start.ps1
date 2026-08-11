@@ -60,6 +60,7 @@ $ModulePaths = @(
   "Installation\WingetInstaller.ps1"
   "Installation\OfflineInstaller.ps1"
   "Installation\MsiInstaller.ps1"
+  "Installation\ZipInstaller.ps1"
   "Installation\CrowdStrikeInstaller.ps1"
   "Installation\OfficeIsoInstaller.ps1"
   "Installation\Office2021ImgInstaller.ps1"
@@ -107,6 +108,11 @@ if ($ValidateOnly) {
     "Test-MsiInstallerFile"
     "Get-MsiInstallerArguments"
     "Install-ApplicationWithMsi"
+    "Get-ZipPackagePath"
+    "Test-ZipDeploymentPackage"
+    "Expand-ZipDeploymentPackage"
+    "Remove-ZipDeploymentExtraction"
+    "Install-ApplicationFromZip"
   )
 
   $MissingFunctions = @(
@@ -121,8 +127,8 @@ if ($ValidateOnly) {
 
   $ValidationProblems = @()
 
-  if ($ModulePaths.Count -ne 33) {
-    $ValidationProblems += ("Expected 33 modules but the loader contains {0}." -f $ModulePaths.Count)
+  if ($ModulePaths.Count -ne 34) {
+    $ValidationProblems += ("Expected 34 modules but the loader contains {0}." -f $ModulePaths.Count)
   }
 
   if ($MissingFunctions.Count -gt 0) {

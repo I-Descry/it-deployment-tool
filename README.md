@@ -123,6 +123,29 @@ Offline installer packages are organized by primary package type:
 
 Application packages that contain multiple dependent files remain together inside their application folder.
 
+### ZIP Package Support
+
+ZIP deployment packages are supported through `InstallType: "ZIP"`.
+
+ZIP applications must define:
+
+- `InstallerPath` - ZIP package path relative to the `Installers` directory.
+- `ExtractedInstallerPath` - path of the installer inside the ZIP archive.
+- `ExtractedInstallType` - installer type inside the archive (`EXE` or `MSI`).
+- `SilentArguments` - silent installation arguments passed to the extracted installer.
+
+ZIP deployment performs the following workflow:
+
+1. Validates the ZIP package.
+2. Validates the configured internal installer path and type.
+3. Rejects unsafe archive paths.
+4. Extracts the package to a temporary deployment directory.
+5. Passes the extracted EXE or MSI to the existing installer engine.
+6. Preserves the original ZIP package.
+7. Removes temporary extraction files after success or failure.
+
+ZIP installation routing has been validated using mocked installer execution. A real ZIP deployment package remains pending authorized-device acceptance testing.
+
 ### Automatic Installer Directory Initialization
 
 During normal startup, the deployment tool automatically checks the required offline installer directory structure and creates any missing directories.
@@ -438,12 +461,16 @@ IT Deployment Tool/
 ├── Config/
 │   └── Applications.json
 ├── Installers/
-│   ├── CrowdStrike/
-│   ├── Office2021LOP/
-│   │   └── ProPlus2021Retail.img
-│   ├── Office2024/
-│   │   └── ODT2024s.ISO
-│   └── SAPGUI-7.70-WINDOWS_50152942_2/
+│   ├── EXE/
+│   │   ├── CrowdStrike/
+│   │   └── SAP/
+│   ├── MSI/
+│   ├── ISO/
+│   │   └── Office2024/
+│   ├── IMG/
+│   │   └── Office2021LOP/
+│   ├── ZIP/
+│   └── Scripts/
 ├── Logs/
 │   └── .gitkeep
 ├── Modules/
@@ -462,10 +489,13 @@ IT Deployment Tool/
 │   │   ├── InstallationQueue.ps1
 │   │   ├── InstallationResult.ps1
 │   │   ├── InstallationRouter.ps1
+│   │   ├── InstallerDirectories.ps1
+│   │   ├── MsiInstaller.ps1
 │   │   ├── Office2021ImgInstaller.ps1
 │   │   ├── OfficeIsoInstaller.ps1
 │   │   ├── OfflineInstaller.ps1
-│   │   └── WingetInstaller.ps1
+│   │   ├── WingetInstaller.ps1
+│   │   └── ZipInstaller.ps1
 │   ├── Interface/
 │   │   ├── Application.ps1
 │   │   ├── ApplicationMenu.ps1
@@ -476,6 +506,7 @@ IT Deployment Tool/
 │   │   └── WindowsConfigurationMenu.ps1
 │   ├── Validation/
 │   │   ├── DeploymentValidation.ps1
+│   │   ├── InstallerPackageReadiness.ps1
 │   │   ├── SystemChecks.ps1
 │   │   └── SystemInformation.ps1
 │   └── Windows/
@@ -485,6 +516,7 @@ IT Deployment Tool/
 │       └── WindowsConfiguration.ps1
 ├── .gitignore
 ├── README.md
+├── TESTING.md
 └── Start.ps1
 ```
 
@@ -618,6 +650,17 @@ These files are excluded from the Git repository because they may be:
 - Security-sensitive
 
 After cloning the repository, the required installer files must be manually placed inside `Installers` using the expected directory structure.
+
+Offline installer packages are organized by package type:
+
+- `Installers/EXE/` - executable installers
+- `Installers/MSI/` - Windows Installer packages
+- `Installers/ISO/` - ISO-based deployment packages
+- `Installers/IMG/` - disc image deployment packages
+- `Installers/ZIP/` - compressed deployment packages
+- `Installers/Scripts/` - supporting deployment scripts
+
+Required installer directories are created automatically when the deployment tool starts.
 
 ### SAP GUI Example
 

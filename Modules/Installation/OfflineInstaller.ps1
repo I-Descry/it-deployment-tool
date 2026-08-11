@@ -4,12 +4,19 @@
 
 function Get-OfflineInstallerPath {
   param(
+    [Parameter(Mandatory)]
     [PSCustomObject]$Application
   )
 
-  $InstallersDirectory = Join-Path $script:ITDeploymentToolRoot "Installers"
+  $ResolvedInstallerPath = [string]$Application.$ResolvedInstallerPath
 
-  return Join-Path $InstallersDirectory $Application.InstallerPath
+  if (-not [string]::IsNullOrWhiteSpace($ResolvedInstallerPath)) {
+    return $ResolvedInstallerPath
+  }
+
+  $InstallerDirectory = Join-Path $script:ITDeploymentToolRoot "Installers"
+
+  return Join-Path $InstallerDirectory $Application.InstallerPath
 }
 
 function Test-OfflineInstallerFile {

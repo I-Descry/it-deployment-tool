@@ -26,6 +26,12 @@ function Test-ApplicationInstallerAvailable {
       return Test-MsiInstallerFile -Application $Application
     }
 
+    "ZIP" {
+      $PackageTest = Test-ZipDeploymentPackage -Application $Application
+
+      return [bool]$PackageTest.Valid
+    }
+
     "CROWDSTRIKE" {
       $PackageTest = Test-CrowdStrikeDeploymentPackage
 
@@ -108,6 +114,12 @@ function Install-ApplicationByType {
 
     "MSI" {
       $RawResult = Install-ApplicationWithMsi -Application $Application
+
+      return ConvertTo-ApplicationInstallationResult -Result $RawResult -ApplicationName $Application.Name
+    }
+
+    "ZIP" {
+      $RawResult = Install-ApplicationFromZip -Application $Application
 
       return ConvertTo-ApplicationInstallationResult -Result $RawResult -ApplicationName $Application.Name
     }

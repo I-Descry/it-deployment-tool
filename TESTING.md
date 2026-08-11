@@ -450,6 +450,27 @@ Perform this test only on an authorized clean Windows deployment device.
 - [x] MSI process execution was validated using a mocked `Start-Process`
 - [ ] Real MSI installation on an authorized deployment package
 
+### ZIP Package Installation
+
+- [x] ZIP package existence validation
+- [x] ZIP file extension validation
+- [x] Extracted installer path validation
+- [x] Extracted installer type validation
+- [x] Extracted EXE/MSI extension validation
+- [x] Internal installer discovery inside ZIP archive
+- [x] ZIP entry path normalization
+- [x] ZIP extraction to temporary deployment directory
+- [x] Extracted installer existence validation
+- [x] Original ZIP package preserved during extraction
+- [x] Extracted MSI delegated to existing MSI installer engine using mocked execution
+- [x] ZIP installation routed through InstallationRouter
+- [x] Successful ZIP installation result normalized
+- [x] Failed ZIP installation result normalized
+- [x] Temporary extraction removed after successful installation
+- [x] Temporary extraction removed after failed installation
+- [x] No real installer executed during ZIP development testing
+- [ ] Real ZIP package installation on an authorized deployment device
+
 ### Result Conversion
 
 - [x] Boolean `true` converts to `Installed`
