@@ -8,7 +8,7 @@ function Get-OfflineInstallerPath {
     [PSCustomObject]$Application
   )
 
-  $ResolvedInstallerPath = [string]$Application.$ResolvedInstallerPath
+  $ResolvedInstallerPath = [string]$Application.ResolvedInstallerPath
 
   if (-not [string]::IsNullOrWhiteSpace($ResolvedInstallerPath)) {
     return $ResolvedInstallerPath

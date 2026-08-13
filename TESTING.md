@@ -469,7 +469,30 @@ Perform this test only on an authorized clean Windows deployment device.
 - [x] Temporary extraction removed after successful installation
 - [x] Temporary extraction removed after failed installation
 - [x] No real installer executed during ZIP development testing
+- [x] `Get-OfflineInstallerPath` `ResolvedInstallerPath` dynamic-property bug fixed and verified (previously every extracted installer path resolved incorrectly, causing `Test-OfflineInstallerFile`/`Test-MsiInstallerFile` to report extracted installers as not found even after successful extraction)
+- [x] Extracted EXE re-verified with real extraction and real execution through `Install-ApplicationFromZip` after the fix
+- [x] ZIP-to-EXE installation re-verified end-to-end through InstallationRouter using a real catalog entry after the fix
+- [ ] Extracted MSI re-verified with real execution after the fix (EXE path confirmed; MSI path shares the same fixed function but was not independently re-tested)
 - [ ] Real ZIP package installation on an authorized deployment device
+
+### Script Package Installation
+
+- [x] Script installer module loads successfully
+- [x] Existing `.ps1` file is accepted
+- [x] Existing `.bat` file is accepted
+- [x] Existing `.cmd` file is accepted
+- [x] Incorrect installer extension (`.txt`) is rejected
+- [x] Missing script file is rejected
+- [x] Script type correctly identified as PowerShell, Batch, or Command
+- [x] PowerShell scripts execute via `powershell.exe -NoProfile -ExecutionPolicy Bypass -File`
+- [x] Batch and Command scripts execute via their registered handler
+- [x] Exit code `0` is handled as success
+- [x] Non-zero exit code is handled as failure
+- [x] Configured `RebootExitCodes` is handled as success with restart recommended
+- [x] Script installation routed through InstallationRouter
+- [x] Successful Script installation result normalized
+- [x] Deployment validation reports 35 modules and 20 required functions
+- [ ] Real script package installation on an authorized deployment device
 
 ### Result Conversion
 

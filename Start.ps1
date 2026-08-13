@@ -60,6 +60,7 @@ $ModulePaths = @(
   "Installation\WingetInstaller.ps1"
   "Installation\OfflineInstaller.ps1"
   "Installation\MsiInstaller.ps1"
+  "Installation\ScriptInstaller.ps1"
   "Installation\ZipInstaller.ps1"
   "Installation\CrowdStrikeInstaller.ps1"
   "Installation\OfficeIsoInstaller.ps1"
@@ -108,6 +109,9 @@ if ($ValidateOnly) {
     "Test-MsiInstallerFile"
     "Get-MsiInstallerArguments"
     "Install-ApplicationWithMsi"
+    "Test-ScriptInstallerFile"
+    "Get-ScriptInstallerType"
+    "Install-ApplicationWithScript"
     "Get-ZipPackagePath"
     "Test-ZipDeploymentPackage"
     "Expand-ZipDeploymentPackage"
@@ -127,8 +131,8 @@ if ($ValidateOnly) {
 
   $ValidationProblems = @()
 
-  if ($ModulePaths.Count -ne 34) {
-    $ValidationProblems += ("Expected 34 modules but the loader contains {0}." -f $ModulePaths.Count)
+  if ($ModulePaths.Count -ne 35) {
+    $ValidationProblems += ("Expected 35 modules but the loader contains {0}." -f $ModulePaths.Count)
   }
 
   if ($MissingFunctions.Count -gt 0) {

@@ -146,6 +146,42 @@ ZIP deployment performs the following workflow:
 
 ZIP installation routing has been validated using mocked installer execution. A real ZIP deployment package remains pending authorized-device acceptance testing.
 
+### Script Package Support
+
+Script-based installer packages are supported through `InstallType: "Script"`.
+
+Supported script types are detected automatically from the installer's file extension:
+
+- `.ps1` - executed via `powershell.exe -NoProfile -ExecutionPolicy Bypass -File`
+- `.bat` - executed directly through its registered Windows handler
+- `.cmd` - executed directly through its registered Windows handler
+
+Script applications are configured with an installer path relative to the `Installers` directory.
+
+Example:
+
+```json
+{
+  "Name": "Example Script Application",
+  "InstallType": "Script",
+  "InstallerPath": "Scripts\\ExampleApp\\Install.ps1",
+  "SuccessExitCodes": [0],
+  "RebootExitCodes": [3010],
+  "Category": "Company Applications",
+  "Recommended": false
+}
+```
+
+Script deployment performs the following workflow:
+
+1. Validates that the script file exists and has a supported extension.
+2. Determines the script type from its file extension.
+3. Runs the script using the appropriate host process for its type.
+4. Evaluates the process exit code against configured `SuccessExitCodes` and `RebootExitCodes`.
+5. Normalizes the result through the standard installation result system.
+
+Script installation routing has been validated for success, failure, and reboot-recommended exit codes using local test scripts. A real script-based application package remains pending authorized-device acceptance testing.
+
 ### Automatic Installer Directory Initialization
 
 During normal startup, the deployment tool automatically checks the required offline installer directory structure and creates any missing directories.
@@ -494,6 +530,7 @@ IT Deployment Tool/
 │   │   ├── Office2021ImgInstaller.ps1
 │   │   ├── OfficeIsoInstaller.ps1
 │   │   ├── OfflineInstaller.ps1
+│   │   ├── ScriptInstaller.ps1
 │   │   ├── WingetInstaller.ps1
 │   │   └── ZipInstaller.ps1
 │   ├── Interface/

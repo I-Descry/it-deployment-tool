@@ -26,6 +26,10 @@ function Test-ApplicationInstallerAvailable {
       return Test-MsiInstallerFile -Application $Application
     }
 
+    "SCRIPT" {
+      return Test-ScriptInstallerFile -Application $Application
+    }
+
     "ZIP" {
       $PackageTest = Test-ZipDeploymentPackage -Application $Application
 
@@ -114,6 +118,12 @@ function Install-ApplicationByType {
 
     "MSI" {
       $RawResult = Install-ApplicationWithMsi -Application $Application
+
+      return ConvertTo-ApplicationInstallationResult -Result $RawResult -ApplicationName $Application.Name
+    }
+
+    "SCRIPT" {
+      $RawResult = Install-ApplicationWithScript -Application $Application
 
       return ConvertTo-ApplicationInstallationResult -Result $RawResult -ApplicationName $Application.Name
     }
