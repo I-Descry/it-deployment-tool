@@ -1,0 +1,80 @@
+# graphify: keyless, code-only, zero-egress baseline for this repository.
+#
+# Rationale
+# ---------
+# Code files are parsed locally with tree-sitter (AST). That path makes no LLM
+# calls and needs no API key. Docs, papers and images are the only inputs that
+# require a semantic LLM backend, so they are excluded here to keep the graph
+# fully local and free to rebuild.
+#
+# SECURITY: Installers/ is excluded unconditionally. It holds offline installer
+# binaries and, per CLAUDE.md, Installers\EXE\CrowdStrike\Readme.txt may contain
+# real CrowdStrike Customer ID and installation token values. Nothing under
+# Installers/ may ever be read into a graph or sent to a semantic backend.
+# Do not remove the Installers/ rules below.
+
+# --- Secrets and machine-local payloads (never index) ---
+Installers/
+Logs/
+Assets/
+
+# --- Repository metadata / transient noise ---
+.git/
+.claude/
+graphify-out/
+*.lock
+*-lock.json
+
+# --- Installer and binary payloads ---
+*.exe
+*.msi
+*.msix
+*.msixbundle
+*.dll
+*.ocx
+*.pdb
+*.pak
+*.iso
+*.img
+*.zip
+*.cab
+*.bin
+*.dat
+*.xig
+
+# --- Media ---
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.svg
+*.ico
+*.webp
+*.tiff
+*.wav
+*.mp3
+*.mp4
+*.avi
+
+# --- Docs / papers / plain text (require an LLM backend for extraction) ---
+# Remove selected lines and rebuild with a backend if you later want
+# README.md / TESTING.md concepts in the graph. Never re-enable *.txt
+# without first confirming Installers/ is still excluded.
+*.md
+*.mdx
+*.txt
+*.TXT
+*.rst
+*.html
+*.pdf
+*.doc
+*.docx
+*.ppt
+*.pptx
+*.csv
+*.yaml
+*.yml
+*.log
+*.cfg
+*.ini

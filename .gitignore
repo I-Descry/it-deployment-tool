@@ -20,3 +20,9 @@ Installers/*
 
 # Editor settings
 .vscode/
+
+# Graphify generated knowledge graph (rebuild with: graphify extract . --code-only)
+graphify-out/
+
+# Local Claude Code tooling (not shared with the repo)
+.claude/
