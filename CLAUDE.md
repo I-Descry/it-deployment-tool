@@ -182,6 +182,7 @@ Common fields include:
 
 * `Name`
 * `DetectionName`
+* `DetectionPath`
 * `InstallType`
 * `Winget`
 * `InstallerPath`

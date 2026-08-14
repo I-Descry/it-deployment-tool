@@ -113,6 +113,13 @@ function Test-ApplicationInstalled {
 
   $InstallType = ([string]$Application.InstallType).Trim().ToUpperInvariant()
 
+  # An explicit DetectionPath overrides all other detection methods.
+  $DetectionPath = ([string]$Application.DetectionPath).Trim()
+
+  if (-not [string]::IsNullOrWhiteSpace($DetectionPath)) {
+    return (Test-Path -LiteralPath $DetectionPath)
+  }
+
   # CrowdStrike is detected through its Windows service.
   if ($InstallType -eq "CROWDSTRIKE") {
     $CrowdStrikeDetectionCommand = Get-Command -Name "Test-CrowdStrikeSensorInstalled" -ErrorAction SilentlyContinue

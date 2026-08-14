@@ -586,11 +586,14 @@ Each application entry may define:
 - Required-for-issuance status
 - WinGet installation scope
 - Installed-application detection method
+- Installed-application detection path
 - Blocking process names
 
 The optional `RequiredForIssuance` property identifies applications that must be installed before a device is considered ready for issuance.
 
 Applications without this property default to `false`.
+
+The optional `DetectionPath` property overrides all other detection methods with a direct file-existence check. When configured, the application is considered installed if the specified absolute file path exists on the device. This is intended for applications with no installer and no registry trace, such as a portable tool copied to a fixed location by a Script-type installer.
 
 ```json
 {

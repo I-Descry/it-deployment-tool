@@ -17,7 +17,7 @@ The remaining acceptance tests require an authorized clean Windows test device. 
 Pending real-device tests include:
 
 - Fresh WinGet application installation
-- SAP GUI installation
+- SAP GUI 7.70 installation (8.00 verified on a real device 2026-08-13)
 - CrowdStrike installation
 - Microsoft Office 2024 installation
 - Microsoft Office 2021 LOP installation
@@ -46,7 +46,7 @@ Record the device used for testing:
 
 ## Deployment Tool Validation Mode
 
-- [x] `Start.ps1 -ValidateOnly` loads all 30 modules
+- [x] `Start.ps1 -ValidateOnly` loads all 35 modules
 - [x] Validation checks the required deployment functions
 - [x] Validation confirms `Config\Applications.json` exists
 - [x] Successful validation returns exit code `0`
@@ -86,6 +86,9 @@ Record the device used for testing:
 - [x] Machine and user registry scopes are preserved
 - [x] Application installed status remains accurate
 - [x] Special detection for WinGet, Teams, CrowdStrike, and Microsoft Office remains unchanged
+- [x] Explicit `DetectionPath` overrides all other detection methods when configured
+- [x] `DetectionPath` correctly reports `Installed` for a real file placed by a Script installer (WinMTR, 2026-08-13)
+- [x] Applications without `DetectionPath` continue using registry detection unchanged (no regression)
 
 ---
 
@@ -95,7 +98,9 @@ Record the device used for testing:
 - [ ] Viber installation works
 - [ ] UltraViewer installation works
 - [ ] AnyDesk installation works
-- [ ] SAP GUI installation works
+- [ ] SAP GUI 7.70 installation works
+- [x] SAP GUI 8.00 installation works (verified on a real device, 2026-08-13; real registry `DisplayName` confirmed as `SAP GUI for Windows 8.00 32bit  (Patch 0)`, matching the configured `DetectionName`)
+- [x] WinMTR Script-type installation verified on a real device (2026-08-13) — file copied to target location and correctly detected via `DetectionPath`
 - [x] Installed applications are skipped correctly
 - [x] Missing installers are reported correctly
 - [x] Installation summary displays correct results
