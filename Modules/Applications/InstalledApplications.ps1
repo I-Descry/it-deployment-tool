@@ -108,6 +108,29 @@ function Test-WingetApplicationInstalled {
   return ($LASTEXITCODE -eq 0)
 }
 
+function Test-AppxPackageInstalled {
+  param(
+    [Parameter(Mandatory)]
+    [string]$PackageName
+  )
+
+  $GetAppxPackageCommand = Get-Command -Name "Get-AppxPackage" -ErrorAction SilentlyContinue
+
+  if ($null -eq $GetAppxPackageCommand) {
+    return $false
+  }
+
+  try {
+    $Package = Get-AppxPackage -Name $PackageName -ErrorAction Stop | Select-Object -First 1
+
+    return ($null -ne $Package)
+  }
+
+  catch {
+    return $false
+  }
+}
+
 function Test-ApplicationInstalled {
   param([PSCustomObject]$Application)
 
@@ -118,6 +141,13 @@ function Test-ApplicationInstalled {
 
   if (-not [string]::IsNullOrWhiteSpace($DetectionPath)) {
     return (Test-Path -LiteralPath $DetectionPath)
+  }
+
+  # An explicit AppxPackageName overrides registry detection for AppX/MSIX-packaged applications, which do not create classic Uninstall registry entries.
+  $AppxPackageName = ([string]$Application.AppxPackageName).Trim()
+
+  if (-not [string]::IsNullOrWhiteSpace($AppxPackageName)) {
+    return (Test-AppxPackageInstalled -PackageName $AppxPackageName)
   }
 
   # CrowdStrike is detected through its Windows service.

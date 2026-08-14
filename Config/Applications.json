@@ -162,5 +162,15 @@
     "Category": "Utilities",
     "Description": "Free network diagnostic tool combining traceroute and ping",
     "Recommended": false
+  },
+  {
+    "Name": "WhatsApp",
+    "AppxPackageName": "5319275A.WhatsAppDesktop",
+    "InstallType": "Exe",
+    "InstallerPath": "EXE\\WhatsApp\\WhatsApp Installer.exe",
+    "SilentArguments": "",
+    "Category": "Communication",
+    "Description": "Messaging application for international communication",
+    "Recommended": false
   }
 ]

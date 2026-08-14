@@ -101,6 +101,7 @@ Record the device used for testing:
 - [ ] SAP GUI 7.70 installation works
 - [x] SAP GUI 8.00 installation works (verified on a real device, 2026-08-13; real registry `DisplayName` confirmed as `SAP GUI for Windows 8.00 32bit  (Patch 0)`, matching the configured `DetectionName`)
 - [x] WinMTR Script-type installation verified on a real device (2026-08-13) — file copied to target location and correctly detected via `DetectionPath`
+- [ ] WhatsApp installation works
 - [x] Installed applications are skipped correctly
 - [x] Missing installers are reported correctly
 - [x] Installation summary displays correct results
