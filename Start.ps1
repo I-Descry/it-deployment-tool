@@ -9,7 +9,10 @@
 # ============================================================
 
 [CmdletBinding()]
-param([switch]$ValidateOnly)
+param(
+  [switch]$ValidateOnly,
+  [switch]$Gui
+)
 
 $AppName = "IT DEPLOYMENT TOOL"
 $AppVersion = "1.1.0-dev"
@@ -80,6 +83,8 @@ $ModulePaths = @(
   "Validation\DeploymentValidation.ps1"
   "Validation\InstallerPackageReadiness.ps1"
 
+  "Gui\GuiWindow.ps1"
+
   "Interface\DeploymentLogs.ps1"
   "Interface\DeploymentLogsMenu.ps1"
   "Interface\SelectedApplicationsSetup.ps1"
@@ -139,8 +144,8 @@ if ($ValidateOnly) {
 
   $ValidationProblems = @()
 
-  if ($ModulePaths.Count -ne 39) {
-    $ValidationProblems += ("Expected 39 modules but the loader contains {0}." -f $ModulePaths.Count)
+  if ($ModulePaths.Count -ne 40) {
+    $ValidationProblems += ("Expected 40 modules but the loader contains {0}." -f $ModulePaths.Count)
   }
 
   if ($MissingFunctions.Count -gt 0) {
@@ -169,6 +174,11 @@ if ($ValidateOnly) {
   Write-Host "Configuration     : Available"
 
   exit 0
+}
+
+if ($Gui) {
+  Show-MainWindow
+  exit
 }
 
 $AdministratorGranted = Request-Administrator -ScriptPath $PSCommandPath

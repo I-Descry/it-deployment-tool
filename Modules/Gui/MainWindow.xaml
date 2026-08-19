@@ -1,0 +1,98 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="IT Deployment Tool" Width="1360" Height="860"
+        WindowStartupLocation="CenterScreen"
+        Background="#16181D"
+        FontFamily="Segoe UI">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="184"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <!-- Sidebar -->
+    <Border Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="0,0,1,0">
+      <StackPanel Margin="10,14,10,14">
+        <Border x:Name="NavApplications" Background="#2438BDF8" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand">
+          <TextBlock x:Name="NavApplicationsText" Text="Applications" Foreground="#38BDF8" FontSize="13" FontWeight="SemiBold"/>
+        </Border>
+        <Border x:Name="NavWindowsConfig" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand">
+          <TextBlock x:Name="NavWindowsConfigText" Text="Windows Configuration" Foreground="#9A9EA8" FontSize="13"/>
+        </Border>
+        <Border x:Name="NavDeploymentLogs" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand">
+          <TextBlock x:Name="NavDeploymentLogsText" Text="Deployment Logs" Foreground="#9A9EA8" FontSize="13"/>
+        </Border>
+        <Border x:Name="NavDeploymentValidation" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand">
+          <TextBlock x:Name="NavDeploymentValidationText" Text="Deployment Validation" Foreground="#9A9EA8" FontSize="13"/>
+        </Border>
+      </StackPanel>
+    </Border>
+
+    <!-- Main content -->
+    <Grid Grid.Column="1">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+
+      <!-- System info bar -->
+      <Border Grid.Row="0" BorderBrush="#2C2F38" BorderThickness="0,0,0,1">
+        <DockPanel Margin="24,13,24,13" LastChildFill="False">
+          <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+            <TextBlock Text="Computer " Foreground="#6B6F79" FontSize="12"/>
+            <TextBlock x:Name="ComputerNameText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold" Margin="0,0,20,0"/>
+            <TextBlock Text="User " Foreground="#6B6F79" FontSize="12"/>
+            <TextBlock x:Name="UserNameText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold" Margin="0,0,20,0"/>
+            <TextBlock Text="Model " Foreground="#6B6F79" FontSize="12"/>
+            <TextBlock x:Name="ModelText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+            <TextBlock x:Name="WingetStatusText" Text="WinGet" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold" Margin="14,0,0,0"/>
+            <TextBlock x:Name="InternetStatusText" Text="Internet" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold" Margin="14,0,0,0"/>
+            <TextBlock x:Name="AdminStatusText" Text="Administrator" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold" Margin="14,0,0,0"/>
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
+      <!-- Toolbar -->
+      <DockPanel x:Name="ApplicationsToolbar" Grid.Row="1" Margin="24,14,24,10" LastChildFill="False">
+        <Button x:Name="SelectAllButton" Content="Select All" DockPanel.Dock="Left"
+                Padding="14,8" Margin="0,0,10,0" Background="#23262E" Foreground="#E8E9EC"
+                BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
+        <Button x:Name="SelectRecommendedButton" Content="Select Recommended" DockPanel.Dock="Left"
+                Padding="14,8" Margin="0,0,10,0" Background="#23262E" Foreground="#E8E9EC"
+                BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
+        <Button x:Name="ClearAllButton" Content="Clear All" DockPanel.Dock="Left"
+                Padding="14,8" Margin="0,0,10,0" Background="#23262E" Foreground="#E8E9EC"
+                BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
+
+        <Button x:Name="UninstallSelectedButton" Content="Uninstall Selected" DockPanel.Dock="Right"
+                Padding="18,9" IsEnabled="False" Background="#1AF2555A" Foreground="#F2555A"
+                BorderBrush="#F2555A" BorderThickness="1.5" FontSize="13" FontWeight="Bold"/>
+        <Button x:Name="InstallSelectedButton" Content="Install Selected" DockPanel.Dock="Right"
+                Padding="18,9" Margin="0,0,10,0" IsEnabled="False" Background="#38BDF8" Foreground="#08131A"
+                BorderThickness="0" FontSize="13" FontWeight="Bold"/>
+        <TextBlock x:Name="SelectedCountText" Text="0 selected" DockPanel.Dock="Right"
+                   Foreground="#9A9EA8" FontSize="12" VerticalAlignment="Center" Margin="0,0,14,0"/>
+      </DockPanel>
+
+      <!-- Applications grid -->
+      <ScrollViewer x:Name="ApplicationsScrollViewer" Grid.Row="2" Padding="24,4,24,24" VerticalScrollBarVisibility="Auto">
+        <ItemsControl x:Name="AppGridPanel">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel Orientation="Horizontal"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+      </ScrollViewer>
+
+      <!-- Placeholder for not-yet-built screens -->
+      <TextBlock x:Name="PlaceholderText" Grid.Row="2" Text="Coming soon"
+                 Foreground="#6B6F79" FontSize="14"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Visibility="Collapsed"/>
+    </Grid>
+  </Grid>
+</Window>
