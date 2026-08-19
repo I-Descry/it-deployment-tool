@@ -6,6 +6,20 @@ Logs/*
 Installers/*
 !Installers/.gitkeep
 
+# Small non-binary uninstall helper files tracked as exceptions
+# (not licensed installer media, so safe to keep in git history)
+!Installers/Scripts/
+Installers/Scripts/*
+!Installers/Scripts/WinMTR/
+Installers/Scripts/WinMTR/*
+!Installers/Scripts/WinMTR/UninstallWinMTR.ps1
+
+!Installers/ISO/
+Installers/ISO/*
+!Installers/ISO/Office2024/
+Installers/ISO/Office2024/*
+!Installers/ISO/Office2024/office-remove.xml
+
 # Installer packages
 *.exe
 *.msi
