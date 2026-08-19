@@ -56,17 +56,21 @@ $ModulePaths = @(
   "Applications\MicrosoftTeams.ps1"
 
   "Installation\InstallationResult.ps1"
+  "Installation\UninstallationResult.ps1"
   "Installation\InstallerDirectories.ps1"
   "Installation\WingetInstaller.ps1"
   "Installation\OfflineInstaller.ps1"
   "Installation\MsiInstaller.ps1"
+  "Installation\AppxInstaller.ps1"
   "Installation\ScriptInstaller.ps1"
   "Installation\ZipInstaller.ps1"
   "Installation\CrowdStrikeInstaller.ps1"
   "Installation\OfficeIsoInstaller.ps1"
   "Installation\Office2021ImgInstaller.ps1"
   "Installation\InstallationRouter.ps1"
+  "Installation\UninstallationRouter.ps1"
   "Installation\InstallationQueue.ps1"
+  "Installation\UninstallationQueue.ps1"
 
   "Windows\ComputerNameConfiguration.ps1"
   "Windows\LocalUserConfiguration.ps1"
@@ -103,6 +107,10 @@ if ($ValidateOnly) {
     "Install-ApplicationByType"
     "New-ApplicationInstallationResult"
     "ConvertTo-ApplicationInstallationResult"
+    "Uninstall-ApplicationByType"
+    "Uninstall-SelectedApplications"
+    "New-ApplicationUninstallationResult"
+    "ConvertTo-ApplicationUninstallationResult"
     "Initialize-InstallerDirectories"
     "Get-InstallerPackageReadiness"
     "Show-InstallerPackageReadiness"
@@ -131,8 +139,8 @@ if ($ValidateOnly) {
 
   $ValidationProblems = @()
 
-  if ($ModulePaths.Count -ne 35) {
-    $ValidationProblems += ("Expected 35 modules but the loader contains {0}." -f $ModulePaths.Count)
+  if ($ModulePaths.Count -ne 39) {
+    $ValidationProblems += ("Expected 39 modules but the loader contains {0}." -f $ModulePaths.Count)
   }
 
   if ($MissingFunctions.Count -gt 0) {

@@ -64,6 +64,51 @@ function Test-CacheRegistryApplicationInstalled {
   return $false
 }
 
+function Get-RegistryApplicationUninstallInfo {
+  param(
+    [Parameter(Mandatory)]
+    [string]$DetectionName,
+
+    [string]$Scope
+  )
+
+  $RegistryPaths = switch ($Scope.Trim().ToLowerInvariant()) {
+    "machine" {
+      @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+      )
+    }
+
+    "user" {
+      @("HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*")
+    }
+
+    default {
+      @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+      )
+    }
+  }
+
+  $MatchedEntry = Get-ItemProperty -Path $RegistryPaths -ErrorAction SilentlyContinue | Where-Object {
+    $DisplayName = ([string]$_.DisplayName).Trim()
+    (-not [string]::IsNullOrWhiteSpace($DisplayName)) -and $DisplayName.StartsWith($DetectionName, [System.StringComparison]::OrdinalIgnoreCase)
+  } | Select-Object -First 1
+
+  if ($null -eq $MatchedEntry) {
+    return $null
+  }
+
+  return [PSCustomObject]@{
+    DisplayName          = [string]$MatchedEntry.DisplayName
+    UninstallString      = [string]$MatchedEntry.UninstallString
+    QuietUninstallString = [string]$MatchedEntry.QuietUninstallString
+  }
+}
+
 function Test-WingetApplicationInstalled {
   param([PSCustomObject]$Application)
 

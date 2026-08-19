@@ -19,6 +19,7 @@ Pending real-device tests include:
 - Fresh WinGet application installation
 - SAP GUI 7.70 installation (8.00 verified on a real device 2026-08-13)
 - CrowdStrike installation
+- WinGet, EXE, MSI, and AppX application uninstallation
 - Microsoft Office 2024 installation
 - Microsoft Office 2021 LOP installation
 - Computer rename
@@ -46,7 +47,7 @@ Record the device used for testing:
 
 ## Deployment Tool Validation Mode
 
-- [x] `Start.ps1 -ValidateOnly` loads all 35 modules
+- [x] `Start.ps1 -ValidateOnly` loads all 39 modules
 - [x] Validation checks the required deployment functions
 - [x] Validation confirms `Config\Applications.json` exists
 - [x] Successful validation returns exit code `0`
@@ -107,6 +108,28 @@ Record the device used for testing:
 - [x] Installation summary displays correct results
 
 > Local, non-destructive acceptance testing is complete. The remaining installation and system-change tests require an authorized clean deployment device. Version `1.1.0-dev` will remain unchanged until those tests pass.
+
+---
+
+## Application Uninstallation
+
+- [x] Uninstallation router correctly prioritizes `AppxPackageName` over `InstallType` (verified: a WhatsApp-like object with `InstallType: Exe` and `AppxPackageName` set routes to the AppX uninstaller, not the EXE uninstaller)
+- [x] WinGet uninstallation dispatch was validated using a mocked `Start-Process`/`winget` call
+- [x] EXE uninstallation was validated against a real registry `UninstallString` (7-Zip) using a mocked `Start-Process`
+- [x] MSI uninstallation argument construction (`/x "<path>" /qn /norestart`) and dispatch were validated using a mocked `Start-Process`
+- [x] AppX uninstallation was validated end-to-end against the real WhatsApp catalog entry and real `Get-AppxPackage` lookup, using a mocked `Remove-AppxPackage`
+- [x] Unsupported installation types (Script, ZIP, CrowdStrike, OfficeISO, Office2021IMG, Teams) return a clean `Failed` result instead of crashing
+- [x] Per-application confirmation prompt correctly gates uninstallation (Y proceeds, N skips)
+- [x] Applications that are not currently installed are skipped automatically without prompting
+- [x] Uninstallation queue counts `Uninstalled`, `Skipped`, and `Failed` correctly (verified with a simulated four-application run)
+- [x] `[U] - Uninstall Selected` option added to the application menu and refreshes installed-application status afterward
+- [x] Deployment validation reports 39 modules and 24 required functions
+- [ ] Real WinGet uninstallation on an authorized deployment device
+- [ ] Real EXE uninstallation on an authorized deployment device
+- [ ] Real MSI uninstallation on an authorized deployment device
+- [ ] Real AppX/WhatsApp uninstallation on an authorized deployment device
+
+> WinGet, EXE, MSI, and AppX uninstallation (Phase 1) are implemented and locally verified using mocked destructive calls. Real-device uninstallation tests are pending. Script, ZIP, CrowdStrike, Office ISO/IMG, and Teams uninstallation are not yet implemented (Phase 2).
 
 ---
 

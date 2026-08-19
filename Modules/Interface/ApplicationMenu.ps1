@@ -85,6 +85,7 @@ function Show-ApplicationOptions {
   Write-Host "[R] - Select Recommended"
   Write-Host "[C] - Clear All"
   Write-Host "[I] - Preview and Install Selected"
+  Write-Host "[U] - Uninstall Selected"
   Write-Host "[Q] - Back"
 }
 
@@ -130,6 +131,12 @@ function Process-ApplicationChoice {
 
       "I" {
         $InstallationStarted = Start-SelectedApplicationsSetup
+
+        return $true
+      }
+
+      "U" {
+        $UninstallationStarted = Start-SelectedApplicationsUninstall
 
         return $true
       }

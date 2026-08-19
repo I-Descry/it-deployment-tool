@@ -174,6 +174,42 @@ Do not introduce new installation result states without updating all consumers, 
 
 Do not bypass result normalization.
 
+### Uninstallation routing
+
+Application uninstallation is dispatched by:
+
+`Modules\Installation\UninstallationRouter.ps1`
+
+`Uninstall-ApplicationByType` checks `AppxPackageName` before `InstallType` — an application detected through `AppxPackageName` (Store/MSIX) is always removed via `Remove-AppxPackage`, regardless of its `InstallType`, matching how `Test-ApplicationInstalled` already prioritizes that field for detection.
+
+Uninstallation currently supports:
+
+* `Winget` — via `winget uninstall`.
+* `Exe` — via the registry `UninstallString`/`QuietUninstallString` for the detected application. The optional `UninstallArguments` field appends a silent flag when the vendor's installer supports one; if omitted, the registry command runs as-is, which may be interactive.
+* `MSI` — via `msiexec /x` against the original offline `.msi` package.
+* Applications detected through `AppxPackageName` — via `Remove-AppxPackage`.
+
+`Script`, `ZIP`, `CrowdStrike`, `OfficeISO`, `Office2021IMG`, and `Teams` are not yet supported for uninstallation. Selecting one for uninstall returns a clean `Failed` result with an explanatory message rather than attempting an unsupported removal.
+
+### Uninstallation results
+
+Result normalization is handled by:
+
+`Modules\Installation\UninstallationResult.ps1`
+
+Primary functions:
+
+* `New-ApplicationUninstallationResult`
+* `ConvertTo-ApplicationUninstallationResult`
+
+Uninstaller functions may return the same shapes as installer functions (a raw `[bool]`, or `{ Status, Message }`), normalized to:
+
+* `Uninstalled`
+* `Skipped`
+* `Failed`
+
+`UninstallationQueue.ps1` prompts for per-application confirmation before invoking an uninstaller, and reports `Skipped` for applications that are not currently installed or whose removal was declined.
+
 ### Application configuration
 
 `Config\Applications.json` is the application catalog and source of truth.
@@ -183,10 +219,12 @@ Common fields include:
 * `Name`
 * `DetectionName`
 * `DetectionPath`
+* `AppxPackageName`
 * `InstallType`
 * `Winget`
 * `InstallerPath`
 * `SilentArguments`
+* `UninstallArguments`
 * `SuccessExitCodes`
 * `RebootExitCodes`
 * `Category`

@@ -88,6 +88,20 @@ The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
 - Distinguishes installed, skipped, blocked, failed, and missing-installer results
 - Caches installed application registry data during each status refresh to avoid repeated registry scans
 
+### Uninstallation Automation
+
+- Uninstalls selected applications that are currently detected as installed
+- Skips applications that are not currently installed
+- Requires per-application confirmation before removing anything
+- Supports silent uninstallation through WinGet
+- Supports uninstallation of AppX/MSIX-packaged applications (including Microsoft Store apps such as WhatsApp) through `Remove-AppxPackage`
+- Supports uninstallation of offline EXE applications using the registry `UninstallString`/`QuietUninstallString`
+- Supports uninstallation of MSI applications using the original offline `.msi` package
+- Returns a clear "not yet supported" result for installation types that do not yet support uninstallation
+- Normalizes uninstallation results into `Uninstalled`, `Skipped`, or `Failed`
+- Displays a final uninstallation summary
+- Refreshes installed-application status after the uninstallation queue completes
+
 ### MSI Installer Support
 
 The deployment tool supports Windows Installer packages using `msiexec.exe`.
@@ -486,6 +500,7 @@ The required application check reads the `RequiredForIssuance` property from `Co
 | `R` | Select recommended applications |
 | `C` | Clear all selections |
 | `I` | Preview and install selected applications |
+| `U` | Uninstall selected applications |
 | `Q` | Return to the main menu |
 
 ---
@@ -578,6 +593,7 @@ Each application entry may define:
 - WinGet package ID
 - Offline installer path
 - Silent installation arguments
+- Silent uninstallation arguments
 - Accepted success exit codes
 - Restart exit codes
 - Category
@@ -587,6 +603,7 @@ Each application entry may define:
 - WinGet installation scope
 - Installed-application detection method
 - Installed-application detection path
+- Installed-application AppX/MSIX package name
 - Blocking process names
 
 The optional `RequiredForIssuance` property identifies applications that must be installed before a device is considered ready for issuance.
@@ -594,6 +611,10 @@ The optional `RequiredForIssuance` property identifies applications that must be
 Applications without this property default to `false`.
 
 The optional `DetectionPath` property overrides all other detection methods with a direct file-existence check. When configured, the application is considered installed if the specified absolute file path exists on the device. This is intended for applications with no installer and no registry trace, such as a portable tool copied to a fixed location by a Script-type installer.
+
+The optional `AppxPackageName` property overrides all other detection methods by checking for an installed AppX/MSIX package with the given package family name. This is intended for applications distributed only through the Microsoft Store, which do not create classic Add/Remove Programs registry entries — for example, WhatsApp Desktop, which installs as the `5319275A.WhatsAppDesktop` package. When configured, this property is also used to uninstall the application, via `Remove-AppxPackage`, regardless of the application's `InstallType`.
+
+The optional `UninstallArguments` property applies to offline EXE applications only. It appends a silent-uninstall flag to the vendor's registry `UninstallString` when the installer supports one (for example, `/S` for many NSIS-based installers). If omitted, the registry uninstall command runs as-is, which may open an interactive uninstaller.
 
 ```json
 {

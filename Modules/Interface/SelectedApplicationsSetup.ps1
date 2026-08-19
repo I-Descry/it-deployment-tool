@@ -152,3 +152,31 @@ function Start-SelectedApplicationsSetup {
 
   return $true
 }
+
+function Start-SelectedApplicationsUninstall {
+  $SelectedApplications = @(Get-SelectedApplications)
+
+  if ($SelectedApplications.Count -eq 0) {
+    Write-Host
+    Write-Host "No applications selected." -ForegroundColor Yellow
+
+    Write-DeploymentLog -Level "WARNING" -Message "Uninstallation requested with no applications selected."
+
+    Pause-Application
+
+    return $false
+  }
+
+  Uninstall-SelectedApplications -SkipPause
+
+  Write-Host
+  Write-Host "Refreshing installed application status..." -ForegroundColor DarkGray
+
+  Update-ApplicationInstallationStatus
+
+  Write-Host "Installed application status refreshed." -ForegroundColor Green
+
+  Pause-Application
+
+  return $true
+}

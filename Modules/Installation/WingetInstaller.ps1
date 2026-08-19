@@ -44,6 +44,26 @@ function Get-WingetInstallArguments {
   return $WingetArguments
 }
 
+function Get-WingetUninstallArguments {
+  param([PSCustomObject]$Application)
+
+  $WingetArguments = @(
+    "uninstall"
+    "--id"
+    $Application.Winget
+    "--exact"
+    "--source"
+    "winget"
+    "--silent"
+    "--accept-source-agreements"
+    "--disable-interactivity"
+  )
+
+  $WingetArguments += @(Get-WingetScopeArguments -Application $Application)
+
+  return $WingetArguments
+}
+
 function Test-WingetPackage {
   param([PSCustomObject]$Application)
 
@@ -103,6 +123,37 @@ function Install-ApplicationWithWinget {
   Write-Host ("{0} failed. Exit code: {1}" -f $Application.Name, $ExitCode) -ForegroundColor Red
 
   Write-DeploymentLog -Message ("{0} installation failed. Exit Code: {1}" -f $Application.Name, $ExitCode) -Level "ERROR"
+
+  return $false
+}
+
+function Uninstall-ApplicationWithWinget {
+  param ([PSCustomObject]$Application)
+
+  Write-Host
+  Write-Host "Uninstalling $($Application.Name)..." -ForegroundColor Cyan
+
+  $WingetArguments = Get-WingetUninstallArguments -Application $Application
+
+  Write-DeploymentLog -Message ("Uninstallation started: {0} ({1})" -f $Application.Name, $Application.Winget)
+
+  & winget @WingetArguments | Out-Host
+
+  $ExitCode = $LASTEXITCODE
+
+  if ($ExitCode -eq 0) {
+    Write-Host
+    Write-Host ("$($Application.Name) uninstalled successfully.") -ForegroundColor Green
+
+    Write-DeploymentLog -Message "$($Application.Name) uninstalled successfully." -Level "SUCCESS"
+
+    return $true
+  }
+
+  Write-Host
+  Write-Host ("{0} failed. Exit code: {1}" -f $Application.Name, $ExitCode) -ForegroundColor Red
+
+  Write-DeploymentLog -Message ("{0} uninstallation failed. Exit Code: {1}" -f $Application.Name, $ExitCode) -Level "ERROR"
 
   return $false
 }

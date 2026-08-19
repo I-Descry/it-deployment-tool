@@ -129,3 +129,87 @@ function Install-ApplicationWithMsi {
     return $false
   }
 }
+
+function Get-MsiUninstallerArguments {
+  param(
+    [Parameter(Mandatory)]
+    [string]$InstallerPath
+  )
+
+  return ('/x "{0}" /qn /norestart' -f $InstallerPath)
+}
+
+function Uninstall-ApplicationWithMsi {
+  param(
+    [Parameter(Mandatory)]
+    [PSCustomObject]$Application
+  )
+
+  $InstallerPath = Get-MsiInstallerPath -Application $Application
+
+  if (-not (Test-MsiInstallerFile -Application $Application)) {
+    Write-Host
+    Write-Host ("{0} MSI installer was not found or is invalid." -f $Application.Name) -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("{0} MSI installer was not found or is invalid." -f $Application.Name) -Level "ERROR"
+
+    return $false
+  }
+
+  $MsiExecPath = Join-Path $env:SystemRoot "System32\msiexec.exe"
+
+  if (-not (Test-Path -LiteralPath $MsiExecPath -PathType Leaf)) {
+    Write-Host
+    Write-Host "Windows Installer could not be found." -ForegroundColor Red
+
+    Write-DeploymentLog -Message "Windows Installer executable could not be found." -Level "ERROR"
+
+    return $false
+  }
+
+  $Arguments = Get-MsiUninstallerArguments -InstallerPath $InstallerPath
+
+  Write-Host
+  Write-Host ("Uninstalling {0}..." -f $Application.Name) -ForegroundColor Cyan
+
+  Write-DeploymentLog -Message ("MSI uninstallation started: {0}" -f $Application.Name)
+
+  $ProcessParameters = @{
+    FilePath         = $MsiExecPath
+    ArgumentList     = $Arguments
+    WorkingDirectory = Split-Path $InstallerPath -Parent
+    Wait             = $true
+    PassThru         = $true
+    ErrorAction      = "Stop"
+  }
+
+  try {
+    $Process = Start-Process @ProcessParameters
+    $ExitCode = $Process.ExitCode
+
+    if ($ExitCode -eq 0) {
+      Write-Host
+      Write-Host ("{0} uninstalled successfully." -f $Application.Name) -ForegroundColor Green
+
+      Write-DeploymentLog -Message ("{0} uninstalled successfully." -f $Application.Name) -Level "SUCCESS"
+
+      return $true
+    }
+
+    Write-Host
+    Write-Host ("{0} failed. Exit code: {1}" -f $Application.Name, $ExitCode) -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("{0} MSI uninstallation failed. Exit code: {1}" -f $Application.Name, $ExitCode) -Level "ERROR"
+
+    return $false
+  }
+
+  catch {
+    Write-Host
+    Write-Host ("{0} MSI uninstaller failed to start: {1}" -f $Application.Name, $_.Exception.Message) -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("{0} MSI uninstaller failed to start: {1}" -f $Application.Name, $_.Exception.Message) -Level "ERROR"
+
+    return $false
+  }
+}

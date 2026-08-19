@@ -145,3 +145,86 @@ function Install-ApplicationWithExe {
     return $false
   }
 }
+
+function Uninstall-ApplicationWithExe {
+  param(
+    [Parameter(Mandatory)]
+    [PSCustomObject]$Application
+  )
+
+  $DetectionName = ([string]$Application.DetectionName).Trim()
+
+  if ([string]::IsNullOrWhiteSpace($DetectionName)) {
+    $DetectionName = ([string]$Application.Name).Trim()
+  }
+
+  $UninstallInfo = Get-RegistryApplicationUninstallInfo -DetectionName $DetectionName -Scope ([string]$Application.WingetScope)
+
+    if ($null -eq $UninstallInfo) {
+    Write-Host
+    Write-Host ("{0} uninstall information was not found in the registry." -f $Application.Name) -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("{0} uninstall information was not found in the registry." -f $Application.Name) -Level "ERROR"
+
+    return $false
+  }
+
+  $Command = ([string]$UninstallInfo.QuietUninstallString).Trim()
+
+  if ([string]::IsNullOrWhiteSpace($Command)) {
+    $Command = ([string]$UninstallInfo.UninstallString).Trim()
+  }
+
+  $ConfiguredArguments = ([string]$Application.UninstallArguments).Trim()
+
+  if (-not [string]::IsNullOrWhiteSpace($ConfiguredArguments)) {
+    $Command = "$Command $ConfiguredArguments"
+  }
+
+  if ([string]::IsNullOrWhiteSpace($Command)) {
+    Write-Host
+    Write-Host ("{0} does not have a usable uninstall command." -f $Application.Name) -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("{0} does not have a usable uninstall command." -f $Application.Name) -Level "ERROR"
+
+    return $false
+  }
+
+  Write-Host
+  Write-Host ("Uninstalling {0}..." -f $Application.Name) -ForegroundColor Cyan
+
+  Write-DeploymentLog -Message ("Offline EXE uninstallation started: {0}" -f $Application.Name)
+
+  $CmdArguments = '/c "{0}"' -f $Command
+
+  try {
+    $Process = Start-Process -FilePath "cmd.exe" -ArgumentList $CmdArguments -Wait -PassThru -ErrorAction Stop
+
+    $ExitCode = $Process.ExitCode
+
+    if ($ExitCode -eq 0) {
+      Write-Host
+      Write-Host ("{0} uninstalled successfully." -f $Application.Name) -ForegroundColor Green
+
+      Write-DeploymentLog -Message ("{0} uninstalled successfully." -f $Application.Name) -Level "SUCCESS"
+
+      return $true
+    }
+
+    Write-Host
+    Write-Host ("{0} uninstallation failed. Exit code: {1}" -f $Application.Name, $ExitCode) -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("{0} EXE uninstallation failed. Exit code: {1}" -f $Application.Name, $ExitCode) -Level "ERROR"
+
+    return $false
+  }
+
+  catch {
+    Write-Host
+    Write-Host ("{0} uninstaller failed to start: {1}" -f $Application.Name, $_.Exception.Message) -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("{0} uninstaller failed to start: {1}" -f $Application.Name, $_.Exception.Message) -Level "ERROR"
+
+    return $false
+  }
+}
