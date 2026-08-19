@@ -97,6 +97,11 @@ The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
 - Supports uninstallation of AppX/MSIX-packaged applications (including Microsoft Store apps such as WhatsApp) through `Remove-AppxPackage`
 - Supports uninstallation of offline EXE applications using the registry `UninstallString`/`QuietUninstallString`
 - Supports uninstallation of MSI applications using the original offline `.msi` package
+- Supports uninstallation of ZIP-installed applications through the same registry-based path as EXE applications
+- Supports uninstallation of Microsoft Teams, removing both the provisioned package and the current-user package
+- Supports uninstallation of Script-type applications through a configurable `UninstallerPath`
+- Supports uninstallation of Microsoft Office LTSC Standard 2024 by mounting the Office ISO and running the Office Deployment Tool with a local removal configuration file
+- Supports uninstallation of Microsoft Office Professional Plus 2021 - LOP through the same registry-based path as EXE applications
 - Returns a clear "not yet supported" result for installation types that do not yet support uninstallation
 - Normalizes uninstallation results into `Uninstalled`, `Skipped`, or `Failed`
 - Displays a final uninstallation summary
@@ -592,6 +597,7 @@ Each application entry may define:
 - Installation type
 - WinGet package ID
 - Offline installer path
+- Offline uninstaller script path
 - Silent installation arguments
 - Silent uninstallation arguments
 - Accepted success exit codes
@@ -615,6 +621,8 @@ The optional `DetectionPath` property overrides all other detection methods with
 The optional `AppxPackageName` property overrides all other detection methods by checking for an installed AppX/MSIX package with the given package family name. This is intended for applications distributed only through the Microsoft Store, which do not create classic Add/Remove Programs registry entries — for example, WhatsApp Desktop, which installs as the `5319275A.WhatsAppDesktop` package. When configured, this property is also used to uninstall the application, via `Remove-AppxPackage`, regardless of the application's `InstallType`.
 
 The optional `UninstallArguments` property applies to offline EXE applications only. It appends a silent-uninstall flag to the vendor's registry `UninstallString` when the installer supports one (for example, `/S` for many NSIS-based installers). If omitted, the registry uninstall command runs as-is, which may open an interactive uninstaller.
+
+The optional `UninstallerPath` property applies to Script-type applications only. It points to a dedicated uninstall script, relative to the `Installers` directory, the same way `InstallerPath` points to the install script. Script installers can perform arbitrary actions, so there is no generic way to reverse one automatically — an application without a configured `UninstallerPath` cannot be uninstalled through the tool.
 
 ```json
 {

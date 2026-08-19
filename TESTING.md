@@ -118,7 +118,16 @@ Record the device used for testing:
 - [x] EXE uninstallation was validated against a real registry `UninstallString` (7-Zip) using a mocked `Start-Process`
 - [x] MSI uninstallation argument construction (`/x "<path>" /qn /norestart`) and dispatch were validated using a mocked `Start-Process`
 - [x] AppX uninstallation was validated end-to-end against the real WhatsApp catalog entry and real `Get-AppxPackage` lookup, using a mocked `Remove-AppxPackage`
-- [x] Unsupported installation types (Script, ZIP, CrowdStrike, OfficeISO, Office2021IMG, Teams) return a clean `Failed` result instead of crashing
+- [x] ZIP-installed applications route through the same registry-based EXE uninstaller regardless of `ExtractedInstallType`, since the original ZIP-extracted installer file no longer exists after install (verified via mocked dispatch)
+- [x] Microsoft Teams uninstallation removes both the provisioned package (`Remove-AppxProvisionedPackage -Online`) and the current-user package (`Remove-AppxPackage`), verified with both packages mocked as present
+- [x] Microsoft Teams uninstallation correctly reports failure when a provisioned package is still detected after removal (verified with a simulated incomplete-removal case)
+- [x] `Uninstall-ApplicationWithScript` reuses `Test-ScriptInstallerFile`/`Get-ScriptInstallerPath`/`Get-ScriptInstallerType` unchanged via a synthetic `InstallerPath = UninstallerPath` object, verified with real (non-destructive) script execution against success, failure, missing-path, and wrong-extension cases
+- [x] WinMTR `UninstallerPath` wiring verified end-to-end against the real catalog entry and real `C:\Tools\WinMTR` installation, with only `Start-Process` mocked; confirmed the real installation was left untouched
+- [x] `Start-Office2024Uninstallation` correctly skips with `Skipped` when Office 2024 is not installed (verified for real, no admin/mount required)
+- [x] `Start-Office2024Uninstallation` correctly aborts before mounting anything when `office-remove.xml` is missing, and correctly aborts at the administrator check once the file exists (both verified for real, in a non-elevated session)
+- [x] `office-remove.xml` (`<Remove All="TRUE" />`) created locally at `Installers\ISO\Office2024\office-remove.xml` and confirmed resolvable by `Get-Office2024UninstallConfigurationPath`
+- [x] Office 2021 LOP uninstallation routes through the same registry-based EXE uninstaller as ZIP applications, relying on the classic `Uninstall` registry entry Click-to-Run itself registers rather than an invented `OfficeClickToRun.exe` command (verified via mocked dispatch)
+- [x] Unsupported installation types (CrowdStrike) return a clean `Failed` result instead of crashing
 - [x] Per-application confirmation prompt correctly gates uninstallation (Y proceeds, N skips)
 - [x] Applications that are not currently installed are skipped automatically without prompting
 - [x] Uninstallation queue counts `Uninstalled`, `Skipped`, and `Failed` correctly (verified with a simulated four-application run)
@@ -128,8 +137,13 @@ Record the device used for testing:
 - [ ] Real EXE uninstallation on an authorized deployment device
 - [ ] Real MSI uninstallation on an authorized deployment device
 - [ ] Real AppX/WhatsApp uninstallation on an authorized deployment device
+- [ ] Real ZIP-installed application uninstallation on an authorized deployment device
+- [ ] Real Microsoft Teams uninstallation on an authorized deployment device
+- [ ] Real WinMTR uninstallation (script execution mocked so far; the script itself was never run for real)
+- [ ] Real Office 2024 uninstallation on an authorized, elevated deployment device (the mount -> `setup.exe /configure` -> verify path could not be exercised in a non-elevated local session)
+- [ ] Real Office 2021 LOP uninstallation on a device that actually has it installed, to confirm the registry `DisplayName` Click-to-Run registers actually matches and the removal runs silently
 
-> WinGet, EXE, MSI, and AppX uninstallation (Phase 1) are implemented and locally verified using mocked destructive calls. Real-device uninstallation tests are pending. Script, ZIP, CrowdStrike, Office ISO/IMG, and Teams uninstallation are not yet implemented (Phase 2).
+> WinGet, EXE, MSI, AppX, ZIP, Teams, Script, Office 2024, and Office 2021 LOP uninstallation are implemented. Real-device uninstallation tests are pending for all of them. Office 2021 LOP relies on the classic registry `Uninstall` entry Click-to-Run registers, rather than an ODT `/configure` command (it installs via `Setup.exe /AUTORUN`, not ODT) or an invented `OfficeClickToRun.exe` command line; the exact registered `DisplayName` has not been confirmed against a real device with it installed. CrowdStrike uninstallation is deliberately deferred pending confirmation of the organization's Maintenance Protection setting in the Falcon console.
 
 ---
 

@@ -154,3 +154,84 @@ function Install-ApplicationWithScript {
     return $false
   }
 }
+
+function Uninstall-ApplicationWithScript {
+  param(
+    [Parameter(Mandatory)]
+    [PSCustomObject]$Application
+  )
+
+  $UninstallerApplication = [PSCustomObject]@{
+    Name          = $Application.Name
+    InstallerPath = $Application.UninstallerPath
+  }
+
+  if (-not (Test-ScriptInstallerFile -Application $UninstallerApplication)) {
+    Write-Host
+    Write-Host ("{0} uninstaller script was not found or is invalid." -f $Application.Name) -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("{0} uninstaller script was not found or is invalid." -f $Application.Name) -Level "ERROR"
+
+    return $false
+  }
+
+  $UninstallerPath = Get-ScriptInstallerPath -Application $UninstallerApplication
+  $ScriptType = Get-ScriptInstallerType -Application $UninstallerApplication
+
+  if ($ScriptType -eq "PowerShell") {
+    $FilePath = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
+    $ArgumentList = '-NoProfile -ExecutionPolicy Bypass -File "{0}"' -f $UninstallerPath
+  }
+
+  else {
+    $FilePath = $UninstallerPath
+    $ArgumentList = $null
+  }
+
+  Write-Host
+  Write-Host ("Uninstalling {0}..." -f $Application.Name) -ForegroundColor Cyan
+
+  Write-DeploymentLog -Message ("Script uninstallation started: {0}" -f $Application.Name)
+
+  $ProcessParameters = @{
+    FilePath         = $FilePath
+    WorkingDirectory = Split-Path $UninstallerPath -Parent
+    Wait             = $true
+    PassThru         = $true
+    ErrorAction      = "Stop"
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($ArgumentList)) {
+    $ProcessParameters["ArgumentList"] = $ArgumentList
+  }
+
+  try {
+    $Process = Start-Process @ProcessParameters
+    $ExitCode = $Process.ExitCode
+
+    if ($ExitCode -eq 0) {
+      Write-Host
+      Write-Host ("{0} uninstalled successfully." -f $Application.Name) -ForegroundColor Green
+
+      Write-DeploymentLog -Message ("{0} uninstalled successfully." -f $Application.Name) -Level "SUCCESS"
+
+      return $true
+    }
+
+    Write-Host
+    Write-Host ("{0} failed. Exit code: {1}" -f $Application.Name, $ExitCode) -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("{0} script uninstallation failed. Exit code: {1}" -f $Application.Name, $ExitCode) -Level "ERROR"
+
+    return $false
+  }
+
+  catch {
+    Write-Host
+    Write-Host ("{0} uninstaller script failed to start: {1}" -f $Application.Name, $_.Exception.Message) -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("{0} uninstaller script failed to start: {1}" -f $Application.Name, $_.Exception.Message) -Level "ERROR"
+
+    return $false
+  }
+}

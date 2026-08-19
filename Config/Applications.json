@@ -158,6 +158,7 @@
     "Name": "WinMTR",
     "InstallType": "Script",
     "InstallerPath": "Scripts\\WinMTR\\InstallWinMTR.ps1",
+    "UninstallerPath": "Scripts\\WinMTR\\UninstallWinMTR.ps1",
     "DetectionPath": "C:\\Tools\\WinMTR\\WinMTR.exe",
     "Category": "Utilities",
     "Description": "Free network diagnostic tool combining traceroute and ping",

@@ -91,6 +91,65 @@ function Get-MicrosoftTeamsDetectionResult {
   }
 }
 
+function Uninstall-MicrosoftTeamsInstallation {
+  [CmdletBinding()]
+  param()
+
+  $ApplicationName = "Microsoft Teams"
+
+  Write-Host
+  Write-Host ("Uninstalling {0}..." -f $ApplicationName) -ForegroundColor Cyan
+
+  Write-MicrosoftTeamsDeploymentLog -Message ("{0} uninstallation started." -f $ApplicationName) -Level "INFO"
+
+  try {
+    $ProvisionedPackages = @(Get-MicrosoftTeamsProvisionedPackage)
+
+    foreach ($ProvisionedPackage in $ProvisionedPackages) {
+      Remove-AppxProvisionedPackage -Online -PackageName $ProvisionedPackage.PackageName -ErrorAction Stop | Out-Null
+    }
+
+    $CurrentUserPackage = Get-MicrosoftTeamsCurrentUserPackage
+
+    if ($null -ne $CurrentUserPackage) {
+      Remove-AppxPackage -Package $CurrentUserPackage.PackageFullName -ErrorAction Stop
+    }
+
+    $StillProvisioned = Test-MicrosoftTeamsProvisioned
+
+    if ($StillProvisioned) {
+      $Message = ("{0} could not be fully removed; a provisioned package is still present." -f $ApplicationName)
+
+      Write-Host
+      Write-Host $Message -ForegroundColor Red
+
+      Write-MicrosoftTeamsDeploymentLog -Message $Message -Level "ERROR"
+
+      return $false
+    }
+
+    $Message = ("{0} uninstalled successfully." -f $ApplicationName)
+
+    Write-Host
+    Write-Host $Message -ForegroundColor Green
+
+    Write-MicrosoftTeamsDeploymentLog -Message $Message -Level "SUCCESS"
+
+    return $true
+  }
+
+  catch {
+    $Message = ("{0} uninstallation failed: {1}" -f $ApplicationName, $_.Exception.Message)
+
+    Write-Host
+    Write-Host $Message -ForegroundColor Red
+
+    Write-MicrosoftTeamsDeploymentLog -Message $Message -Level "ERROR"
+
+    return $false
+  }
+}
+
 # ============================================================
 # MICROSOFT TEAMS BOOTSTRAPPER
 # ============================================================

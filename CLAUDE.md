@@ -188,8 +188,13 @@ Uninstallation currently supports:
 * `Exe` — via the registry `UninstallString`/`QuietUninstallString` for the detected application. The optional `UninstallArguments` field appends a silent flag when the vendor's installer supports one; if omitted, the registry command runs as-is, which may be interactive.
 * `MSI` — via `msiexec /x` against the original offline `.msi` package.
 * Applications detected through `AppxPackageName` — via `Remove-AppxPackage`.
+* `ZIP` — always via the same registry-based path as `Exe`, regardless of `ExtractedInstallType`. The ZIP-extracted installer file is deleted after installation, so a ZIP-sourced application must be uninstalled through its registry `UninstallString`, never by re-running the original extracted installer.
+* `Teams` — via `Remove-AppxProvisionedPackage -Online` for the provisioned package and `Remove-AppxPackage` for the current-user package, the inverse of how `Get-MicrosoftTeamsProvisionedPackage`/`Get-MicrosoftTeamsCurrentUserPackage` already detect Teams.
+* `Script` — via the optional `UninstallerPath` field, which points to a dedicated uninstall script. `Uninstall-ApplicationWithScript` reuses the existing `Get-ScriptInstallerPath`/`Test-ScriptInstallerFile`/`Get-ScriptInstallerType` helpers by constructing a synthetic application object with `InstallerPath` set to `UninstallerPath`, the same technique `Install-ApplicationFromZip` already uses to reuse the EXE/MSI installers. There is no generic "undo" for Script installers; an application without a configured `UninstallerPath` cannot be uninstalled.
+* `OfficeISO` — via `Start-Office2024Uninstallation`, which mounts the same Office ISO used for install and runs `setup.exe /configure office-remove.xml`, where `office-remove.xml` is a local file (`Installers\ISO\Office2024\office-remove.xml`, not tracked by git) containing the standard ODT `<Remove All="TRUE" />` element.
+* `Office2021IMG` — via the same registry-based path as `Exe`. Office 2021 LOP installs via a Retail Click-to-Run mechanism (`Setup.exe /AUTORUN`), not the ODT `/configure` pattern `OfficeISO` uses, so there is no ODT-based removal available. Click-to-Run products (retail and volume license alike) register a standard entry under the classic `Uninstall` registry key, the same as any other Windows application, so this relies on whatever command Windows itself already registered rather than inventing Office-specific removal syntax. The exact registry `DisplayName` for Office 2021 LOP has not been verified against a device with it installed; if it does not match, `Uninstall-ApplicationWithExe` already fails cleanly rather than doing anything incorrect.
 
-`Script`, `ZIP`, `CrowdStrike`, `OfficeISO`, `Office2021IMG`, and `Teams` are not yet supported for uninstallation. Selecting one for uninstall returns a clean `Failed` result with an explanatory message rather than attempting an unsupported removal.
+`CrowdStrike` is not yet supported for uninstallation. Selecting it for uninstall returns a clean `Failed` result with an explanatory message rather than attempting an unsupported removal. It is deferred pending confirmation of the organization's Maintenance Protection setting in the Falcon console; there is no separate maintenance/removal token available locally.
 
 ### Uninstallation results
 
@@ -223,6 +228,7 @@ Common fields include:
 * `InstallType`
 * `Winget`
 * `InstallerPath`
+* `UninstallerPath`
 * `SilentArguments`
 * `UninstallArguments`
 * `SuccessExitCodes`

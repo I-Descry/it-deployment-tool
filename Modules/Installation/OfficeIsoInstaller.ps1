@@ -226,3 +226,153 @@ function Start-Office2024Installation {
     }
   }
 }
+
+function Get-Office2024UninstallConfigurationPath {
+  $OfficeIsoDirectory = Get-OfficeIsoDirectory
+
+  $ConfigurationPath = Join-Path $OfficeIsoDirectory "office-remove.xml"
+
+  if (-not (Test-Path -LiteralPath $ConfigurationPath -PathType Leaf)) {
+    throw "The Office 2024 removal configuration file was not found: office-remove.xml"
+  }
+
+  return (Get-Item -LiteralPath $ConfigurationPath -ErrorAction Stop).FullName
+}
+
+function Start-Office2024Uninstallation {
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param()
+
+  $ApplicationName = "Microsoft Office LTSC Standard 2024"
+  $OfficeIsoPath = $null
+  $MountedByFunction = $false
+
+  try {
+    $CurrentlyInstalled = Test-Office2024Installed
+
+    if (-not $CurrentlyInstalled -and -not $WhatIfPreference) {
+      Write-Host
+      Write-Host "$ApplicationName is not installed." -ForegroundColor Yellow
+
+      return [PSCustomObject]@{
+        Status  = "Skipped"
+        Message = "$ApplicationName is not installed."
+      }
+    }
+
+    $CurrentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $CurrentPrincipal = New-Object Security.Principal.WindowsPrincipal($CurrentIdentity)
+    $IsAdministrator = $CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+    if (-not $IsAdministrator -and -not $WhatIfPreference) {
+      throw "Office 2024 uninstallation requires administrator privileges."
+    }
+
+    $OfficeIsoPath = Get-OfficeIsoPath
+    $ConfigurationPath = Get-Office2024UninstallConfigurationPath
+
+    if (-not $PSCmdlet.ShouldProcess($ApplicationName, "Mount the Office ISO and run setup.exe /configure office-remove.xml")) {
+      return [PSCustomObject]@{
+        Status  = "Preview Only"
+        Message = "No Office removal was performed."
+      }
+    }
+
+    Write-Host
+    Write-Host "Preparing to remove $ApplicationName..." -ForegroundColor Cyan
+
+    Unblock-File -LiteralPath $OfficeIsoPath -ErrorAction SilentlyContinue
+
+    $DiskImage = Get-DiskImage -ImagePath $OfficeIsoPath -ErrorAction SilentlyContinue
+
+    if ($null -eq $DiskImage -or (-not $DiskImage.Attached)) {
+      $DiskImage = Mount-DiskImage -ImagePath $OfficeIsoPath -PassThru -ErrorAction Stop
+
+      $MountedByFunction = $true
+    }
+
+    $MountedVolume = Get-OfficeMountedVolume -DiskImage $DiskImage
+    $MountedRoot = "{0}:\" -f $MountedVolume.DriveLetter
+    $SetupPath = Join-Path $MountedRoot "setup.exe"
+
+    if (-not (Test-Path -LiteralPath $SetupPath -PathType Leaf)) {
+      throw "setup.exe was not found inside the Office ISO."
+    }
+
+    Write-Host
+    Write-Host "Removing Office..." -ForegroundColor Cyan
+
+    Write-DeploymentLog -Level "INFO" -Message ("{0} removal started from the Office ISO." -f $ApplicationName)
+
+    $UninstallerArguments = ("/configure `"{0}`"" -f $ConfigurationPath)
+
+    $UninstallerProcess = Start-Process -FilePath $SetupPath -ArgumentList $UninstallerArguments -WorkingDirectory $MountedRoot -Wait -PassThru -ErrorAction Stop
+
+    $UninstallerExitCode = $UninstallerProcess.ExitCode
+
+    if ($UninstallerExitCode -ne 0) {
+      throw ("Office removal exited with code {0}." -f $UninstallerExitCode)
+    }
+
+    Write-Host
+    Write-Host "Verifying Office removal..." -ForegroundColor DarkGray
+
+    $RemovalVerified = $false
+
+    for ($Attempt = 1; $Attempt -le 12; $Attempt++) {
+      if (-not (Test-Office2024Installed)) {
+        $RemovalVerified = $true
+        break
+      }
+
+      Start-Sleep -Seconds 5
+    }
+
+    if ($RemovalVerified) {
+      $Message = "$ApplicationName was removed successfully."
+
+      Write-Host
+      Write-Host $Message -ForegroundColor Green
+
+      Write-DeploymentLog -Level "SUCCESS" -Message $Message
+
+      return [PSCustomObject]@{
+        Status  = "Uninstalled"
+        Message = $Message
+      }
+    }
+
+    $Message = "Office removal completed, but $ApplicationName is still detected."
+
+    Write-Host
+    Write-Host $Message -ForegroundColor Yellow
+
+    Write-DeploymentLog -Level "WARNING" -Message $Message
+
+    return [PSCustomObject]@{
+      Status  = "Failed"
+      Message = $Message
+    }
+  }
+
+  catch {
+    $ErrorMessage = $_.Exception.Message
+
+    Write-Host
+    Write-Host "$ApplicationName removal failed." -ForegroundColor Red
+    Write-Host $ErrorMessage -ForegroundColor Red
+
+    Write-DeploymentLog -Level "ERROR" -Message ("{0} removal failed: {1}" -f $ApplicationName, $ErrorMessage)
+
+    return [PSCustomObject]@{
+      Status  = "Failed"
+      Message = $ErrorMessage
+    }
+  }
+
+  finally {
+    if ($MountedByFunction -and -not [string]::IsNullOrWhiteSpace([string]$OfficeIsoPath)) {
+      Dismount-DiskImage -ImagePath $OfficeIsoPath -ErrorAction SilentlyContinue | Out-Null
+    }
+  }
+}

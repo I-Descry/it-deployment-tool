@@ -38,6 +38,37 @@ function Uninstall-ApplicationByType {
       return ConvertTo-ApplicationUninstallationResult -Result $RawResult -ApplicationName $Application.Name
     }
 
+    "ZIP" {
+      $RawResult = Uninstall-ApplicationWithExe -Application $Application
+
+      return ConvertTo-ApplicationUninstallationResult -Result $RawResult -ApplicationName $Application.Name
+    }
+
+    "TEAMS" {
+      $RawResult = Uninstall-MicrosoftTeamsInstallation
+
+      return ConvertTo-ApplicationUninstallationResult -Result $RawResult -ApplicationName $Application.Name
+    }
+
+    "SCRIPT" {
+      $RawResult = Uninstall-ApplicationWithScript -Application $Application
+
+      return ConvertTo-ApplicationUninstallationResult -Result $RawResult -ApplicationName $Application.Name
+    }
+
+    "OFFICEISO" {
+      $RawResult = Start-Office2024Uninstallation
+
+      return ConvertTo-ApplicationUninstallationResult -Result $RawResult -ApplicationName $Application.Name
+    }
+
+    "OFFICE2021IMG" {
+      $RawResult = Uninstall-ApplicationWithExe -Application $Application
+
+      return ConvertTo-ApplicationUninstallationResult -Result $RawResult -ApplicationName $Application.Name
+    }
+
+
     default {
       $Message = ("Uninstallation is not yet supported for {0}: {1}" -f $Application.Name, $InstallType)
 
