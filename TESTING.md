@@ -143,7 +143,7 @@ Record the device used for testing:
 - [ ] Real Office 2024 uninstallation on an authorized, elevated deployment device (the mount -> `setup.exe /configure` -> verify path could not be exercised in a non-elevated local session)
 - [ ] Real Office 2021 LOP uninstallation on a device that actually has it installed, to confirm the registry `DisplayName` Click-to-Run registers actually matches and the removal runs silently
 
-> WinGet, EXE, MSI, AppX, ZIP, Teams, Script, Office 2024, and Office 2021 LOP uninstallation are implemented. Real-device uninstallation tests are pending for all of them. Office 2021 LOP relies on the classic registry `Uninstall` entry Click-to-Run registers, rather than an ODT `/configure` command (it installs via `Setup.exe /AUTORUN`, not ODT) or an invented `OfficeClickToRun.exe` command line; the exact registered `DisplayName` has not been confirmed against a real device with it installed. CrowdStrike uninstallation is deliberately deferred pending confirmation of the organization's Maintenance Protection setting in the Falcon console.
+> WinGet, EXE, MSI, AppX, ZIP, Teams, Script, Office 2024, and Office 2021 LOP uninstallation are implemented. Real-device uninstallation tests are pending for all of them. Office 2021 LOP relies on the classic registry `Uninstall` entry Click-to-Run registers, rather than an ODT `/configure` command (it installs via `Setup.exe /AUTORUN`, not ODT) or an invented `OfficeClickToRun.exe` command line; the exact registered `DisplayName` has not been confirmed against a real device with it installed. CrowdStrike uninstallation is intentionally out of scope for this tool, not a pending item.
 
 ---
 
