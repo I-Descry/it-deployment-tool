@@ -4,6 +4,50 @@
         WindowStartupLocation="CenterScreen"
         Background="#16181D"
         FontFamily="Segoe UI">
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="40" GlassFrameThickness="0" ResizeBorderThickness="6"
+                  CornerRadius="0" UseAeroCaptionButtons="False"/>
+  </WindowChrome.WindowChrome>
+  <DockPanel x:Name="RootDockPanel" LastChildFill="True">
+
+    <!-- Title bar -->
+    <Border x:Name="TitleBar" DockPanel.Dock="Top" Height="40"
+            Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="0,0,0,1">
+      <Grid Margin="14,0,8,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Canvas Width="16" Height="16" Margin="0,0,9,0">
+            <Rectangle Canvas.Left="3" Canvas.Top="3" Width="12" Height="12" RadiusX="2.4" RadiusY="2.4" Stroke="#38BDF8" StrokeThickness="1.4"/>
+            <Path Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M6.5 9l1.8 1.8L11.5 7"/>
+          </Canvas>
+          <TextBlock Text="IT DEPLOYMENT TOOL" Foreground="#C7CAD1" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+          <TextBlock x:Name="TitleBarVersionText" Text="-" Foreground="#6B6F79" FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                    Margin="0,0,6,0" WindowChrome.IsHitTestVisibleInChrome="True">
+          <Border x:Name="TitleBarMinimizeButton" Width="30" Height="30" Cursor="Hand" Background="Transparent">
+            <Canvas Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Center">
+              <Line X1="1" Y1="8.2" X2="9" Y2="8.2" Stroke="#9A9EA8" StrokeThickness="1.3"/>
+            </Canvas>
+          </Border>
+          <Border x:Name="TitleBarMaximizeButton" Width="30" Height="30" Cursor="Hand" Margin="8,0,0,0" Background="Transparent">
+            <Canvas Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Center">
+              <Rectangle Canvas.Left="1.3" Canvas.Top="1.3" Width="7.4" Height="7.4" Stroke="#9A9EA8" StrokeThickness="1.2"/>
+            </Canvas>
+          </Border>
+          <Border x:Name="TitleBarCloseButton" Width="30" Height="30" Cursor="Hand" Margin="8,0,0,0" Background="Transparent">
+            <Canvas Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Center">
+              <Line X1="1.2" Y1="1.2" X2="8.8" Y2="8.8" Stroke="#9A9EA8" StrokeThickness="1.3" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+              <Line X1="8.8" Y1="1.2" X2="1.2" Y2="8.8" Stroke="#9A9EA8" StrokeThickness="1.3" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+            </Canvas>
+          </Border>
+        </StackPanel>
+      </Grid>
+    </Border>
+
   <Grid>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="184"/>
@@ -300,4 +344,5 @@
                  Visibility="Collapsed"/>
     </Grid>
   </Grid>
+  </DockPanel>
 </Window>

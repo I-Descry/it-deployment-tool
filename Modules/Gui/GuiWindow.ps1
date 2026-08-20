@@ -1341,6 +1341,14 @@ function Show-MainWindow {
     Write-DeploymentLog -Message "Nunito font could not be loaded; falling back to the default font. $($_.Exception.Message)" -Level "WARNING"
   }
 
+  $RootDockPanel = $Window.FindName("RootDockPanel")
+  $TitleBarVersionText = $Window.FindName("TitleBarVersionText")
+  $TitleBarMinimizeButton = $Window.FindName("TitleBarMinimizeButton")
+  $TitleBarMaximizeButton = $Window.FindName("TitleBarMaximizeButton")
+  $TitleBarCloseButton = $Window.FindName("TitleBarCloseButton")
+
+  $TitleBarVersionText.Text = "v$AppVersion"
+
   $AppGridPanel = $Window.FindName("AppGridPanel")
   $SelectedCountText = $Window.FindName("SelectedCountText")
   $SelectAllButton = $Window.FindName("SelectAllButton")
@@ -1579,6 +1587,52 @@ function Show-MainWindow {
     }
     catch {
       [System.Windows.MessageBox]::Show("Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+  })
+
+  $TitleBarMinimizeButton.Add_MouseLeftButtonUp({
+    try {
+      [System.Windows.SystemCommands]::MinimizeWindow($Window)
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Minimize error: $($_.Exception.Message)")
+    }
+  })
+
+  $TitleBarMaximizeButton.Add_MouseLeftButtonUp({
+    try {
+      if ($Window.WindowState -eq [System.Windows.WindowState]::Maximized) {
+        [System.Windows.SystemCommands]::RestoreWindow($Window)
+      }
+      else {
+        [System.Windows.SystemCommands]::MaximizeWindow($Window)
+      }
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Maximize error: $($_.Exception.Message)")
+    }
+  })
+
+  $TitleBarCloseButton.Add_MouseLeftButtonUp({
+    try {
+      [System.Windows.SystemCommands]::CloseWindow($Window)
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Close error: $($_.Exception.Message)")
+    }
+  })
+
+  # WindowChrome's known maximize-clipping bug: without this, the maximized
+  # window renders a few pixels past the monitor's working area on every
+  # edge. Doubling the resize-border thickness as the maximized-state margin
+  # was empirically verified to correct it in this environment.
+  $Window.Add_StateChanged({
+    if ($Window.WindowState -eq [System.Windows.WindowState]::Maximized) {
+      $ResizeBorder = [System.Windows.SystemParameters]::WindowResizeBorderThickness
+      $RootDockPanel.Margin = New-Object System.Windows.Thickness(($ResizeBorder.Left * 2), ($ResizeBorder.Top * 2), ($ResizeBorder.Right * 2), ($ResizeBorder.Bottom * 2))
+    }
+    else {
+      $RootDockPanel.Margin = New-Object System.Windows.Thickness(0)
     }
   })
 
