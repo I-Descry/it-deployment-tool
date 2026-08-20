@@ -25,6 +25,9 @@ Pending real-device tests include:
 - Computer rename
 - Local standard user creation and group verification
 - Actual power and sleep configuration changes
+- `Start.ps1 -Gui` elevation flow (single UAC prompt, elevated relaunch opens the GUI, not a console)
+- GUI-based install/uninstall via the background runspace added 2026-08-20 (window responsiveness during a real install, correct completion, CrowdStrike/Office installs no longer failing under `$ConfirmPreference = "None"`)
+- GUI-based Rename Computer, Create Local Standard User, and Apply Power Settings (Windows Configuration screen, added 2026-08-20)
 
 These items are pending, not failed. Version `1.1.0-dev` will remain unchanged until the required tests are completed.
 
@@ -47,7 +50,7 @@ Record the device used for testing:
 
 ## Deployment Tool Validation Mode
 
-- [x] `Start.ps1 -ValidateOnly` loads all 39 modules
+- [x] `Start.ps1 -ValidateOnly` loads all 40 modules
 - [x] Validation checks the required deployment functions
 - [x] Validation confirms `Config\Applications.json` exists
 - [x] Successful validation returns exit code `0`
@@ -249,6 +252,50 @@ Record the device used for testing:
 - [x] Credentials and product keys are not logged
 - [x] Session completion is logged
 - [x] Recent logs can be viewed from the tool
+
+---
+
+## GUI Mode
+
+The WPF GUI (`Start.ps1 -Gui`) is a separate interface layer that wraps the same underlying functions as the console menus above. These checklist items verify the GUI-specific wiring (elevation, layout, background execution); the underlying business logic (validation rules, install/uninstall behavior, computer rename/local user/power-setting mechanics) is covered by the console-mode sections elsewhere in this document and is not re-verified here.
+
+### Startup and Elevation
+
+- [ ] `Start.ps1 -Gui` requests administrator elevation before the window opens (not bypassed)
+- [ ] The elevated relaunch opens the GUI window (not a console session)
+- [ ] Declining the UAC prompt exits cleanly without opening a window
+
+### Applications Screen
+
+- [x] Real catalog data loads and displays grouped by category (confirmed on a real device via screenshot)
+- [x] Individual selection, Select All, Select Recommended, and Clear All work (confirmed on a real device via screenshot)
+- [x] System information bar (computer, user, model, administrator/internet/WinGet status) displays correctly (confirmed on a real device via screenshot)
+- [ ] Install Selected completes correctly and the window stays responsive during a real install (background execution added 2026-08-20, not yet re-tested live)
+- [ ] Uninstall Selected completes correctly for both machine-scope and user-scope WinGet packages (originally reported failing for Google Chrome due to the `-Gui` elevation bypass; elevation fix and winget diagnostics added 2026-08-20, not yet re-tested live)
+- [ ] Closing the window while an install/uninstall queue is running is blocked with a warning instead of abandoning the queue
+- [ ] CrowdStrike, Microsoft Office 2024, and Microsoft Office 2021 LOP installs complete correctly through the GUI (background execution requires `$ConfirmPreference = "None"` to avoid the native confirmation prompt throwing in a non-interactive runspace; added 2026-08-20, not yet tested live)
+
+### Deployment Validation Screen
+
+- [x] Device Readiness Checks and Installer Package Status sections both render with real data (verified via automated non-destructive testing against this device, 2026-08-20)
+- [x] Pass/fail counts and colors are correct (verified via automated non-destructive testing, 2026-08-20)
+- [x] Results are written to the deployment log (verified via automated non-destructive testing, 2026-08-20)
+- [ ] Re-run Validation button refreshes correctly when clicked by a user
+
+### Deployment Logs Screen
+
+- [x] Recent logs list populates and auto-selects the most recent log (verified via automated non-destructive testing, 2026-08-20)
+- [x] Clicking a different log switches the content viewer and selection highlight correctly (verified via a simulated click event, 2026-08-20)
+- [ ] Refresh button and Open Logs Folder button work when clicked by a user
+
+### Windows Configuration Screen
+
+- [x] Device Information, current computer name, local standard users list, and current power settings all populate with real data (verified via automated non-destructive testing against this device, 2026-08-20)
+- [x] Re-running the refresh does not clobber in-progress typing in the power-setting input fields (verified via automated non-destructive testing, 2026-08-20)
+- [ ] Rename Computer works end-to-end on an authorized test device
+- [ ] Create Local Standard User works end-to-end, including password entry via the masked password fields, on an authorized test device
+- [ ] Password is not displayed, logged, or persisted anywhere during GUI-based user creation
+- [ ] Apply Power Settings works end-to-end on an authorized test device
 
 ---
 
