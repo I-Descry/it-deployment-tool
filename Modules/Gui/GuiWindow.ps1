@@ -520,13 +520,252 @@ function Update-GuiSystemInfoBar {
   $WingetStatusText.Foreground = if ($SystemInfo.WingetAvailable) { "#34D399" } else { "#F2555A" }
 }
 
+function Start-GuiApplicationQueue {
+  param(
+    [Parameter(Mandatory)]
+    [ValidateSet("Install", "Uninstall")]
+    [string]$Mode,
+
+    [Parameter(Mandatory)]
+    [AllowEmptyCollection()]
+    [PSCustomObject[]]$Applications,
+
+    [int]$PreSkippedCount = 0,
+
+    [string[]]$PreFailureMessages = @(),
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.ItemsControl]$GridPanel,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$CountText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Button[]]$ButtonsToDisable
+  )
+
+  if (($Applications.Count -eq 0) -and ($PreSkippedCount -eq 0)) {
+    return
+  }
+
+  foreach ($Button in $ButtonsToDisable) {
+    $Button.IsEnabled = $false
+  }
+
+  $script:GuiQueueRunning = $true
+  $CountText.Text = if ($Mode -eq "Install") { "Installing..." } else { "Uninstalling..." }
+
+  $RootPath = $script:ITDeploymentToolRoot
+  $LogPath = $script:LogFilePath
+
+  # Deliberately duplicated from Start.ps1's $ModulePaths rather than reused --
+  # this is the minimal subset the install/uninstall call graph actually
+  # touches, re-loaded fresh inside a background runspace that starts with no
+  # session state of its own. Keep in sync if a new install type module is
+  # ever added to the router.
+  $BackgroundScript = {
+    param(
+      [string]$RootPath,
+      [string]$LogPath,
+      [string]$Mode,
+      [object[]]$Applications
+    )
+
+    $ModulePaths = @(
+      "Core\Logging.ps1"
+      "Applications\InstalledApplications.ps1"
+      "Applications\ApplicationProcessCheck.ps1"
+      "Applications\MicrosoftTeams.ps1"
+      "Installation\InstallationResult.ps1"
+      "Installation\UninstallationResult.ps1"
+      "Installation\WingetInstaller.ps1"
+      "Installation\OfflineInstaller.ps1"
+      "Installation\MsiInstaller.ps1"
+      "Installation\AppxInstaller.ps1"
+      "Installation\ScriptInstaller.ps1"
+      "Installation\ZipInstaller.ps1"
+      "Installation\CrowdStrikeInstaller.ps1"
+      "Installation\OfficeIsoInstaller.ps1"
+      "Installation\Office2021ImgInstaller.ps1"
+      "Installation\InstallationRouter.ps1"
+      "Installation\UninstallationRouter.ps1"
+    )
+
+    foreach ($ModulePath in $ModulePaths) {
+      . (Join-Path $RootPath "Modules\$ModulePath")
+    }
+
+    # Must happen AFTER dot-sourcing: Core\Logging.ps1's own top-level code
+    # resets $script:LogFilePath to $null when it loads, which would silently
+    # undo this assignment if it ran first.
+    $script:ITDeploymentToolRoot = $RootPath
+    $script:LogFilePath = $LogPath
+    $ConfirmPreference = "None"
+
+    $Results = New-Object System.Collections.ArrayList
+
+    if ($Mode -eq "Install") {
+      Update-InstalledApplicationRegistryCache
+
+      foreach ($Application in $Applications) {
+        $AlreadyInstalled = Test-ApplicationInstalled -Application $Application
+
+        if ($AlreadyInstalled) {
+          Write-DeploymentLog -Message ("{0} is already installed. Skipped." -f $Application.Name) -Level "INFO"
+          [void]$Results.Add([PSCustomObject]@{ ApplicationName = $Application.Name; Status = "Skipped"; Message = "$($Application.Name) is already installed. Skipped." })
+          continue
+        }
+
+        $BlockingProcesses = @(Get-BlockingApplicationProcesses -Application $Application)
+
+        if ($BlockingProcesses.Count -gt 0) {
+          $ProcessNames = ($BlockingProcesses | Select-Object -ExpandProperty ProcessName -Unique | Sort-Object) -join ", "
+          Write-DeploymentLog -Message ("{0} was skipped because these processes are running: {1}" -f $Application.Name, $ProcessNames) -Level "WARNING"
+          [void]$Results.Add([PSCustomObject]@{ ApplicationName = $Application.Name; Status = "Blocked"; Message = "$($Application.Name) was skipped because these processes are running: $ProcessNames" })
+          continue
+        }
+
+        $InstallerAvailable = Test-ApplicationInstallerAvailable -Application $Application
+
+        if (-not $InstallerAvailable) {
+          Write-DeploymentLog -Message ("Installer was not found or is unavailable for {0}." -f $Application.Name) -Level "ERROR"
+          [void]$Results.Add([PSCustomObject]@{ ApplicationName = $Application.Name; Status = "NotFound"; Message = "Installer was not found or is unavailable for $($Application.Name)." })
+          continue
+        }
+
+        $InstallationResult = Install-ApplicationByType -Application $Application
+
+        [void]$Results.Add([PSCustomObject]@{ ApplicationName = $Application.Name; Status = $InstallationResult.Status; Message = $InstallationResult.Message })
+      }
+    }
+    else {
+      foreach ($Application in $Applications) {
+        $UninstallationResult = Uninstall-ApplicationByType -Application $Application
+
+        [void]$Results.Add([PSCustomObject]@{ ApplicationName = $Application.Name; Status = $UninstallationResult.Status; Message = $UninstallationResult.Message })
+      }
+    }
+
+    return @($Results)
+  }
+
+  $Runspace = [runspacefactory]::CreateRunspace()
+  $Runspace.Open()
+
+  $PowerShellInstance = [powershell]::Create()
+  $PowerShellInstance.Runspace = $Runspace
+
+  [void]$PowerShellInstance.AddScript($BackgroundScript)
+  [void]$PowerShellInstance.AddArgument($RootPath)
+  [void]$PowerShellInstance.AddArgument($LogPath)
+  [void]$PowerShellInstance.AddArgument($Mode)
+  [void]$PowerShellInstance.AddArgument($Applications)
+
+  $AsyncResult = $PowerShellInstance.BeginInvoke()
+
+  $script:GuiQueueAsyncResult = $AsyncResult
+  $script:GuiQueuePowerShell = $PowerShellInstance
+  $script:GuiQueueRunspace = $Runspace
+  $script:GuiQueueMode = $Mode
+  $script:GuiQueueGridPanel = $GridPanel
+  $script:GuiQueueCountText = $CountText
+  $script:GuiQueueButtonsToDisable = $ButtonsToDisable
+  $script:GuiQueuePreSkippedCount = $PreSkippedCount
+  $script:GuiQueuePreFailureMessages = $PreFailureMessages
+
+  $Timer = New-Object System.Windows.Threading.DispatcherTimer
+  $Timer.Interval = [TimeSpan]::FromMilliseconds(300)
+  $script:GuiQueueTimer = $Timer
+
+  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d. This function
+  # returns before the timer ever ticks, so a closure would need to capture
+  # every variable below by value; GetNewClosure() was already found earlier
+  # in this file to break dot-sourced function resolution inside WPF event
+  # handlers (that's why the toolbar buttons broke and had to be fixed by
+  # removing it). Reading everything back from $script:GuiQueue* instead
+  # mirrors the same proven-safe pattern New-GuiLogListRow's per-row click
+  # handler already uses.
+  $Timer.Add_Tick({
+    if (-not $script:GuiQueueAsyncResult.IsCompleted) {
+      return
+    }
+
+    $script:GuiQueueTimer.Stop()
+
+    try {
+      $QueueResults = @($script:GuiQueuePowerShell.EndInvoke($script:GuiQueueAsyncResult))
+
+      if ($script:GuiQueuePowerShell.HadErrors) {
+        foreach ($QueueError in $script:GuiQueuePowerShell.Streams.Error) {
+          Write-DeploymentLog -Message ([string]$QueueError) -Level "ERROR"
+        }
+      }
+
+      if ($script:GuiQueueMode -eq "Install") {
+        $InstalledCount = @($QueueResults | Where-Object { $_.Status -eq "Installed" }).Count
+        $SkippedCount = @($QueueResults | Where-Object { $_.Status -eq "Skipped" }).Count
+        $BlockedCount = @($QueueResults | Where-Object { $_.Status -eq "Blocked" }).Count
+        $NotFoundCount = @($QueueResults | Where-Object { $_.Status -eq "NotFound" }).Count
+        $FailedResults = @($QueueResults | Where-Object { $_.Status -notin @("Installed", "Skipped", "Blocked", "NotFound") })
+        $FailedCount = $FailedResults.Count
+
+        $Summary = "Install summary`n`nInstalled: $InstalledCount`nSkipped: $SkippedCount`nBlocked: $BlockedCount`nFailed: $FailedCount`nNot Found: $NotFoundCount"
+
+        $FailureMessages = @($FailedResults | ForEach-Object { $_.Message })
+      }
+      else {
+        $UninstalledCount = @($QueueResults | Where-Object { $_.Status -eq "Uninstalled" }).Count
+        $SkippedCount = @($QueueResults | Where-Object { $_.Status -eq "Skipped" }).Count + $script:GuiQueuePreSkippedCount
+        $FailedResults = @($QueueResults | Where-Object { $_.Status -notin @("Uninstalled", "Skipped") })
+        $FailedCount = $FailedResults.Count
+
+        $Summary = "Uninstall summary`n`nUninstalled: $UninstalledCount`nSkipped: $SkippedCount`nFailed: $FailedCount"
+
+        $FailureMessages = @($script:GuiQueuePreFailureMessages) + @($FailedResults | ForEach-Object { $_.Message })
+      }
+
+      if ($FailureMessages.Count -gt 0) {
+        $Summary += "`n`nFailure details:`n" + ($FailureMessages -join "`n")
+      }
+
+      Update-ApplicationInstallationStatus
+      Update-GuiApplicationGrid -GridPanel $script:GuiQueueGridPanel
+      Update-GuiSelectedCount -CountText $script:GuiQueueCountText
+
+      [System.Windows.MessageBox]::Show($Summary)
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Queue error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+    finally {
+      $script:GuiQueuePowerShell.Dispose()
+      $script:GuiQueueRunspace.Close()
+      $script:GuiQueueRunspace.Dispose()
+
+      foreach ($Button in $script:GuiQueueButtonsToDisable) {
+        $Button.IsEnabled = $true
+      }
+
+      $script:GuiQueueRunning = $false
+    }
+  })
+
+  $Timer.Start()
+}
+
 function Invoke-GuiInstallQueue {
   param(
     [Parameter(Mandatory)]
     [System.Windows.Controls.ItemsControl]$GridPanel,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.TextBlock]$CountText
+    [System.Windows.Controls.TextBlock]$CountText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Button]$InstallButton,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Button]$UninstallButton
   )
 
   $SelectedApplications = @(Get-SelectedApplications)
@@ -536,62 +775,9 @@ function Invoke-GuiInstallQueue {
     return
   }
 
-  $InstalledCount = 0
-  $SkippedCount = 0
-  $BlockedCount = 0
-  $FailedCount = 0
-  $NotFoundCount = 0
-  $FailureMessages = @()
+  $ClonedApplications = @($SelectedApplications | ForEach-Object { $_.PSObject.Copy() })
 
-  foreach ($Application in $SelectedApplications) {
-    $AlreadyInstalled = Test-ApplicationInstalled -Application $Application
-
-    if ($AlreadyInstalled) {
-      $SkippedCount++
-      Write-DeploymentLog -Message ("{0} is already installed. Skipped." -f $Application.Name) -Level "INFO"
-      continue
-    }
-
-    $BlockingProcesses = @(Get-BlockingApplicationProcesses -Application $Application)
-
-    if ($BlockingProcesses.Count -gt 0) {
-      $BlockedCount++
-      $ProcessNames = ($BlockingProcesses | Select-Object -ExpandProperty ProcessName -Unique | Sort-Object) -join ", "
-      Write-DeploymentLog -Message ("{0} was skipped because these processes are running: {1}" -f $Application.Name, $ProcessNames) -Level "WARNING"
-      continue
-    }
-
-    $InstallerAvailable = Test-ApplicationInstallerAvailable -Application $Application
-
-    if (-not $InstallerAvailable) {
-      $NotFoundCount++
-      Write-DeploymentLog -Message ("Installer was not found or is unavailable for {0}." -f $Application.Name) -Level "ERROR"
-      continue
-    }
-
-    $InstallationResult = Install-ApplicationByType -Application $Application
-
-    switch ($InstallationResult.Status) {
-      "Installed" { $InstalledCount++ }
-      "Skipped"   { $SkippedCount++ }
-      default     {
-        $FailedCount++
-        $FailureMessages += $InstallationResult.Message
-      }
-    }
-  }
-
-  Update-ApplicationInstallationStatus
-  Update-GuiApplicationGrid -GridPanel $GridPanel
-  Update-GuiSelectedCount -CountText $CountText
-
-  $Summary = "Install summary`n`nInstalled: $InstalledCount`nSkipped: $SkippedCount`nBlocked: $BlockedCount`nFailed: $FailedCount`nNot Found: $NotFoundCount"
-
-  if ($FailureMessages.Count -gt 0) {
-    $Summary += "`n`nFailure details:`n" + ($FailureMessages -join "`n")
-  }
-
-  [System.Windows.MessageBox]::Show($Summary)
+  Start-GuiApplicationQueue -Mode "Install" -Applications $ClonedApplications -GridPanel $GridPanel -CountText $CountText -ButtonsToDisable @($InstallButton, $UninstallButton)
 }
 
 function Invoke-GuiUninstallQueue {
@@ -600,7 +786,13 @@ function Invoke-GuiUninstallQueue {
     [System.Windows.Controls.ItemsControl]$GridPanel,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.TextBlock]$CountText
+    [System.Windows.Controls.TextBlock]$CountText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Button]$InstallButton,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Button]$UninstallButton
   )
 
   $SelectedApplications = @(Get-SelectedApplications)
@@ -610,16 +802,14 @@ function Invoke-GuiUninstallQueue {
     return
   }
 
-  $UninstalledCount = 0
-  $SkippedCount = 0
-  $FailedCount = 0
-  $FailureMessages = @()
+  $ApplicationsToUninstall = @()
+  $PreSkippedCount = 0
 
   foreach ($Application in $SelectedApplications) {
     $IsInstalled = Test-ApplicationInstalled -Application $Application
 
     if (-not $IsInstalled) {
-      $SkippedCount++
+      $PreSkippedCount++
       Write-DeploymentLog -Message ("{0} is not installed. Skipped." -f $Application.Name) -Level "INFO"
       continue
     }
@@ -632,34 +822,15 @@ function Invoke-GuiUninstallQueue {
     )
 
     if ($Confirmation -ne [System.Windows.MessageBoxResult]::Yes) {
-      $SkippedCount++
+      $PreSkippedCount++
       Write-DeploymentLog -Message ("{0} uninstallation was declined." -f $Application.Name) -Level "INFO"
       continue
     }
 
-    $UninstallationResult = Uninstall-ApplicationByType -Application $Application
-
-    switch ($UninstallationResult.Status) {
-      "Uninstalled" { $UninstalledCount++ }
-      "Skipped"     { $SkippedCount++ }
-      default       {
-        $FailedCount++
-        $FailureMessages += $UninstallationResult.Message
-      }
-    }
+    $ApplicationsToUninstall += $Application.PSObject.Copy()
   }
 
-  Update-ApplicationInstallationStatus
-  Update-GuiApplicationGrid -GridPanel $GridPanel
-  Update-GuiSelectedCount -CountText $CountText
-
-  $Summary = "Uninstall summary`n`nUninstalled: $UninstalledCount`nSkipped: $SkippedCount`nFailed: $FailedCount"
-
-  if ($FailureMessages.Count -gt 0) {
-    $Summary += "`n`nFailure details:`n" + ($FailureMessages -join "`n")
-  }
-
-  [System.Windows.MessageBox]::Show($Summary)
+  Start-GuiApplicationQueue -Mode "Uninstall" -Applications $ApplicationsToUninstall -PreSkippedCount $PreSkippedCount -GridPanel $GridPanel -CountText $CountText -ButtonsToDisable @($InstallButton, $UninstallButton)
 }
 
 function Update-GuiWindowsConfigDeviceInfo {
@@ -1025,7 +1196,7 @@ function Show-MainWindow {
 
   $InstallSelectedButton.Add_Click({
     try {
-      Invoke-GuiInstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText
+      Invoke-GuiInstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText -InstallButton $InstallSelectedButton -UninstallButton $UninstallSelectedButton
     }
     catch {
       [System.Windows.MessageBox]::Show("Install error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
@@ -1034,7 +1205,7 @@ function Show-MainWindow {
 
   $UninstallSelectedButton.Add_Click({
     try {
-      Invoke-GuiUninstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText
+      Invoke-GuiUninstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText -InstallButton $InstallSelectedButton -UninstallButton $UninstallSelectedButton
     }
     catch {
       [System.Windows.MessageBox]::Show("Uninstall error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
@@ -1113,6 +1284,7 @@ function Show-MainWindow {
   $NavDeploymentValidation = $Window.FindName("NavDeploymentValidation")
   $NavDeploymentValidationText = $Window.FindName("NavDeploymentValidationText")
 
+  $script:GuiQueueRunning = $false
   $script:GuiNavBorders = @($NavApplications, $NavWindowsConfig, $NavDeploymentLogs, $NavDeploymentValidation)
   $script:GuiNavTexts = @($NavApplicationsText, $NavWindowsConfigText, $NavDeploymentLogsText, $NavDeploymentValidationText)
   $script:GuiApplicationsToolbar = $Window.FindName("ApplicationsToolbar")
@@ -1167,6 +1339,13 @@ function Show-MainWindow {
     }
     catch {
       [System.Windows.MessageBox]::Show("Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+  })
+
+  $Window.Add_Closing({
+    if ($script:GuiQueueRunning) {
+      $_.Cancel = $true
+      [System.Windows.MessageBox]::Show("An install or uninstall is still running. Please wait for it to finish before closing.")
     }
   })
 
