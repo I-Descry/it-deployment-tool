@@ -7,9 +7,11 @@ function Get-SystemInformation {
     $SystemInfo.LoggedUser = $env:USERNAME
 
     $ComputerSystem = Get-CimInstance Win32_ComputerSystem
+    $OperatingSystem = Get-CimInstance Win32_OperatingSystem
 
     $SystemInfo.Manufacturer = $ComputerSystem.Manufacturer
     $SystemInfo.Model = $ComputerSystem.Model
+    $SystemInfo.WindowsEdition = $OperatingSystem.Caption
 }
 
 function Show-SystemInformation {

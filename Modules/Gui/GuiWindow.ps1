@@ -694,15 +694,22 @@ function Update-GuiSystemInfoBar {
   $Window.FindName("ComputerNameText").Text = $SystemInfo.ComputerName
   $Window.FindName("UserNameText").Text = $SystemInfo.LoggedUser
   $Window.FindName("ModelText").Text = $SystemInfo.Model
+  $Window.FindName("EditionText").Text = $SystemInfo.WindowsEdition
 
-  $AdminStatusText = $Window.FindName("AdminStatusText")
-  $AdminStatusText.Foreground = if ($SystemInfo.IsAdministrator) { "#34D399" } else { "#F2555A" }
+  $AdminStatusColor = if ($SystemInfo.IsAdministrator) { "#34D399" } else { "#F2555A" }
+  $Window.FindName("AdminStatusText").Foreground = $AdminStatusColor
+  $Window.FindName("AdminStatusDot").Fill = $AdminStatusColor
 
-  $InternetStatusText = $Window.FindName("InternetStatusText")
-  $InternetStatusText.Foreground = if ($SystemInfo.InternetStatus) { "#34D399" } else { "#F2555A" }
+  $InternetStatusColor = if ($SystemInfo.InternetStatus) { "#34D399" } else { "#F2555A" }
+  $Window.FindName("InternetStatusText").Foreground = $InternetStatusColor
+  $Window.FindName("InternetStatusDot").Fill = $InternetStatusColor
 
-  $WingetStatusText = $Window.FindName("WingetStatusText")
-  $WingetStatusText.Foreground = if ($SystemInfo.WingetAvailable) { "#34D399" } else { "#F2555A" }
+  $WingetStatusColor = if ($SystemInfo.WingetAvailable) { "#34D399" } else { "#F2555A" }
+  $Window.FindName("WingetStatusText").Foreground = $WingetStatusColor
+  $Window.FindName("WingetStatusDot").Fill = $WingetStatusColor
+
+  $ElevationLabel = if ($SystemInfo.IsAdministrator) { "Elevated (Administrator)" } else { "Not Elevated" }
+  $Window.FindName("SidebarFooterText").Text = "Session started $($script:GuiSessionStartTime.ToString('hh:mm tt'))`n$ElevationLabel"
 }
 
 function Start-GuiApplicationQueue {
@@ -1302,6 +1309,8 @@ function Invoke-GuiPowerSettingsApply {
 
 function Show-MainWindow {
   Add-Type -AssemblyName PresentationFramework
+
+  $script:GuiSessionStartTime = Get-Date
 
   Initialize-DeploymentLog -Version $AppVersion
 

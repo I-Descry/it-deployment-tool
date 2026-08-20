@@ -12,7 +12,13 @@
 
     <!-- Sidebar -->
     <Border Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="0,0,1,0">
-      <StackPanel Margin="10,14,10,14">
+      <DockPanel Margin="10,14,10,14">
+        <StackPanel DockPanel.Dock="Bottom">
+          <Border BorderBrush="#2C2F38" BorderThickness="0,1,0,0" Padding="0,10,0,0" Margin="1,6,1,0">
+            <TextBlock x:Name="SidebarFooterText" Text="-" Foreground="#6B6F79" FontSize="10.5" TextWrapping="Wrap"/>
+          </Border>
+        </StackPanel>
+        <StackPanel>
         <Border x:Name="NavApplications" Background="#2438BDF8" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand">
           <StackPanel Orientation="Horizontal">
             <Canvas x:Name="NavApplicationsIcon" Width="20" Height="20" Margin="0,0,10,0">
@@ -53,7 +59,8 @@
             <TextBlock x:Name="NavDeploymentValidationText" Text="Deployment Validation" Foreground="#9A9EA8" FontSize="13" VerticalAlignment="Center"/>
           </StackPanel>
         </Border>
-      </StackPanel>
+        </StackPanel>
+      </DockPanel>
     </Border>
 
     <!-- Main content -->
@@ -73,12 +80,23 @@
             <TextBlock Text="User " Foreground="#6B6F79" FontSize="12"/>
             <TextBlock x:Name="UserNameText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold" Margin="0,0,20,0"/>
             <TextBlock Text="Model " Foreground="#6B6F79" FontSize="12"/>
-            <TextBlock x:Name="ModelText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
+            <TextBlock x:Name="ModelText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold" Margin="0,0,20,0"/>
+            <TextBlock Text="Edition " Foreground="#6B6F79" FontSize="12"/>
+            <TextBlock x:Name="EditionText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
           </StackPanel>
           <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-            <TextBlock x:Name="WingetStatusText" Text="WinGet" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold" Margin="14,0,0,0"/>
-            <TextBlock x:Name="InternetStatusText" Text="Internet" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold" Margin="14,0,0,0"/>
-            <TextBlock x:Name="AdminStatusText" Text="Administrator" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold" Margin="14,0,0,0"/>
+            <StackPanel Orientation="Horizontal" Margin="14,0,0,0">
+              <Ellipse x:Name="WingetStatusDot" Width="6" Height="6" Fill="#6B6F79" VerticalAlignment="Center" Margin="0,0,6,0"/>
+              <TextBlock x:Name="WingetStatusText" Text="WinGet" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="14,0,0,0">
+              <Ellipse x:Name="InternetStatusDot" Width="6" Height="6" Fill="#6B6F79" VerticalAlignment="Center" Margin="0,0,6,0"/>
+              <TextBlock x:Name="InternetStatusText" Text="Internet" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="14,0,0,0">
+              <Ellipse x:Name="AdminStatusDot" Width="6" Height="6" Fill="#6B6F79" VerticalAlignment="Center" Margin="0,0,6,0"/>
+              <TextBlock x:Name="AdminStatusText" Text="Administrator" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
+            </StackPanel>
           </StackPanel>
         </DockPanel>
       </Border>
