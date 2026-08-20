@@ -176,14 +176,14 @@ if ($ValidateOnly) {
   exit 0
 }
 
-if ($Gui) {
-  Show-MainWindow
+$AdministratorGranted = Request-Administrator -ScriptPath $PSCommandPath -Gui:$Gui
+
+if (-not $AdministratorGranted) {
   exit
 }
 
-$AdministratorGranted = Request-Administrator -ScriptPath $PSCommandPath
-
-if (-not $AdministratorGranted) {
+if ($Gui) {
+  Show-MainWindow
   exit
 }
 

@@ -101,7 +101,7 @@ function Install-ApplicationWithWinget {
 
     Write-DeploymentLog -Message $_.Exception.Message -Level "ERROR"
 
-    return $false
+    return [PSCustomObject]@{ Status = "Failed"; Message = $_.Exception.Message }
   }
 
   Write-DeploymentLog -Message ("Installation started: {0} ({1})" -f $Application.Name, $Application.Winget)
@@ -116,7 +116,7 @@ function Install-ApplicationWithWinget {
 
     Write-DeploymentLog -Message "$($Application.Name) installed successfully." -Level "SUCCESS"
 
-    return $true
+    return [PSCustomObject]@{ Status = "Installed"; Message = "$($Application.Name) installed successfully." }
   }
 
   Write-Host
@@ -124,7 +124,7 @@ function Install-ApplicationWithWinget {
 
   Write-DeploymentLog -Message ("{0} installation failed. Exit Code: {1}" -f $Application.Name, $ExitCode) -Level "ERROR"
 
-  return $false
+  return [PSCustomObject]@{ Status = "Failed"; Message = ("{0} installation failed. Exit code: {1}" -f $Application.Name, $ExitCode) }
 }
 
 function Uninstall-ApplicationWithWinget {
@@ -133,7 +133,18 @@ function Uninstall-ApplicationWithWinget {
   Write-Host
   Write-Host "Uninstalling $($Application.Name)..." -ForegroundColor Cyan
 
-  $WingetArguments = Get-WingetUninstallArguments -Application $Application
+  try {
+    $WingetArguments = Get-WingetUninstallArguments -Application $Application
+  }
+
+  catch {
+    Write-Host
+    Write-Host $_.Exception.Message -ForegroundColor Red
+
+    Write-DeploymentLog -Message $_.Exception.Message -Level "ERROR"
+
+    return [PSCustomObject]@{ Status = "Failed"; Message = $_.Exception.Message }
+  }
 
   Write-DeploymentLog -Message ("Uninstallation started: {0} ({1})" -f $Application.Name, $Application.Winget)
 
@@ -147,7 +158,7 @@ function Uninstall-ApplicationWithWinget {
 
     Write-DeploymentLog -Message "$($Application.Name) uninstalled successfully." -Level "SUCCESS"
 
-    return $true
+    return [PSCustomObject]@{ Status = "Uninstalled"; Message = "$($Application.Name) uninstalled successfully." }
   }
 
   Write-Host
@@ -155,5 +166,5 @@ function Uninstall-ApplicationWithWinget {
 
   Write-DeploymentLog -Message ("{0} uninstallation failed. Exit Code: {1}" -f $Application.Name, $ExitCode) -Level "ERROR"
 
-  return $false
+  return [PSCustomObject]@{ Status = "Failed"; Message = ("{0} uninstallation failed. Exit code: {1}" -f $Application.Name, $ExitCode) }
 }

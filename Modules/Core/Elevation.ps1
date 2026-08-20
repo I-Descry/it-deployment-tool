@@ -5,7 +5,9 @@
 function Request-Administrator {
   param(
     [Parameter(Mandatory)]
-    [string]$ScriptPath
+    [string]$ScriptPath,
+
+    [switch]$Gui
   )
 
   Test-Administrator
@@ -28,6 +30,10 @@ function Request-Administrator {
     "-File"
     "`"$ScriptPath`""
   )
+
+  if ($Gui) {
+    $PowerShellArguments += "-Gui"
+  }
 
   try {
     Start-Process -FilePath $PowerShellPath -ArgumentList $PowerShellArguments -WorkingDirectory $WorkingDirectory -Verb RunAs -ErrorAction Stop

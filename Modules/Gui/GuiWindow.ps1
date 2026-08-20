@@ -128,6 +128,284 @@ function Update-GuiSelectedCount {
   $CountText.Text = "$SelectedCount selected"
 }
 
+function New-GuiValidationStatusRow {
+  param(
+    [Parameter(Mandatory)]
+    [string]$StatusLabel,
+
+    [Parameter(Mandatory)]
+    [bool]$Passed,
+
+    [Parameter(Mandatory)]
+    [string]$PrimaryText,
+
+    [Parameter(Mandatory)]
+    [string]$DetailText
+  )
+
+  $RowGrid = New-Object System.Windows.Controls.Grid
+  $RowGrid.Margin = "0,4,0,4"
+
+  $StatusColumn = New-Object System.Windows.Controls.ColumnDefinition
+  $StatusColumn.Width = "56"
+  $RowGrid.ColumnDefinitions.Add($StatusColumn)
+
+  $NameColumn = New-Object System.Windows.Controls.ColumnDefinition
+  $NameColumn.Width = "220"
+  $RowGrid.ColumnDefinitions.Add($NameColumn)
+
+  $DetailColumn = New-Object System.Windows.Controls.ColumnDefinition
+  $DetailColumn.Width = "*"
+  $RowGrid.ColumnDefinitions.Add($DetailColumn)
+
+  $StatusText = New-Object System.Windows.Controls.TextBlock
+  $StatusText.Text = $StatusLabel
+  $StatusText.FontSize = 11
+  $StatusText.FontWeight = "Bold"
+  $StatusText.Foreground = if ($Passed) { "#34D399" } else { "#F2555A" }
+  [System.Windows.Controls.Grid]::SetColumn($StatusText, 0)
+  $RowGrid.Children.Add($StatusText) | Out-Null
+
+  $NameText = New-Object System.Windows.Controls.TextBlock
+  $NameText.Text = $PrimaryText
+  $NameText.FontSize = 12.5
+  $NameText.FontWeight = "SemiBold"
+  $NameText.Foreground = "#E8E9EC"
+  $NameText.TextTrimming = "CharacterEllipsis"
+  $NameText.Margin = "0,0,10,0"
+  [System.Windows.Controls.Grid]::SetColumn($NameText, 1)
+  $RowGrid.Children.Add($NameText) | Out-Null
+
+  $DetailTextBlock = New-Object System.Windows.Controls.TextBlock
+  $DetailTextBlock.Text = $DetailText
+  $DetailTextBlock.FontSize = 11.5
+  $DetailTextBlock.Foreground = "#9A9EA8"
+  $DetailTextBlock.TextWrapping = "Wrap"
+  [System.Windows.Controls.Grid]::SetColumn($DetailTextBlock, 2)
+  $RowGrid.Children.Add($DetailTextBlock) | Out-Null
+
+  return $RowGrid
+}
+
+function New-GuiDeviceReadinessRow {
+  param(
+    [Parameter(Mandatory)]
+    [PSCustomObject]$Result
+  )
+
+  $StatusLabel = if ($Result.Passed) { "PASS" } else { "FAIL" }
+
+  return New-GuiValidationStatusRow -StatusLabel $StatusLabel -Passed $Result.Passed -PrimaryText $Result.Name -DetailText $Result.Detail
+}
+
+function New-GuiInstallerReadinessRow {
+  param(
+    [Parameter(Mandatory)]
+    [PSCustomObject]$Result
+  )
+
+  $Passed = ($Result.Status -eq "READY")
+  $Detail = "{0} - {1}" -f $Result.InstallType, $Result.Message
+
+  return New-GuiValidationStatusRow -StatusLabel $Result.Status -Passed $Passed -PrimaryText $Result.Name -DetailText $Detail
+}
+
+function New-GuiValidationSectionCard {
+  param(
+    [Parameter(Mandatory)]
+    [string]$SectionTitle,
+
+    [Parameter(Mandatory)]
+    [System.Windows.UIElement[]]$Rows,
+
+    [Parameter(Mandatory)]
+    [int]$PassedCount,
+
+    [Parameter(Mandatory)]
+    [int]$TotalCount
+  )
+
+  $Card = New-Object System.Windows.Controls.Border
+  $Card.Background = "#1C1F26"
+  $Card.BorderBrush = "#2C2F38"
+  $Card.BorderThickness = "1"
+  $Card.CornerRadius = "10"
+  $Card.Padding = "18"
+  $Card.Margin = "0,0,0,16"
+
+  $Stack = New-Object System.Windows.Controls.StackPanel
+  $Card.Child = $Stack
+
+  $HeaderGrid = New-Object System.Windows.Controls.Grid
+  $HeaderGrid.Margin = "0,0,0,10"
+
+  $TitleColumn = New-Object System.Windows.Controls.ColumnDefinition
+  $TitleColumn.Width = "*"
+  $HeaderGrid.ColumnDefinitions.Add($TitleColumn)
+
+  $CountColumn = New-Object System.Windows.Controls.ColumnDefinition
+  $CountColumn.Width = "Auto"
+  $HeaderGrid.ColumnDefinitions.Add($CountColumn)
+
+  $Header = New-Object System.Windows.Controls.TextBlock
+  $Header.Text = $SectionTitle.ToUpper()
+  $Header.FontSize = 12
+  $Header.FontWeight = "Bold"
+  $Header.Foreground = "#9A9EA8"
+  [System.Windows.Controls.Grid]::SetColumn($Header, 0)
+  $HeaderGrid.Children.Add($Header) | Out-Null
+
+  $CountText = New-Object System.Windows.Controls.TextBlock
+  $CountText.Text = "$PassedCount / $TotalCount passed"
+  $CountText.FontSize = 11
+  $CountText.FontWeight = "SemiBold"
+  $CountText.Foreground = if ($PassedCount -eq $TotalCount) { "#34D399" } else { "#F2555A" }
+  [System.Windows.Controls.Grid]::SetColumn($CountText, 1)
+  $HeaderGrid.Children.Add($CountText) | Out-Null
+
+  $Stack.Children.Add($HeaderGrid) | Out-Null
+
+  foreach ($Row in $Rows) {
+    $Stack.Children.Add($Row) | Out-Null
+  }
+
+  return $Card
+}
+
+function Invoke-GuiDeploymentValidation {
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.StackPanel]$ValidationPanel,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$SummaryText
+  )
+
+  $ValidationPanel.Children.Clear()
+
+  $DeviceResults = @(Get-DeploymentValidationResults)
+  Write-DeploymentValidationResultsToLog -Results $DeviceResults
+
+  $DevicePassedCount = @($DeviceResults | Where-Object { $_.Passed }).Count
+  $DeviceRows = @($DeviceResults | ForEach-Object { New-GuiDeviceReadinessRow -Result $_ })
+  $DeviceCard = New-GuiValidationSectionCard -SectionTitle "Device Readiness Checks" -Rows $DeviceRows -PassedCount $DevicePassedCount -TotalCount $DeviceResults.Count
+  $ValidationPanel.Children.Add($DeviceCard) | Out-Null
+
+  $ReadinessResults = @(Get-InstallerPackageReadiness -Applications $script:Applications)
+  $ReadinessPassedCount = @($ReadinessResults | Where-Object { $_.Status -eq "READY" }).Count
+  $ReadinessRows = @($ReadinessResults | ForEach-Object { New-GuiInstallerReadinessRow -Result $_ })
+  $ReadinessCard = New-GuiValidationSectionCard -SectionTitle "Installer Package Status" -Rows $ReadinessRows -PassedCount $ReadinessPassedCount -TotalCount $ReadinessResults.Count
+  $ValidationPanel.Children.Add($ReadinessCard) | Out-Null
+
+  $TotalPassed = $DevicePassedCount + $ReadinessPassedCount
+  $TotalChecks = $DeviceResults.Count + $ReadinessResults.Count
+  $TotalFailed = $TotalChecks - $TotalPassed
+
+  $SummaryText.Text = "$TotalPassed passed, $TotalFailed failed"
+  $SummaryText.Foreground = if ($TotalFailed -eq 0) { "#34D399" } else { "#F2555A" }
+}
+
+function Show-GuiLogContent {
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBox]$ContentTextBox,
+
+    [Parameter(Mandatory)]
+    [System.IO.FileInfo]$LogFile
+  )
+
+  try {
+    $LogContent = @(Get-DeploymentLogContent -LogFile $LogFile)
+
+    if ($LogContent.Count -eq 0) {
+      $ContentTextBox.Text = "The deployment log is empty."
+    }
+    else {
+      $ContentTextBox.Text = ($LogContent -join "`r`n")
+    }
+  }
+
+  catch {
+    $ContentTextBox.Text = "Unable to read the deployment log: $($_.Exception.Message)"
+  }
+}
+
+function New-GuiLogListRow {
+  param(
+    [Parameter(Mandatory)]
+    [System.IO.FileInfo]$LogFile
+  )
+
+  $Row = New-Object System.Windows.Controls.Border
+  $Row.CornerRadius = "6"
+  $Row.Padding = "10,8"
+  $Row.Margin = "0,0,0,4"
+  $Row.Cursor = "Hand"
+  $Row.Tag = $LogFile
+
+  $Stack = New-Object System.Windows.Controls.StackPanel
+  $Row.Child = $Stack
+
+  $NameText = New-Object System.Windows.Controls.TextBlock
+  $NameText.Text = $LogFile.Name
+  $NameText.FontSize = 12
+  $NameText.FontWeight = "SemiBold"
+  $NameText.Foreground = "#E8E9EC"
+  $NameText.TextTrimming = "CharacterEllipsis"
+  $Stack.Children.Add($NameText) | Out-Null
+
+  $DetailText = New-Object System.Windows.Controls.TextBlock
+  $DetailText.Text = "{0} - {1:N0} bytes" -f $LogFile.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss"), $LogFile.Length
+  $DetailText.FontSize = 10.5
+  $DetailText.Foreground = "#9A9EA8"
+  $DetailText.Margin = "0,2,0,0"
+  $Stack.Children.Add($DetailText) | Out-Null
+
+  $Row.Add_MouseLeftButtonUp({
+    try {
+      foreach ($SiblingRow in $this.Parent.Children) {
+        $SiblingRow.Background = $null
+      }
+
+      $this.Background = "#2438BDF8"
+
+      Show-GuiLogContent -ContentTextBox $script:GuiLogContentTextBox -LogFile $this.Tag
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Log view error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+  })
+
+  return $Row
+}
+
+function Update-GuiLogsList {
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.StackPanel]$ListPanel,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBox]$ContentTextBox
+  )
+
+  $ListPanel.Children.Clear()
+
+  $DeploymentLogs = @(Get-DeploymentLogs -MaximumResults 10)
+
+  if ($DeploymentLogs.Count -eq 0) {
+    $ContentTextBox.Text = "No deployment logs found."
+    return
+  }
+
+  foreach ($LogFile in $DeploymentLogs) {
+    $Row = New-GuiLogListRow -LogFile $LogFile
+    $ListPanel.Children.Add($Row) | Out-Null
+  }
+
+  $ListPanel.Children[0].Background = "#2438BDF8"
+  Show-GuiLogContent -ContentTextBox $ContentTextBox -LogFile $DeploymentLogs[0]
+}
+
 function Switch-GuiScreen {
   param(
     [Parameter(Mandatory)]
@@ -156,11 +434,41 @@ function Switch-GuiScreen {
   if ($ScreenName -eq "Applications") {
     $script:GuiApplicationsToolbar.Visibility = "Visible"
     $script:GuiApplicationsScrollViewer.Visibility = "Visible"
+    $script:GuiDeploymentValidationToolbar.Visibility = "Collapsed"
+    $script:GuiDeploymentValidationScrollViewer.Visibility = "Collapsed"
+    $script:GuiDeploymentLogsToolbar.Visibility = "Collapsed"
+    $script:GuiDeploymentLogsContent.Visibility = "Collapsed"
     $script:GuiPlaceholderText.Visibility = "Collapsed"
+  }
+  elseif ($ScreenName -eq "Deployment Validation") {
+    $script:GuiApplicationsToolbar.Visibility = "Collapsed"
+    $script:GuiApplicationsScrollViewer.Visibility = "Collapsed"
+    $script:GuiDeploymentValidationToolbar.Visibility = "Visible"
+    $script:GuiDeploymentValidationScrollViewer.Visibility = "Visible"
+    $script:GuiDeploymentLogsToolbar.Visibility = "Collapsed"
+    $script:GuiDeploymentLogsContent.Visibility = "Collapsed"
+    $script:GuiPlaceholderText.Visibility = "Collapsed"
+
+    Invoke-GuiDeploymentValidation -ValidationPanel $script:GuiDeploymentValidationPanel -SummaryText $script:GuiValidationSummaryText
+  }
+  elseif ($ScreenName -eq "Deployment Logs") {
+    $script:GuiApplicationsToolbar.Visibility = "Collapsed"
+    $script:GuiApplicationsScrollViewer.Visibility = "Collapsed"
+    $script:GuiDeploymentValidationToolbar.Visibility = "Collapsed"
+    $script:GuiDeploymentValidationScrollViewer.Visibility = "Collapsed"
+    $script:GuiDeploymentLogsToolbar.Visibility = "Visible"
+    $script:GuiDeploymentLogsContent.Visibility = "Visible"
+    $script:GuiPlaceholderText.Visibility = "Collapsed"
+
+    Update-GuiLogsList -ListPanel $script:GuiDeploymentLogsPanel -ContentTextBox $script:GuiLogContentTextBox
   }
   else {
     $script:GuiApplicationsToolbar.Visibility = "Collapsed"
     $script:GuiApplicationsScrollViewer.Visibility = "Collapsed"
+    $script:GuiDeploymentValidationToolbar.Visibility = "Collapsed"
+    $script:GuiDeploymentValidationScrollViewer.Visibility = "Collapsed"
+    $script:GuiDeploymentLogsToolbar.Visibility = "Collapsed"
+    $script:GuiDeploymentLogsContent.Visibility = "Collapsed"
     $script:GuiPlaceholderText.Text = "$ScreenName screen - not built yet"
     $script:GuiPlaceholderText.Visibility = "Visible"
   }
@@ -191,8 +499,152 @@ function Update-GuiSystemInfoBar {
   $WingetStatusText.Foreground = if ($SystemInfo.WingetAvailable) { "#34D399" } else { "#F2555A" }
 }
 
+function Invoke-GuiInstallQueue {
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.ItemsControl]$GridPanel,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$CountText
+  )
+
+  $SelectedApplications = @(Get-SelectedApplications)
+
+  if ($SelectedApplications.Count -eq 0) {
+    [System.Windows.MessageBox]::Show("No applications selected.")
+    return
+  }
+
+  $InstalledCount = 0
+  $SkippedCount = 0
+  $BlockedCount = 0
+  $FailedCount = 0
+  $NotFoundCount = 0
+  $FailureMessages = @()
+
+  foreach ($Application in $SelectedApplications) {
+    $AlreadyInstalled = Test-ApplicationInstalled -Application $Application
+
+    if ($AlreadyInstalled) {
+      $SkippedCount++
+      Write-DeploymentLog -Message ("{0} is already installed. Skipped." -f $Application.Name) -Level "INFO"
+      continue
+    }
+
+    $BlockingProcesses = @(Get-BlockingApplicationProcesses -Application $Application)
+
+    if ($BlockingProcesses.Count -gt 0) {
+      $BlockedCount++
+      $ProcessNames = ($BlockingProcesses | Select-Object -ExpandProperty ProcessName -Unique | Sort-Object) -join ", "
+      Write-DeploymentLog -Message ("{0} was skipped because these processes are running: {1}" -f $Application.Name, $ProcessNames) -Level "WARNING"
+      continue
+    }
+
+    $InstallerAvailable = Test-ApplicationInstallerAvailable -Application $Application
+
+    if (-not $InstallerAvailable) {
+      $NotFoundCount++
+      Write-DeploymentLog -Message ("Installer was not found or is unavailable for {0}." -f $Application.Name) -Level "ERROR"
+      continue
+    }
+
+    $InstallationResult = Install-ApplicationByType -Application $Application
+
+    switch ($InstallationResult.Status) {
+      "Installed" { $InstalledCount++ }
+      "Skipped"   { $SkippedCount++ }
+      default     {
+        $FailedCount++
+        $FailureMessages += $InstallationResult.Message
+      }
+    }
+  }
+
+  Update-ApplicationInstallationStatus
+  Update-GuiApplicationGrid -GridPanel $GridPanel
+  Update-GuiSelectedCount -CountText $CountText
+
+  $Summary = "Install summary`n`nInstalled: $InstalledCount`nSkipped: $SkippedCount`nBlocked: $BlockedCount`nFailed: $FailedCount`nNot Found: $NotFoundCount"
+
+  if ($FailureMessages.Count -gt 0) {
+    $Summary += "`n`nFailure details:`n" + ($FailureMessages -join "`n")
+  }
+
+  [System.Windows.MessageBox]::Show($Summary)
+}
+
+function Invoke-GuiUninstallQueue {
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.ItemsControl]$GridPanel,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$CountText
+  )
+
+  $SelectedApplications = @(Get-SelectedApplications)
+
+  if ($SelectedApplications.Count -eq 0) {
+    [System.Windows.MessageBox]::Show("No applications selected.")
+    return
+  }
+
+  $UninstalledCount = 0
+  $SkippedCount = 0
+  $FailedCount = 0
+  $FailureMessages = @()
+
+  foreach ($Application in $SelectedApplications) {
+    $IsInstalled = Test-ApplicationInstalled -Application $Application
+
+    if (-not $IsInstalled) {
+      $SkippedCount++
+      Write-DeploymentLog -Message ("{0} is not installed. Skipped." -f $Application.Name) -Level "INFO"
+      continue
+    }
+
+    $Confirmation = [System.Windows.MessageBox]::Show(
+      "Uninstall $($Application.Name)?",
+      "Confirm Uninstall",
+      [System.Windows.MessageBoxButton]::YesNo,
+      [System.Windows.MessageBoxImage]::Warning
+    )
+
+    if ($Confirmation -ne [System.Windows.MessageBoxResult]::Yes) {
+      $SkippedCount++
+      Write-DeploymentLog -Message ("{0} uninstallation was declined." -f $Application.Name) -Level "INFO"
+      continue
+    }
+
+    $UninstallationResult = Uninstall-ApplicationByType -Application $Application
+
+    switch ($UninstallationResult.Status) {
+      "Uninstalled" { $UninstalledCount++ }
+      "Skipped"     { $SkippedCount++ }
+      default       {
+        $FailedCount++
+        $FailureMessages += $UninstallationResult.Message
+      }
+    }
+  }
+
+  Update-ApplicationInstallationStatus
+  Update-GuiApplicationGrid -GridPanel $GridPanel
+  Update-GuiSelectedCount -CountText $CountText
+
+  $Summary = "Uninstall summary`n`nUninstalled: $UninstalledCount`nSkipped: $SkippedCount`nFailed: $FailedCount"
+
+  if ($FailureMessages.Count -gt 0) {
+    $Summary += "`n`nFailure details:`n" + ($FailureMessages -join "`n")
+  }
+
+  [System.Windows.MessageBox]::Show($Summary)
+}
+
 function Show-MainWindow {
   Add-Type -AssemblyName PresentationFramework
+
+  Initialize-DeploymentLog -Version $AppVersion
 
   Initialize-Applications | Out-Null
   Update-ApplicationInstallationStatus
@@ -209,6 +661,15 @@ function Show-MainWindow {
   $SelectAllButton = $Window.FindName("SelectAllButton")
   $SelectRecommendedButton = $Window.FindName("SelectRecommendedButton")
   $ClearAllButton = $Window.FindName("ClearAllButton")
+  $InstallSelectedButton = $Window.FindName("InstallSelectedButton")
+  $UninstallSelectedButton = $Window.FindName("UninstallSelectedButton")
+  $DeploymentValidationPanel = $Window.FindName("DeploymentValidationPanel")
+  $ValidationSummaryText = $Window.FindName("ValidationSummaryText")
+  $RerunValidationButton = $Window.FindName("RerunValidationButton")
+  $DeploymentLogsPanel = $Window.FindName("DeploymentLogsPanel")
+  $LogContentTextBox = $Window.FindName("LogContentTextBox")
+  $RefreshLogsButton = $Window.FindName("RefreshLogsButton")
+  $OpenLogsFolderButton = $Window.FindName("OpenLogsFolderButton")
 
   Update-GuiApplicationGrid -GridPanel $AppGridPanel
   Update-GuiSelectedCount -CountText $SelectedCountText
@@ -247,6 +708,51 @@ function Show-MainWindow {
     }
   })
 
+  $InstallSelectedButton.Add_Click({
+    try {
+      Invoke-GuiInstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Install error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+  })
+
+  $UninstallSelectedButton.Add_Click({
+    try {
+      Invoke-GuiUninstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Uninstall error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+  })
+
+  $RerunValidationButton.Add_Click({
+    try {
+      Invoke-GuiDeploymentValidation -ValidationPanel $DeploymentValidationPanel -SummaryText $ValidationSummaryText
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Deployment validation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+  })
+
+  $RefreshLogsButton.Add_Click({
+    try {
+      Update-GuiLogsList -ListPanel $DeploymentLogsPanel -ContentTextBox $LogContentTextBox
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+  })
+
+  $OpenLogsFolderButton.Add_Click({
+    try {
+      Open-DeploymentLogsFolder
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Unable to open the Logs folder: $($_.Exception.Message)")
+    }
+  })
+
   $NavApplications = $Window.FindName("NavApplications")
   $NavApplicationsText = $Window.FindName("NavApplicationsText")
   $NavWindowsConfig = $Window.FindName("NavWindowsConfig")
@@ -261,6 +767,14 @@ function Show-MainWindow {
   $script:GuiApplicationsToolbar = $Window.FindName("ApplicationsToolbar")
   $script:GuiApplicationsScrollViewer = $Window.FindName("ApplicationsScrollViewer")
   $script:GuiPlaceholderText = $Window.FindName("PlaceholderText")
+  $script:GuiDeploymentValidationToolbar = $Window.FindName("DeploymentValidationToolbar")
+  $script:GuiDeploymentValidationScrollViewer = $Window.FindName("DeploymentValidationScrollViewer")
+  $script:GuiDeploymentValidationPanel = $DeploymentValidationPanel
+  $script:GuiValidationSummaryText = $ValidationSummaryText
+  $script:GuiDeploymentLogsToolbar = $Window.FindName("DeploymentLogsToolbar")
+  $script:GuiDeploymentLogsContent = $Window.FindName("DeploymentLogsContent")
+  $script:GuiDeploymentLogsPanel = $DeploymentLogsPanel
+  $script:GuiLogContentTextBox = $LogContentTextBox
 
   $NavApplications.Add_MouseLeftButtonUp({
     try {
@@ -299,4 +813,6 @@ function Show-MainWindow {
   })
 
   [void]$Window.ShowDialog()
+
+  Complete-DeploymentLog
 }

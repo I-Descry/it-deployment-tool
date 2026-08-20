@@ -68,13 +68,32 @@
                 BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
 
         <Button x:Name="UninstallSelectedButton" Content="Uninstall Selected" DockPanel.Dock="Right"
-                Padding="18,9" IsEnabled="False" Background="#1AF2555A" Foreground="#F2555A"
+                Padding="18,9" Background="#1AF2555A" Foreground="#F2555A"
                 BorderBrush="#F2555A" BorderThickness="1.5" FontSize="13" FontWeight="Bold"/>
         <Button x:Name="InstallSelectedButton" Content="Install Selected" DockPanel.Dock="Right"
-                Padding="18,9" Margin="0,0,10,0" IsEnabled="False" Background="#38BDF8" Foreground="#08131A"
+                Padding="18,9" Margin="0,0,10,0" Background="#38BDF8" Foreground="#08131A"
                 BorderThickness="0" FontSize="13" FontWeight="Bold"/>
         <TextBlock x:Name="SelectedCountText" Text="0 selected" DockPanel.Dock="Right"
                    Foreground="#9A9EA8" FontSize="12" VerticalAlignment="Center" Margin="0,0,14,0"/>
+      </DockPanel>
+
+      <!-- Deployment Validation toolbar -->
+      <DockPanel x:Name="DeploymentValidationToolbar" Grid.Row="1" Margin="24,14,24,10" LastChildFill="False" Visibility="Collapsed">
+        <Button x:Name="RerunValidationButton" Content="Re-run Validation" DockPanel.Dock="Right"
+                Padding="18,9" Background="#38BDF8" Foreground="#08131A"
+                BorderThickness="0" FontSize="13" FontWeight="Bold"/>
+        <TextBlock x:Name="ValidationSummaryText" Text="" DockPanel.Dock="Right"
+                   Foreground="#9A9EA8" FontSize="12" VerticalAlignment="Center" Margin="0,0,14,0"/>
+      </DockPanel>
+
+      <!-- Deployment Logs toolbar -->
+      <DockPanel x:Name="DeploymentLogsToolbar" Grid.Row="1" Margin="24,14,24,10" LastChildFill="False" Visibility="Collapsed">
+        <Button x:Name="RefreshLogsButton" Content="Refresh" DockPanel.Dock="Left"
+                Padding="14,8" Margin="0,0,10,0" Background="#23262E" Foreground="#E8E9EC"
+                BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
+        <Button x:Name="OpenLogsFolderButton" Content="Open Logs Folder" DockPanel.Dock="Left"
+                Padding="14,8" Background="#23262E" Foreground="#E8E9EC"
+                BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
       </DockPanel>
 
       <!-- Applications grid -->
@@ -87,6 +106,31 @@
           </ItemsControl.ItemsPanel>
         </ItemsControl>
       </ScrollViewer>
+
+      <!-- Deployment validation content -->
+      <ScrollViewer x:Name="DeploymentValidationScrollViewer" Grid.Row="2" Padding="24,4,24,24" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <StackPanel x:Name="DeploymentValidationPanel"/>
+      </ScrollViewer>
+
+      <!-- Deployment logs content -->
+      <Grid x:Name="DeploymentLogsContent" Grid.Row="2" Margin="24,4,24,24" Visibility="Collapsed">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="280"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <ScrollViewer Grid.Column="0" Margin="0,0,14,0" VerticalScrollBarVisibility="Auto">
+          <StackPanel x:Name="DeploymentLogsPanel"/>
+        </ScrollViewer>
+
+        <Border Grid.Column="1" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10">
+          <TextBox x:Name="LogContentTextBox"
+                   Background="Transparent" Foreground="#E8E9EC" BorderThickness="0"
+                   FontFamily="Consolas" FontSize="12" Padding="14"
+                   IsReadOnly="True" TextWrapping="NoWrap"
+                   VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+        </Border>
+      </Grid>
 
       <!-- Placeholder for not-yet-built screens -->
       <TextBlock x:Name="PlaceholderText" Grid.Row="2" Text="Coming soon"
