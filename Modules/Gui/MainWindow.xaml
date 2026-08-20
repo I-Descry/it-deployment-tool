@@ -96,6 +96,13 @@
                 BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
       </DockPanel>
 
+      <!-- Windows Configuration toolbar -->
+      <DockPanel x:Name="WindowsConfigToolbar" Grid.Row="1" Margin="24,14,24,10" LastChildFill="False" Visibility="Collapsed">
+        <Button x:Name="RefreshWindowsConfigButton" Content="Refresh" DockPanel.Dock="Left"
+                Padding="14,8" Background="#23262E" Foreground="#E8E9EC"
+                BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
+      </DockPanel>
+
       <!-- Applications grid -->
       <ScrollViewer x:Name="ApplicationsScrollViewer" Grid.Row="2" Padding="24,4,24,24" VerticalScrollBarVisibility="Auto">
         <ItemsControl x:Name="AppGridPanel">
@@ -131,6 +138,114 @@
                    VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
         </Border>
       </Grid>
+
+      <!-- Windows Configuration content -->
+      <ScrollViewer x:Name="WindowsConfigScrollViewer" Grid.Row="2" Padding="24,4,24,24" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <StackPanel x:Name="WindowsConfigPanel" MaxWidth="640">
+
+          <!-- Device Information -->
+          <Border Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,16">
+            <StackPanel>
+              <TextBlock Text="DEVICE INFORMATION" FontSize="12" FontWeight="Bold" Foreground="#9A9EA8" Margin="0,0,0,10"/>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="150"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Computer Name" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceComputerNameText" Grid.Row="0" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Manufacturer" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceManufacturerText" Grid.Row="1" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Model" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceModelText" Grid.Row="2" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Serial Number" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceSerialNumberText" Grid.Row="3" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Network Type" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceNetworkTypeText" Grid.Row="4" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Domain/Workgroup" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceDomainWorkgroupText" Grid.Row="5" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="OS Edition" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceOSEditionText" Grid.Row="6" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="OS Version" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceOSVersionText" Grid.Row="7" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="Build Number" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceOSBuildNumberText" Grid.Row="8" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="9" Grid.Column="0" Text="Architecture" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceOSArchitectureText" Grid.Row="9" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="10" Grid.Column="0" Text="Logged User" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceLoggedUserText" Grid.Row="10" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="11" Grid.Column="0" Text="Administrator" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceAdminStatusText" Grid.Row="11" Grid.Column="1" Text="-" Foreground="#6B6F79" FontSize="12"/>
+                <TextBlock Grid.Row="12" Grid.Column="0" Text="Active Power Plan" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DevicePowerPlanText" Grid.Row="12" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+                <TextBlock Grid.Row="13" Grid.Column="0" Text="Sleep (Plugged/Battery)" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceSleepText" Grid.Row="13" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <!-- Rename Computer -->
+          <Border Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,16">
+            <StackPanel>
+              <TextBlock Text="RENAME COMPUTER" FontSize="12" FontWeight="Bold" Foreground="#9A9EA8" Margin="0,0,0,10"/>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Current: " Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="CurrentComputerNameText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
+              </StackPanel>
+              <TextBlock Text="Format: POSITION-NAME (e.g. IT04-JP) - letters, numbers, one hyphen, max 15 characters" Foreground="#6B6F79" FontSize="10.5" Margin="0,0,0,8" TextWrapping="Wrap"/>
+              <TextBox x:Name="NewComputerNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#2C2F38" BorderThickness="1" Padding="8,6" FontSize="12.5" Margin="0,0,0,10"/>
+              <Button x:Name="RenameComputerButton" Content="Rename Computer" HorizontalAlignment="Left"
+                      Padding="18,9" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="13" FontWeight="Bold"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Create Local Standard User -->
+          <Border Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,16">
+            <StackPanel>
+              <TextBlock Text="CREATE LOCAL STANDARD USER" FontSize="12" FontWeight="Bold" Foreground="#9A9EA8" Margin="0,0,0,10"/>
+              <StackPanel x:Name="LocalUsersListPanel" Margin="0,0,0,10"/>
+              <TextBlock Text="Username" Foreground="#9A9EA8" FontSize="11" Margin="0,0,0,3"/>
+              <TextBox x:Name="NewUserNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#2C2F38" BorderThickness="1" Padding="8,6" FontSize="12.5" Margin="0,0,0,8"/>
+              <TextBlock Text="Full Name (optional)" Foreground="#9A9EA8" FontSize="11" Margin="0,0,0,3"/>
+              <TextBox x:Name="NewUserFullNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#2C2F38" BorderThickness="1" Padding="8,6" FontSize="12.5" Margin="0,0,0,8"/>
+              <TextBlock Text="Password" Foreground="#9A9EA8" FontSize="11" Margin="0,0,0,3"/>
+              <PasswordBox x:Name="NewUserPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#2C2F38" BorderThickness="1" Padding="8,6" FontSize="12.5" Margin="0,0,0,8"/>
+              <TextBlock Text="Confirm Password" Foreground="#9A9EA8" FontSize="11" Margin="0,0,0,3"/>
+              <PasswordBox x:Name="NewUserConfirmPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#2C2F38" BorderThickness="1" Padding="8,6" FontSize="12.5" Margin="0,0,0,10"/>
+              <Button x:Name="CreateUserButton" Content="Create User" HorizontalAlignment="Left"
+                      Padding="18,9" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="13" FontWeight="Bold"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Power and Sleep Settings -->
+          <Border Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,16">
+            <StackPanel>
+              <TextBlock Text="POWER AND SLEEP SETTINGS" FontSize="12" FontWeight="Bold" Foreground="#9A9EA8" Margin="0,0,0,10"/>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                <TextBlock Text="Current plugged in: " Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="CurrentPluggedInText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Current on battery: " Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="CurrentBatteryText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
+              </StackPanel>
+              <TextBlock Text="Minutes, 0 to 1440. Enter 0 for Never." Foreground="#6B6F79" FontSize="10.5" Margin="0,0,0,8"/>
+              <TextBlock Text="Sleep timeout when plugged in (minutes)" Foreground="#9A9EA8" FontSize="11" Margin="0,0,0,3"/>
+              <TextBox x:Name="PluggedInMinutesTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#2C2F38" BorderThickness="1" Padding="8,6" FontSize="12.5" Margin="0,0,0,8"/>
+              <TextBlock Text="Sleep timeout on battery (minutes)" Foreground="#9A9EA8" FontSize="11" Margin="0,0,0,3"/>
+              <TextBox x:Name="BatteryMinutesTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#2C2F38" BorderThickness="1" Padding="8,6" FontSize="12.5" Margin="0,0,0,10"/>
+              <Button x:Name="ApplyPowerSettingsButton" Content="Apply Power Settings" HorizontalAlignment="Left"
+                      Padding="18,9" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="13" FontWeight="Bold"/>
+            </StackPanel>
+          </Border>
+
+        </StackPanel>
+      </ScrollViewer>
 
       <!-- Placeholder for not-yet-built screens -->
       <TextBlock x:Name="PlaceholderText" Grid.Row="2" Text="Coming soon"

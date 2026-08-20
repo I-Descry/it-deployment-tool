@@ -98,10 +98,9 @@ function Test-CurrentProcessAdministrator {
   }
 }
 
-function Show-WindowsConfigurationReport {
-  Clear-Host
-
-  Write-Title -Title "CURRENT WINDOWS CONFIGURATION"
+function Get-WindowsConfigurationReport {
+  [CmdletBinding()]
+  param()
 
   $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue
   $OperatingSystem = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction SilentlyContinue
@@ -113,8 +112,6 @@ function Show-WindowsConfigurationReport {
   if (($null -ne $ComputerSystem) -and (-not [string]::IsNullOrWhiteSpace([string]$ComputerSystem.UserName))) {
     $CurrentUser = $ComputerSystem.UserName
   }
-
-  Write-Section -Title "Computer Information"
 
   $ComputerName = [string]([System.Environment]::MachineName)
 
@@ -130,10 +127,6 @@ function Show-WindowsConfigurationReport {
   if ([string]::IsNullOrWhiteSpace($ComputerName)) {
     $ComputerName = "Unknown"
   }
-  Write-Info -Name "Computer Name" -Value $ComputerName
-  Write-Info -Name "Manufacturer" -Value ([string]$ComputerSystem.Manufacturer)
-  Write-Info -Name "Model" -Value ([string]$ComputerSystem.Model)
-  Write-Info -Name "Serial Number" -Value ([string]$BiosInformation.SerialNumber)
 
   $NetworkType = "Workgroup"
 
@@ -141,18 +134,50 @@ function Show-WindowsConfigurationReport {
     $NetworkType = "Domain"
   }
 
-  Write-Info -Name "Network Type" -Value $NetworkType
-  Write-Info -Name "Domain/Workgroup" -Value ([string]$ComputerSystem.Domain)
+  return [PSCustomObject]@{
+    ComputerName    = $ComputerName
+    Manufacturer    = [string]$ComputerSystem.Manufacturer
+    Model           = [string]$ComputerSystem.Model
+    SerialNumber    = [string]$BiosInformation.SerialNumber
+    NetworkType     = $NetworkType
+    DomainWorkgroup = [string]$ComputerSystem.Domain
+    OSEdition       = [string]$OperatingSystem.Caption
+    OSVersion       = [string]$OperatingSystem.Version
+    OSBuildNumber   = [string]$OperatingSystem.BuildNumber
+    OSArchitecture  = [string]$OperatingSystem.OSArchitecture
+    LoggedUser      = $CurrentUser
+    IsAdministrator = [bool](Test-CurrentProcessAdministrator)
+    ActivePowerPlan = [string]$PowerConfiguration.ActivePlan
+    SleepAC         = [string]$PowerConfiguration.SleepAC
+    SleepDC         = [string]$PowerConfiguration.SleepDC
+  }
+}
+
+function Show-WindowsConfigurationReport {
+  Clear-Host
+
+  Write-Title -Title "CURRENT WINDOWS CONFIGURATION"
+
+  $Report = Get-WindowsConfigurationReport
+
+  Write-Section -Title "Computer Information"
+
+  Write-Info -Name "Computer Name" -Value $Report.ComputerName
+  Write-Info -Name "Manufacturer" -Value $Report.Manufacturer
+  Write-Info -Name "Model" -Value $Report.Model
+  Write-Info -Name "Serial Number" -Value $Report.SerialNumber
+  Write-Info -Name "Network Type" -Value $Report.NetworkType
+  Write-Info -Name "Domain/Workgroup" -Value $Report.DomainWorkgroup
   Write-Section -Title "Windows Information"
-  Write-Info -Name "Edition" -Value ([string]$OperatingSystem.Caption)
-  Write-Info -Name "Version" -Value ([string]$OperatingSystem.Version)
-  Write-Info -Name "Build Number" -Value ([string]$OperatingSystem.BuildNumber)
-  Write-Info -Name "Architecture" -Value ([string]$OperatingSystem.OSArchitecture)
+  Write-Info -Name "Edition" -Value $Report.OSEdition
+  Write-Info -Name "Version" -Value $Report.OSVersion
+  Write-Info -Name "Build Number" -Value $Report.OSBuildNumber
+  Write-Info -Name "Architecture" -Value $Report.OSArchitecture
   Write-Section -Title "Account Information"
-  Write-Info -Name "Logged User" -Value $CurrentUser
-  Write-Status -Name "Administrator" -Status (Test-CurrentProcessAdministrator)
+  Write-Info -Name "Logged User" -Value $Report.LoggedUser
+  Write-Status -Name "Administrator" -Status $Report.IsAdministrator
   Write-Section -Title "Power Configuration"
-  Write-Info -Name "Active Plan" -Value ([string]$PowerConfiguration.ActivePlan)
-  Write-Info -Name "Sleep - Plugged" -Value ([string]$PowerConfiguration.SleepAC)
-  Write-Info -Name "Sleep - Battery" -Value ([string]$PowerConfiguration.SleepDC)
+  Write-Info -Name "Active Plan" -Value $Report.ActivePowerPlan
+  Write-Info -Name "Sleep - Plugged" -Value $Report.SleepAC
+  Write-Info -Name "Sleep - Battery" -Value $Report.SleepDC
 }
