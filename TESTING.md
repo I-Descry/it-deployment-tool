@@ -271,6 +271,7 @@ The WPF GUI (`Start.ps1 -Gui`) is a separate interface layer that wraps the same
 - [x] Individual selection, Select All, Select Recommended, and Clear All work (confirmed on a real device via screenshot)
 - [x] System information bar (computer, user, model, administrator/internet/WinGet status) displays correctly (confirmed on a real device via screenshot)
 - [ ] Install Selected completes correctly and the window stays responsive during a real install (background execution added 2026-08-20, not yet re-tested live)
+- [x] Toolbar text shows live "Installing N of M: AppName..." progress while a queue runs, updating incrementally per app rather than only at completion (verified via automated non-destructive testing of the timer/queue mechanism, 2026-08-20; not yet observed during a real install)
 - [ ] Uninstall Selected completes correctly for both machine-scope and user-scope WinGet packages (originally reported failing for Google Chrome due to the `-Gui` elevation bypass; elevation fix and winget diagnostics added 2026-08-20, not yet re-tested live)
 - [ ] Closing the window while an install/uninstall queue is running is blocked with a warning instead of abandoning the queue
 - [ ] CrowdStrike, Microsoft Office 2024, and Microsoft Office 2021 LOP installs complete correctly through the GUI (background execution requires `$ConfirmPreference = "None"` to avoid the native confirmation prompt throwing in a non-interactive runspace; added 2026-08-20, not yet tested live)
