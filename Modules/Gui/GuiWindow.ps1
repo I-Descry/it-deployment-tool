@@ -1130,6 +1130,23 @@ function Show-MainWindow {
   $Reader = New-Object System.Xml.XmlNodeReader $WindowXaml
   $Window = [Windows.Markup.XamlReader]::Load($Reader)
 
+  # Nunito is bundled as a variable font rather than installed system-wide,
+  # since this tool is copied directly to technician machines rather than
+  # installed. Loaded via an absolute folder URI (not a relative XAML path)
+  # because XamlReader.Load has no base URI to resolve a relative FontFamily
+  # reference against here -- every other path in this app already uses
+  # $script:ITDeploymentToolRoot for the same reason. Falls back to the
+  # XAML's own Segoe UI default if the font file is ever missing (e.g. not
+  # yet copied to this machine), rather than failing to start.
+  try {
+    $FontsDirectory = Join-Path $script:ITDeploymentToolRoot "Modules\Gui\Fonts"
+    $FontsUri = New-Object System.Uri(($FontsDirectory.TrimEnd('\') + '\'), [System.UriKind]::Absolute)
+    $Window.FontFamily = New-Object System.Windows.Media.FontFamily($FontsUri, "./#Nunito")
+  }
+  catch {
+    Write-DeploymentLog -Message "Nunito font could not be loaded; falling back to the default font. $($_.Exception.Message)" -Level "WARNING"
+  }
+
   $AppGridPanel = $Window.FindName("AppGridPanel")
   $SelectedCountText = $Window.FindName("SelectedCountText")
   $SelectAllButton = $Window.FindName("SelectAllButton")
