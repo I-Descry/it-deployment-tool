@@ -557,6 +557,7 @@ function Start-GuiApplicationQueue {
 
   $RootPath = $script:ITDeploymentToolRoot
   $LogPath = $script:LogFilePath
+  $ProgressQueue = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
 
   # Deliberately duplicated from Start.ps1's $ModulePaths rather than reused --
   # this is the minimal subset the install/uninstall call graph actually
@@ -568,7 +569,8 @@ function Start-GuiApplicationQueue {
       [string]$RootPath,
       [string]$LogPath,
       [string]$Mode,
-      [object[]]$Applications
+      [object[]]$Applications,
+      [System.Collections.Concurrent.ConcurrentQueue[string]]$ProgressQueue
     )
 
     $ModulePaths = @(
@@ -604,10 +606,16 @@ function Start-GuiApplicationQueue {
 
     $Results = New-Object System.Collections.ArrayList
 
+    $TotalCount = $Applications.Count
+    $Index = 0
+
     if ($Mode -eq "Install") {
       Update-InstalledApplicationRegistryCache
 
       foreach ($Application in $Applications) {
+        $Index++
+        $ProgressQueue.Enqueue(("Installing {0} of {1}: {2}..." -f $Index, $TotalCount, $Application.Name))
+
         $AlreadyInstalled = Test-ApplicationInstalled -Application $Application
 
         if ($AlreadyInstalled) {
@@ -640,6 +648,9 @@ function Start-GuiApplicationQueue {
     }
     else {
       foreach ($Application in $Applications) {
+        $Index++
+        $ProgressQueue.Enqueue(("Uninstalling {0} of {1}: {2}..." -f $Index, $TotalCount, $Application.Name))
+
         $UninstallationResult = Uninstall-ApplicationByType -Application $Application
 
         [void]$Results.Add([PSCustomObject]@{ ApplicationName = $Application.Name; Status = $UninstallationResult.Status; Message = $UninstallationResult.Message })
@@ -660,6 +671,7 @@ function Start-GuiApplicationQueue {
   [void]$PowerShellInstance.AddArgument($LogPath)
   [void]$PowerShellInstance.AddArgument($Mode)
   [void]$PowerShellInstance.AddArgument($Applications)
+  [void]$PowerShellInstance.AddArgument($ProgressQueue)
 
   $AsyncResult = $PowerShellInstance.BeginInvoke()
 
@@ -672,6 +684,7 @@ function Start-GuiApplicationQueue {
   $script:GuiQueueButtonsToDisable = $ButtonsToDisable
   $script:GuiQueuePreSkippedCount = $PreSkippedCount
   $script:GuiQueuePreFailureMessages = $PreFailureMessages
+  $script:GuiQueueProgressQueue = $ProgressQueue
 
   $Timer = New-Object System.Windows.Threading.DispatcherTimer
   $Timer.Interval = [TimeSpan]::FromMilliseconds(300)
@@ -686,6 +699,17 @@ function Start-GuiApplicationQueue {
   # mirrors the same proven-safe pattern New-GuiLogListRow's per-row click
   # handler already uses.
   $Timer.Add_Tick({
+    $LatestProgressMessage = $null
+    $DequeuedMessage = $null
+
+    while ($script:GuiQueueProgressQueue.TryDequeue([ref]$DequeuedMessage)) {
+      $LatestProgressMessage = $DequeuedMessage
+    }
+
+    if ($null -ne $LatestProgressMessage) {
+      $script:GuiQueueCountText.Text = $LatestProgressMessage
+    }
+
     if (-not $script:GuiQueueAsyncResult.IsCompleted) {
       return
     }
