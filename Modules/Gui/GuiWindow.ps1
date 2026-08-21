@@ -1182,6 +1182,10 @@ function Invoke-GuiComputerRename {
 
   [System.Windows.MessageBox]::Show($RenameResult.Message)
 
+  if ($RenameResult.Status -eq "Renamed") {
+    $NewNameTextBox.Text = ""
+  }
+
   Update-GuiWindowsConfigCurrentName -CurrentNameText $CurrentNameText
 }
 
@@ -1250,6 +1254,11 @@ function Invoke-GuiLocalUserCreation {
     $CreationResult = New-DeploymentLocalStandardUser -UserName $UserName -Password $PasswordBox.SecurePassword -FullName $FullName -Confirm:$false
 
     [System.Windows.MessageBox]::Show($CreationResult.Message)
+
+    if ($CreationResult.Status -eq "Created") {
+      $UserNameTextBox.Text = ""
+      $FullNameTextBox.Text = ""
+    }
 
     Update-GuiWindowsConfigLocalUsersList -ListPanel $ListPanel
   }

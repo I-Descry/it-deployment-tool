@@ -37,7 +37,7 @@ function Get-MsiInstallerArguments {
     [string]$InstallerPath
   )
 
-  $SilentArguments = [string]$Application.$SilentArguments
+  $SilentArguments = [string]$Application.SilentArguments
 
   if ([string]::IsNullOrWhiteSpace($SilentArguments)) {
     $SilentArguments = "/qn /norestart"

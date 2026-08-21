@@ -764,6 +764,18 @@ Do not commit or publicly share the real values.
 
 ---
 
+## Deploying to a New Machine
+
+The tool is copied to each machine rather than installed through a package manager. When setting up a brand new company laptop:
+
+1. **Get the code onto the machine.** Clone or copy this repository. Everything except the `Installers\` directory's actual package files travels with it automatically, including the bundled Nunito font used by the GUI (`Modules\Gui\Fonts\`).
+2. **Transfer the offline installer packages separately.** `Installers\` is deliberately excluded from Git (see [Offline Installers](#offline-installers) above) because its contents are large, proprietary, licensed, or security-sensitive. On a machine that already has these staged, the directory structure under `Installers\` can be copied as-is onto the new machine — the exact transfer method (external drive, network share, cloud storage) isn't dictated by this tool and is still an open decision for this project; whichever is used, preserve the existing subfolder structure (`Installers\EXE\...`, `Installers\ISO\...`, etc.) exactly, since the application catalog's `InstallerPath` values are matched against it directly.
+3. **Validate before doing anything else.** Run `.\Start.ps1 -ValidateOnly` first. This is read-only, requests no elevation, and confirms the module set loads correctly and `Config\Applications.json` is present — a fast way to catch a broken transfer before ever touching the new machine's real configuration.
+4. **Check installer package readiness.** From the console menu or the GUI's Deployment Validation screen, review which offline packages report `READY` vs. `MISSING` — this shows exactly which `Installers\` subfolders didn't make the transfer, before attempting an install that would otherwise fail partway through.
+5. **Run the tool for real**, either `.\Start.ps1` (console) or `.\Start.ps1 -Gui` (graphical). WinGet-based applications install directly from the internet and need no local files; only EXE/MSI/ISO/IMG/ZIP/Script-type applications depend on `Installers\` being populated.
+
+---
+
 ## Deployment Logs
 
 Deployment logs are automatically created inside:
@@ -797,6 +809,18 @@ Open PowerShell in the project directory and run:
 ```
 
 The tool automatically requests administrator privileges when elevation is required.
+
+---
+
+### GUI Mode
+
+A WPF graphical interface is available as an alternative to the console menus, styled after the approved design mockup (dark theme, custom title bar, sidebar navigation):
+
+```powershell
+.\Start.ps1 -Gui
+```
+
+Administrator elevation is requested before the window opens, exactly like console mode. The GUI covers the same functionality as the console menus: Applications (browse, select, install, uninstall — install/uninstall run in the background so the window stays responsive), Windows Configuration (device information, computer rename, local standard user creation, power and sleep settings), Deployment Logs (browse and view recent session logs), and Deployment Validation (device readiness checks and installer package status).
 
 ---
 
