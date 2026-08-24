@@ -173,5 +173,16 @@
     "Category": "Communication",
     "Description": "Messaging application for international communication",
     "Recommended": false
+  },
+  {
+    "Name": "WinRAR",
+    "DetectionName": "WinRAR",
+    "InstallType": "Winget",
+    "Winget": "RARLab.WinRAR",
+    "WingetScope": "machine",
+    "Category": "Utilities",
+    "Description": "File archiver and compression utility supporting RAR, ZIP, and other formats",
+    "Recommended": false,
+    "RequiredForIssuance": false
   }
 ]
