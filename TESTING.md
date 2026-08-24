@@ -50,7 +50,7 @@ Record the device used for testing:
 
 ## Deployment Tool Validation Mode
 
-- [x] `Start.ps1 -ValidateOnly` loads all 40 modules
+- [x] `Start.ps1 -ValidateOnly` loads all 45 modules
 - [x] Validation checks the required deployment functions
 - [x] Validation confirms `Config\Applications.json` exists
 - [x] Successful validation returns exit code `0`
@@ -135,7 +135,7 @@ Record the device used for testing:
 - [x] Applications that are not currently installed are skipped automatically without prompting
 - [x] Uninstallation queue counts `Uninstalled`, `Skipped`, and `Failed` correctly (verified with a simulated four-application run)
 - [x] `[U] - Uninstall Selected` option added to the application menu and refreshes installed-application status afterward
-- [x] Deployment validation reports 39 modules and 24 required functions
+- [x] Deployment validation reports 45 modules and 24 required functions
 - [ ] Real WinGet uninstallation on an authorized deployment device
 - [ ] Real EXE uninstallation on an authorized deployment device
 - [ ] Real MSI uninstallation on an authorized deployment device
