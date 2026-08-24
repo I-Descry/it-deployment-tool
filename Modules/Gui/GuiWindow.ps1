@@ -7,6 +7,42 @@
 # them together: cross-screen navigation, the system info bar, and the
 # Show-MainWindow entry point that wires every control.
 
+function Start-GuiFadeIn {
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.UIElement]$Element
+  )
+
+  $Element.Opacity = 0
+  $Animation = New-Object System.Windows.Media.Animation.DoubleAnimation(0, 1, (New-Object System.Windows.Duration([TimeSpan]::FromMilliseconds(160))))
+  $Element.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $Animation)
+}
+
+function Show-GuiScreenLoadingState {
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Panel]$Panel,
+
+    [Parameter(Mandatory)]
+    [string]$Message
+  )
+
+  $Panel.Children.Clear()
+
+  $LoadingText = New-Object System.Windows.Controls.TextBlock
+  $LoadingText.Text = $Message
+  $LoadingText.Foreground = "#9A9EA8"
+  $LoadingText.FontSize = 13
+  $LoadingText.Margin = "0,20,0,0"
+  $Panel.Children.Add($LoadingText) | Out-Null
+
+  # The checks that follow this call run synchronously on the UI thread and
+  # can take the better part of a second (CIM/BIOS queries, powercfg.exe).
+  # Forcing a Render-priority dispatch here flushes the "Loading..." text to
+  # screen first, so the tab switch itself feels instant instead of frozen.
+  $Panel.Dispatcher.Invoke([action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
+}
+
 function Switch-GuiScreen {
   param(
     [Parameter(Mandatory)]
@@ -50,6 +86,8 @@ function Switch-GuiScreen {
     $script:GuiWindowsConfigToolbar.Visibility = "Collapsed"
     $script:GuiWindowsConfigScrollViewer.Visibility = "Collapsed"
     $script:GuiPlaceholderText.Visibility = "Collapsed"
+
+    Start-GuiFadeIn -Element $script:GuiApplicationsScrollViewer
   }
   elseif ($ScreenName -eq "Deployment Validation") {
     $script:GuiApplicationsToolbar.Visibility = "Collapsed"
@@ -62,7 +100,12 @@ function Switch-GuiScreen {
     $script:GuiWindowsConfigScrollViewer.Visibility = "Collapsed"
     $script:GuiPlaceholderText.Visibility = "Collapsed"
 
-    Invoke-GuiDeploymentValidation -ValidationPanel $script:GuiDeploymentValidationPanel -SummaryText $script:GuiValidationSummaryText
+    if (-not $script:GuiDeploymentValidationLoaded) {
+      $script:GuiDeploymentValidationLoaded = $true
+      Start-GuiDeploymentValidationLoad -ValidationPanel $script:GuiDeploymentValidationPanel -SummaryText $script:GuiValidationSummaryText -RerunButton $script:GuiRerunValidationButton
+    }
+
+    Start-GuiFadeIn -Element $script:GuiDeploymentValidationScrollViewer
   }
   elseif ($ScreenName -eq "Deployment Logs") {
     $script:GuiApplicationsToolbar.Visibility = "Collapsed"
@@ -75,7 +118,12 @@ function Switch-GuiScreen {
     $script:GuiWindowsConfigScrollViewer.Visibility = "Collapsed"
     $script:GuiPlaceholderText.Visibility = "Collapsed"
 
-    Update-GuiLogsList -ListPanel $script:GuiDeploymentLogsPanel -ContentTextBox $script:GuiLogContentTextBox
+    if (-not $script:GuiDeploymentLogsLoaded) {
+      $script:GuiDeploymentLogsLoaded = $true
+      Update-GuiLogsList -ListPanel $script:GuiDeploymentLogsPanel -ContentTextBox $script:GuiLogContentTextBox -NameText $script:GuiSelectedLogNameText
+    }
+
+    Start-GuiFadeIn -Element $script:GuiDeploymentLogsContent
   }
   elseif ($ScreenName -eq "Windows Configuration") {
     $script:GuiApplicationsToolbar.Visibility = "Collapsed"
@@ -88,7 +136,19 @@ function Switch-GuiScreen {
     $script:GuiWindowsConfigScrollViewer.Visibility = "Visible"
     $script:GuiPlaceholderText.Visibility = "Collapsed"
 
-    Invoke-GuiWindowsConfigurationRefresh -DeviceFields $script:GuiWindowsConfigDeviceFields -CurrentNameText $script:GuiCurrentComputerNameText -LocalUsersListPanel $script:GuiLocalUsersListPanel -CurrentPluggedInText $script:GuiCurrentPluggedInText -CurrentBatteryText $script:GuiCurrentBatteryText
+    if (-not $script:GuiWindowsConfigLoaded) {
+      $script:GuiWindowsConfigLoaded = $true
+
+      # Runs the CIM/BIOS/powercfg queries on a background runspace (the same
+      # pattern used for install/uninstall queues) so this first load never
+      # blocks the UI thread. Start-GuiFadeIn runs once the data actually
+      # arrives, inside Start-GuiWindowsConfigLoad's own completion handler,
+      # rather than immediately below like the other screens.
+      Start-GuiWindowsConfigLoad -DeviceFields $script:GuiWindowsConfigDeviceFields -CurrentNameText $script:GuiCurrentComputerNameText -LocalUsersListPanel $script:GuiLocalUsersListPanel -CurrentPluggedInText $script:GuiCurrentPluggedInText -CurrentBatteryText $script:GuiCurrentBatteryText -RefreshButton $script:GuiRefreshWindowsConfigButton -ScrollViewer $script:GuiWindowsConfigScrollViewer
+    }
+    else {
+      Start-GuiFadeIn -Element $script:GuiWindowsConfigScrollViewer
+    }
   }
   else {
     $script:GuiApplicationsToolbar.Visibility = "Collapsed"
@@ -185,11 +245,16 @@ function Show-MainWindow {
   $ClearAllButton = $Window.FindName("ClearAllButton")
   $InstallSelectedButton = $Window.FindName("InstallSelectedButton")
   $UninstallSelectedButton = $Window.FindName("UninstallSelectedButton")
+  $CancelQueueButton = $Window.FindName("CancelQueueButton")
+  $QueueProgressPanel = $Window.FindName("QueueProgressPanel")
+  $QueueProgressText = $Window.FindName("QueueProgressText")
+  $QueueProgressBar = $Window.FindName("QueueProgressBar")
   $DeploymentValidationPanel = $Window.FindName("DeploymentValidationPanel")
   $ValidationSummaryText = $Window.FindName("ValidationSummaryText")
   $RerunValidationButton = $Window.FindName("RerunValidationButton")
   $DeploymentLogsPanel = $Window.FindName("DeploymentLogsPanel")
   $LogContentTextBox = $Window.FindName("LogContentTextBox")
+  $SelectedLogNameText = $Window.FindName("SelectedLogNameText")
   $RefreshLogsButton = $Window.FindName("RefreshLogsButton")
   $OpenLogsFolderButton = $Window.FindName("OpenLogsFolderButton")
   $RefreshWindowsConfigButton = $Window.FindName("RefreshWindowsConfigButton")
@@ -224,6 +289,17 @@ function Show-MainWindow {
     PowerPlan       = $Window.FindName("DevicePowerPlanText")
     Sleep           = $Window.FindName("DeviceSleepText")
   }
+
+  $CompletionModalControls = @{
+    Overlay      = $Window.FindName("CompletionModalOverlay")
+    IconSuccess  = $Window.FindName("CompletionModalIconSuccess")
+    IconWarning  = $Window.FindName("CompletionModalIconWarning")
+    TitleText    = $Window.FindName("CompletionModalTitleText")
+    CountsPanel  = $Window.FindName("CompletionModalCountsPanel")
+    DetailsCard  = $Window.FindName("CompletionModalDetailsCard")
+    DetailsPanel = $Window.FindName("CompletionModalDetailsPanel")
+  }
+  $CompletionModalOkButton = $Window.FindName("CompletionModalOkButton")
 
   $InitialTimeouts = Get-CurrentSleepTimeoutMinutes
   $PluggedInMinutesTextBox.Text = [string]$InitialTimeouts.PluggedInMinutes
@@ -268,7 +344,9 @@ function Show-MainWindow {
 
   $InstallSelectedButton.Add_Click({
     try {
-      Invoke-GuiInstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText -InstallButton $InstallSelectedButton -UninstallButton $UninstallSelectedButton
+      Invoke-GuiInstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText -InstallButton $InstallSelectedButton -UninstallButton $UninstallSelectedButton `
+        -CancelButton $CancelQueueButton -QueueProgressPanel $QueueProgressPanel -QueueProgressText $QueueProgressText -QueueProgressBar $QueueProgressBar `
+        -ModalControls $CompletionModalControls
     }
     catch {
       [System.Windows.MessageBox]::Show("Install error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
@@ -277,16 +355,33 @@ function Show-MainWindow {
 
   $UninstallSelectedButton.Add_Click({
     try {
-      Invoke-GuiUninstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText -InstallButton $InstallSelectedButton -UninstallButton $UninstallSelectedButton
+      Invoke-GuiUninstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText -InstallButton $InstallSelectedButton -UninstallButton $UninstallSelectedButton `
+        -CancelButton $CancelQueueButton -QueueProgressPanel $QueueProgressPanel -QueueProgressText $QueueProgressText -QueueProgressBar $QueueProgressBar `
+        -ModalControls $CompletionModalControls
     }
     catch {
       [System.Windows.MessageBox]::Show("Uninstall error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
     }
   })
 
+  $CancelQueueButton.Add_Click({
+    try {
+      $CancelQueueButton.IsEnabled = $false
+      $CancelQueueButton.Content = "Cancelling..."
+      $script:GuiQueueCancelQueue.Enqueue($true)
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Cancel error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+  })
+
+  $CompletionModalOkButton.Add_Click({
+    $CompletionModalControls.Overlay.Visibility = "Collapsed"
+  })
+
   $RerunValidationButton.Add_Click({
     try {
-      Invoke-GuiDeploymentValidation -ValidationPanel $DeploymentValidationPanel -SummaryText $ValidationSummaryText
+      Start-GuiDeploymentValidationLoad -ValidationPanel $DeploymentValidationPanel -SummaryText $ValidationSummaryText -RerunButton $RerunValidationButton
     }
     catch {
       [System.Windows.MessageBox]::Show("Deployment validation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
@@ -295,7 +390,7 @@ function Show-MainWindow {
 
   $RefreshLogsButton.Add_Click({
     try {
-      Update-GuiLogsList -ListPanel $DeploymentLogsPanel -ContentTextBox $LogContentTextBox
+      Update-GuiLogsList -ListPanel $DeploymentLogsPanel -ContentTextBox $LogContentTextBox -NameText $SelectedLogNameText
     }
     catch {
       [System.Windows.MessageBox]::Show("Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
@@ -361,6 +456,10 @@ function Show-MainWindow {
   $NavDeploymentValidationIcon = $Window.FindName("NavDeploymentValidationIcon")
 
   $script:GuiQueueRunning = $false
+  $script:GuiSelectedCountText = $SelectedCountText
+  $script:GuiDeploymentValidationLoaded = $false
+  $script:GuiDeploymentLogsLoaded = $false
+  $script:GuiWindowsConfigLoaded = $false
   $script:GuiNavBorders = @($NavApplications, $NavWindowsConfig, $NavDeploymentLogs, $NavDeploymentValidation)
   $script:GuiNavTexts = @($NavApplicationsText, $NavWindowsConfigText, $NavDeploymentLogsText, $NavDeploymentValidationText)
   $script:GuiNavIcons = @($NavApplicationsIcon, $NavWindowsConfigIcon, $NavDeploymentLogsIcon, $NavDeploymentValidationIcon)
@@ -371,10 +470,13 @@ function Show-MainWindow {
   $script:GuiDeploymentValidationScrollViewer = $Window.FindName("DeploymentValidationScrollViewer")
   $script:GuiDeploymentValidationPanel = $DeploymentValidationPanel
   $script:GuiValidationSummaryText = $ValidationSummaryText
+  $script:GuiRerunValidationButton = $RerunValidationButton
+  $script:GuiRefreshWindowsConfigButton = $RefreshWindowsConfigButton
   $script:GuiDeploymentLogsToolbar = $Window.FindName("DeploymentLogsToolbar")
   $script:GuiDeploymentLogsContent = $Window.FindName("DeploymentLogsContent")
   $script:GuiDeploymentLogsPanel = $DeploymentLogsPanel
   $script:GuiLogContentTextBox = $LogContentTextBox
+  $script:GuiSelectedLogNameText = $SelectedLogNameText
   $script:GuiWindowsConfigToolbar = $Window.FindName("WindowsConfigToolbar")
   $script:GuiWindowsConfigScrollViewer = $Window.FindName("WindowsConfigScrollViewer")
   $script:GuiWindowsConfigDeviceFields = $WindowsConfigDeviceFields

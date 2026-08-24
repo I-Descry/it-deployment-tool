@@ -104,6 +104,174 @@ function Invoke-GuiWindowsConfigurationRefresh {
   Update-GuiWindowsConfigPowerCurrentValues -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText
 }
 
+function Start-GuiWindowsConfigLoad {
+  param(
+    [Parameter(Mandatory)]
+    [hashtable]$DeviceFields,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$CurrentNameText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.StackPanel]$LocalUsersListPanel,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$CurrentPluggedInText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$CurrentBatteryText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Button]$RefreshButton,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.ScrollViewer]$ScrollViewer
+  )
+
+  $RefreshButton.IsEnabled = $false
+
+  $RootPath = $script:ITDeploymentToolRoot
+
+  # Used only for the screen's first load (see Switch-GuiScreen), where the
+  # CIM/BIOS/powercfg queries are guaranteed to be a real, un-cached cost.
+  # The Refresh button keeps using the synchronous Invoke-GuiWindowsConfigurationRefresh
+  # below, since by then the identity cache in Get-WindowsConfigurationIdentity
+  # (WindowsConfiguration.ps1) is already warm in the main runspace and that
+  # path is already fast (~60ms) -- backgrounding it would add complexity for
+  # no perceptible benefit. A fresh background runspace has its own empty
+  # cache, so this path always pays the full first-query cost.
+  $BackgroundScript = {
+    param([string]$RootPath)
+
+    $ModulePaths = @(
+      "Windows\ComputerNameConfiguration.ps1"
+      "Windows\LocalUserConfiguration.ps1"
+      "Windows\PowerConfiguration.ps1"
+      "Windows\WindowsConfiguration.ps1"
+    )
+
+    foreach ($ModulePath in $ModulePaths) {
+      . (Join-Path $RootPath "Modules\$ModulePath")
+    }
+
+    $script:ITDeploymentToolRoot = $RootPath
+
+    $Report = Get-WindowsConfigurationReport
+    $CurrentName = Get-CurrentComputerName
+    $LocalUsers = @(Get-DeploymentLocalStandardUsers)
+    $Timeouts = Get-CurrentSleepTimeoutMinutes
+
+    return [PSCustomObject]@{
+      Report      = $Report
+      CurrentName = $CurrentName
+      LocalUsers  = $LocalUsers
+      Timeouts    = $Timeouts
+    }
+  }
+
+  $Runspace = [runspacefactory]::CreateRunspace()
+  $Runspace.Open()
+
+  $PowerShellInstance = [powershell]::Create()
+  $PowerShellInstance.Runspace = $Runspace
+
+  [void]$PowerShellInstance.AddScript($BackgroundScript)
+  [void]$PowerShellInstance.AddArgument($RootPath)
+
+  $AsyncResult = $PowerShellInstance.BeginInvoke()
+
+  $script:GuiWindowsConfigLoadAsyncResult = $AsyncResult
+  $script:GuiWindowsConfigLoadPowerShell = $PowerShellInstance
+  $script:GuiWindowsConfigLoadRunspace = $Runspace
+  $script:GuiWindowsConfigLoadDeviceFields = $DeviceFields
+  $script:GuiWindowsConfigLoadCurrentNameText = $CurrentNameText
+  $script:GuiWindowsConfigLoadLocalUsersListPanel = $LocalUsersListPanel
+  $script:GuiWindowsConfigLoadCurrentPluggedInText = $CurrentPluggedInText
+  $script:GuiWindowsConfigLoadCurrentBatteryText = $CurrentBatteryText
+  $script:GuiWindowsConfigLoadRefreshButton = $RefreshButton
+  $script:GuiWindowsConfigLoadScrollViewer = $ScrollViewer
+
+  $Timer = New-Object System.Windows.Threading.DispatcherTimer
+  $Timer.Interval = [TimeSpan]::FromMilliseconds(200)
+  $script:GuiWindowsConfigLoadTimer = $Timer
+
+  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d, matching every
+  # other background-runspace timer handler in this app.
+  $Timer.Add_Tick({
+    if (-not $script:GuiWindowsConfigLoadAsyncResult.IsCompleted) {
+      return
+    }
+
+    $script:GuiWindowsConfigLoadTimer.Stop()
+
+    try {
+      $Result = $script:GuiWindowsConfigLoadPowerShell.EndInvoke($script:GuiWindowsConfigLoadAsyncResult) | Select-Object -First 1
+
+      if ($script:GuiWindowsConfigLoadPowerShell.HadErrors) {
+        foreach ($LoadError in $script:GuiWindowsConfigLoadPowerShell.Streams.Error) {
+          Write-DeploymentLog -Message ([string]$LoadError) -Level "ERROR"
+        }
+      }
+
+      $Report = $Result.Report
+      $Fields = $script:GuiWindowsConfigLoadDeviceFields
+
+      $Fields.ComputerName.Text = $Report.ComputerName
+      $Fields.Manufacturer.Text = $Report.Manufacturer
+      $Fields.Model.Text = $Report.Model
+      $Fields.SerialNumber.Text = $Report.SerialNumber
+      $Fields.NetworkType.Text = $Report.NetworkType
+      $Fields.DomainWorkgroup.Text = $Report.DomainWorkgroup
+      $Fields.OSEdition.Text = $Report.OSEdition
+      $Fields.OSVersion.Text = $Report.OSVersion
+      $Fields.OSBuildNumber.Text = $Report.OSBuildNumber
+      $Fields.OSArchitecture.Text = $Report.OSArchitecture
+      $Fields.LoggedUser.Text = $Report.LoggedUser
+      $Fields.PowerPlan.Text = $Report.ActivePowerPlan
+      $Fields.Sleep.Text = "Plugged: {0} | Battery: {1}" -f $Report.SleepAC, $Report.SleepDC
+      $Fields.AdminStatus.Text = if ($Report.IsAdministrator) { "Yes" } else { "No" }
+      $Fields.AdminStatus.Foreground = if ($Report.IsAdministrator) { "#34D399" } else { "#F2555A" }
+
+      $script:GuiWindowsConfigLoadCurrentNameText.Text = $Result.CurrentName
+
+      $ListPanel = $script:GuiWindowsConfigLoadLocalUsersListPanel
+      $ListPanel.Children.Clear()
+      $LocalUsers = @($Result.LocalUsers)
+
+      if ($LocalUsers.Count -eq 0) {
+        $EmptyText = New-Object System.Windows.Controls.TextBlock
+        $EmptyText.Text = "No standard users created yet."
+        $EmptyText.FontSize = 11.5
+        $EmptyText.Foreground = "#6B6F79"
+        $ListPanel.Children.Add($EmptyText) | Out-Null
+      }
+      else {
+        foreach ($User in $LocalUsers) {
+          $DetailText = if ([string]::IsNullOrWhiteSpace([string]$User.FullName)) { "Standard user" } else { [string]$User.FullName }
+          $Row = New-GuiValidationStatusRow -StatusLabel "ACTIVE" -Passed $true -PrimaryText $User.Name -DetailText $DetailText
+          $ListPanel.Children.Add($Row) | Out-Null
+        }
+      }
+
+      $script:GuiWindowsConfigLoadCurrentPluggedInText.Text = Convert-SleepTimeoutMinutesToText -Minutes $Result.Timeouts.PluggedInMinutes
+      $script:GuiWindowsConfigLoadCurrentBatteryText.Text = Convert-SleepTimeoutMinutesToText -Minutes $Result.Timeouts.BatteryMinutes
+
+      Start-GuiFadeIn -Element $script:GuiWindowsConfigLoadScrollViewer
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Windows Configuration load error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+    finally {
+      $script:GuiWindowsConfigLoadPowerShell.Dispose()
+      $script:GuiWindowsConfigLoadRunspace.Close()
+      $script:GuiWindowsConfigLoadRunspace.Dispose()
+      $script:GuiWindowsConfigLoadRefreshButton.IsEnabled = $true
+    }
+  })
+
+  $Timer.Start()
+}
+
 function Invoke-GuiComputerRename {
   param(
     [Parameter(Mandatory)]

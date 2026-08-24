@@ -72,7 +72,6 @@
     {
     "Name": "WinBox",
     "DetectionName": "WinBox",
-    "DetectionMethod": "Winget",
     "InstallType": "Winget",
     "Winget": "Mikrotik.Winbox",
     "WingetScope": "machine",

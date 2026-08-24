@@ -145,6 +145,79 @@ function New-GuiRecommendedIcon {
   return $Canvas
 }
 
+function New-GuiStatusIcon {
+  param(
+    [Parameter(Mandatory)]
+    [bool]$Passed
+  )
+
+  $Canvas = New-Object System.Windows.Controls.Canvas
+  $Canvas.Width = 10
+  $Canvas.Height = 10
+
+  if ($Passed) {
+    $Mark = New-GuiIconShape -Type Path -Color "#0B1116" -StrokeThickness 1.6 -Cap Round -Join Round -Data "M1.5 5L4 7.5L8.5 2"
+    $BadgeColor = "#34D399"
+  }
+  else {
+    $Mark = New-GuiIconShape -Type Path -Color "#0B1116" -StrokeThickness 1.6 -Cap Round -Join Round -Data "M2 2L8 8M8 2L2 8"
+    $BadgeColor = "#F2555A"
+  }
+
+  $Badge = New-Object System.Windows.Shapes.Ellipse
+  $Badge.Width = 10
+  $Badge.Height = 10
+  $Badge.Fill = New-Object System.Windows.Media.SolidColorBrush([System.Windows.Media.ColorConverter]::ConvertFromString($BadgeColor))
+  $Canvas.Children.Add($Badge) | Out-Null
+  $Canvas.Children.Add($Mark) | Out-Null
+
+  return $Canvas
+}
+
+function New-GuiSectionHeaderIcon {
+  param(
+    [Parameter(Mandatory)]
+    [ValidateSet("DeviceReadiness", "InstallerPackages", "DeploymentLogs")]
+    [string]$IconName,
+
+    [string]$Color = "#38BDF8"
+  )
+
+  $Canvas = New-Object System.Windows.Controls.Canvas
+  $Canvas.Width = 16
+  $Canvas.Height = 16
+
+  $Shapes = switch ($IconName) {
+    "DeviceReadiness" {
+      @(
+        New-GuiIconShape -Type Path -Color $Color -StrokeThickness 1.4 -Data "M8 1.5l5.5 2v4c0 4-2.4 6.3-5.5 7-3.1-.7-5.5-3-5.5-7v-4L8 1.5z"
+        New-GuiIconShape -Type Path -Color $Color -StrokeThickness 1.4 -Cap Round -Join Round -Data "M5.5 8l1.8 1.8L10.5 6"
+      )
+    }
+    "InstallerPackages" {
+      @(
+        New-GuiIconShape -Type Path -Color $Color -StrokeThickness 1.3 -Join Round -Data "M2 5.5l6-3.5 6 3.5-6 3.5-6-3.5z"
+        New-GuiIconShape -Type Path -Color $Color -StrokeThickness 1.3 -Data "M2 5.5v5l6 3.5 6-3.5v-5"
+        New-GuiIconShape -Type Line -Color $Color -StrokeThickness 1.3 -X1 8 -Y1 9 -X2 8 -Y2 14
+      )
+    }
+    "DeploymentLogs" {
+      @(
+        New-GuiIconShape -Type Rectangle -Color $Color -StrokeThickness 1.4 -X 3.5 -Y 1.5 -Width 9 -Height 13 -RadiusX 1.2
+        New-GuiIconShape -Type Line -Color $Color -StrokeThickness 1.2 -X1 6 -Y1 5 -X2 10 -Y2 5
+        New-GuiIconShape -Type Line -Color $Color -StrokeThickness 1.2 -X1 6 -Y1 7.7 -X2 10 -Y2 7.7
+        New-GuiIconShape -Type Line -Color $Color -StrokeThickness 1.2 -X1 6 -Y1 10.4 -X2 8.7 -Y2 10.4
+      )
+    }
+  }
+
+  foreach ($Shape in $Shapes) {
+    $Canvas.Children.Add($Shape) | Out-Null
+  }
+
+  return $Canvas
+}
+
 function Set-GuiIconColor {
   param(
     [Parameter(Mandatory)]

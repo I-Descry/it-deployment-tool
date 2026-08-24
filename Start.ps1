@@ -188,6 +188,21 @@ if (-not $AdministratorGranted) {
 }
 
 if ($Gui) {
+  # GUI mode is meant to look and feel like a normal Windows application, not
+  # a script running in a console. The console window still exists (WPF has
+  # no windowless PowerShell host), so it is hidden rather than left visible
+  # behind/alongside the GUI window.
+  Add-Type -Name Win32ConsoleWindow -Namespace ITDeploymentTool -MemberDefinition '
+    [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow();
+    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+  '
+
+  $ConsoleWindowHandle = [ITDeploymentTool.Win32ConsoleWindow]::GetConsoleWindow()
+
+  if ($ConsoleWindowHandle -ne [IntPtr]::Zero) {
+    [ITDeploymentTool.Win32ConsoleWindow]::ShowWindow($ConsoleWindowHandle, 0) | Out-Null
+  }
+
   Show-MainWindow
   exit
 }

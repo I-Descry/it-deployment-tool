@@ -98,20 +98,20 @@ function Test-CurrentProcessAdministrator {
   }
 }
 
-function Get-WindowsConfigurationReport {
-  [CmdletBinding()]
-  param()
+$script:WindowsConfigurationIdentityCache = $null
+
+function Get-WindowsConfigurationIdentity {
+  # Manufacturer, model, serial number, OS edition/version/build/architecture,
+  # computer name, network type, and domain/workgroup cannot change while this
+  # tool is running, so the underlying CIM/BIOS queries only need to run once
+  # per session rather than on every Windows Configuration screen refresh.
+  if ($null -ne $script:WindowsConfigurationIdentityCache) {
+    return $script:WindowsConfigurationIdentityCache
+  }
 
   $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue
   $OperatingSystem = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction SilentlyContinue
   $BiosInformation = Get-CimInstance -ClassName Win32_BIOS -ErrorAction SilentlyContinue
-  $PowerConfiguration = Get-CurrentPowerConfiguration
-  $CurrentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
-  $CurrentUser = $CurrentIdentity.Name
-
-  if (($null -ne $ComputerSystem) -and (-not [string]::IsNullOrWhiteSpace([string]$ComputerSystem.UserName))) {
-    $CurrentUser = $ComputerSystem.UserName
-  }
 
   $ComputerName = [string]([System.Environment]::MachineName)
 
@@ -134,7 +134,7 @@ function Get-WindowsConfigurationReport {
     $NetworkType = "Domain"
   }
 
-  return [PSCustomObject]@{
+  $script:WindowsConfigurationIdentityCache = [PSCustomObject]@{
     ComputerName    = $ComputerName
     Manufacturer    = [string]$ComputerSystem.Manufacturer
     Model           = [string]$ComputerSystem.Model
@@ -145,8 +145,39 @@ function Get-WindowsConfigurationReport {
     OSVersion       = [string]$OperatingSystem.Version
     OSBuildNumber   = [string]$OperatingSystem.BuildNumber
     OSArchitecture  = [string]$OperatingSystem.OSArchitecture
-    LoggedUser      = $CurrentUser
     IsAdministrator = [bool](Test-CurrentProcessAdministrator)
+    ComputerSystemUserName = [string]$ComputerSystem.UserName
+  }
+
+  return $script:WindowsConfigurationIdentityCache
+}
+
+function Get-WindowsConfigurationReport {
+  [CmdletBinding()]
+  param()
+
+  $Identity = Get-WindowsConfigurationIdentity
+  $PowerConfiguration = Get-CurrentPowerConfiguration
+
+  $CurrentUser = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+
+  if (-not [string]::IsNullOrWhiteSpace($Identity.ComputerSystemUserName)) {
+    $CurrentUser = $Identity.ComputerSystemUserName
+  }
+
+  return [PSCustomObject]@{
+    ComputerName    = $Identity.ComputerName
+    Manufacturer    = $Identity.Manufacturer
+    Model           = $Identity.Model
+    SerialNumber    = $Identity.SerialNumber
+    NetworkType     = $Identity.NetworkType
+    DomainWorkgroup = $Identity.DomainWorkgroup
+    OSEdition       = $Identity.OSEdition
+    OSVersion       = $Identity.OSVersion
+    OSBuildNumber   = $Identity.OSBuildNumber
+    OSArchitecture  = $Identity.OSArchitecture
+    LoggedUser      = $CurrentUser
+    IsAdministrator = $Identity.IsAdministrator
     ActivePowerPlan = [string]$PowerConfiguration.ActivePlan
     SleepAC         = [string]$PowerConfiguration.SleepAC
     SleepDC         = [string]$PowerConfiguration.SleepDC

@@ -2,6 +2,101 @@
 # GUI APPLICATIONS SCREEN
 # ============================================================
 
+$script:GuiCompletionModalStatusColors = @{
+  Installed   = "#34D399"
+  Uninstalled = "#34D399"
+  Skipped     = "#9A9EA8"
+  Blocked     = "#FBBF24"
+  Failed      = "#F2555A"
+  "Not Found" = "#F2555A"
+  Cancelled   = "#9A9EA8"
+}
+
+function Show-GuiCompletionModal {
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Border]$Overlay,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Canvas]$IconSuccess,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Canvas]$IconWarning,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$TitleText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.StackPanel]$CountsPanel,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Border]$DetailsCard,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.StackPanel]$DetailsPanel,
+
+    [Parameter(Mandatory)]
+    [string]$Title,
+
+    [Parameter(Mandatory)]
+    [System.Collections.Specialized.OrderedDictionary]$Counts,
+
+    [string[]]$FailureMessages = @()
+  )
+
+  $TitleText.Text = $Title
+
+  $HasFailures = ($FailureMessages.Count -gt 0)
+  $IconSuccess.Visibility = if ($HasFailures) { "Collapsed" } else { "Visible" }
+  $IconWarning.Visibility = if ($HasFailures) { "Visible" } else { "Collapsed" }
+
+  $CountsPanel.Children.Clear()
+
+  foreach ($Entry in $Counts.GetEnumerator()) {
+    $Color = $script:GuiCompletionModalStatusColors[$Entry.Key]
+
+    if ([string]::IsNullOrWhiteSpace($Color)) {
+      $Color = "#9A9EA8"
+    }
+
+    $Badge = New-Object System.Windows.Controls.Border
+    $Badge.CornerRadius = "8"
+    $Badge.Padding = "10,5"
+    $Badge.Margin = "0,0,8,8"
+    $Badge.Background = "#1A" + $Color.TrimStart("#")
+
+    $BadgeText = New-Object System.Windows.Controls.TextBlock
+    $BadgeText.Text = "$($Entry.Value) $($Entry.Key)"
+    $BadgeText.FontSize = 11.5
+    $BadgeText.FontWeight = "SemiBold"
+    $BadgeText.Foreground = $Color
+    $Badge.Child = $BadgeText
+
+    $CountsPanel.Children.Add($Badge) | Out-Null
+  }
+
+  $DetailsPanel.Children.Clear()
+
+  if ($HasFailures) {
+    $DetailsCard.Visibility = "Visible"
+
+    foreach ($Message in $FailureMessages) {
+      $DetailText = New-Object System.Windows.Controls.TextBlock
+      $DetailText.Text = "- $Message"
+      $DetailText.Foreground = "#E8E9EC"
+      $DetailText.FontSize = 11.5
+      $DetailText.TextWrapping = "Wrap"
+      $DetailText.Margin = "0,0,0,6"
+      $DetailsPanel.Children.Add($DetailText) | Out-Null
+    }
+  }
+  else {
+    $DetailsCard.Visibility = "Collapsed"
+  }
+
+  $Overlay.Visibility = "Visible"
+}
+
 function New-GuiApplicationRow {
   param(
     [Parameter(Mandatory)]
@@ -23,22 +118,86 @@ function New-GuiApplicationRow {
   $StatusColumn.Width = "Auto"
   $RowGrid.ColumnDefinitions.Add($StatusColumn)
 
+  $RowPanel = New-Object System.Windows.Controls.StackPanel
+  $RowPanel.Orientation = "Horizontal"
+  $RowPanel.Cursor = "Hand"
+  # A Panel with no Background is only hit-testable where its children
+  # actually paint pixels -- clicks in the gaps between the checkbox and
+  # the name text would otherwise fall through and never reach this row's
+  # click handler.
+  $RowPanel.Background = "Transparent"
+
+  $CheckboxMark = New-Object System.Windows.Shapes.Path
+  $CheckboxMark.Stroke = "#0B1116"
+  $CheckboxMark.StrokeThickness = 1.7
+  $CheckboxMark.StrokeStartLineCap = "Round"
+  $CheckboxMark.StrokeEndLineCap = "Round"
+  $CheckboxMark.StrokeLineJoin = "Round"
+  $CheckboxMark.Data = "M1.5 5L4 7.5L8.5 2"
+
+  $CheckboxCanvas = New-Object System.Windows.Controls.Canvas
+  $CheckboxCanvas.Width = 10
+  $CheckboxCanvas.Height = 10
+  $CheckboxCanvas.HorizontalAlignment = "Center"
+  $CheckboxCanvas.VerticalAlignment = "Center"
+  $CheckboxCanvas.Children.Add($CheckboxMark) | Out-Null
+
+  $Checkbox = New-Object System.Windows.Controls.Border
+  $Checkbox.Width = 16
+  $Checkbox.Height = 16
+  $Checkbox.CornerRadius = "4"
+  $Checkbox.VerticalAlignment = "Center"
+  $Checkbox.Child = $CheckboxCanvas
+
+  if ([bool]$Application.Selected) {
+    $Checkbox.Background = "#38BDF8"
+  }
+  else {
+    # A Border with only BorderBrush/BorderThickness set (no Background) is
+    # only hit-testable on the painted stroke itself, not its interior --
+    # the same gotcha already worked around on the title bar buttons. Without
+    # an explicit transparent Background here, clicking inside an unchecked
+    # box does nothing.
+    $Checkbox.Background = "Transparent"
+    $Checkbox.BorderBrush = "#565A64"
+    $Checkbox.BorderThickness = "1.5"
+    $CheckboxMark.Visibility = "Collapsed"
+  }
+
+  $RowPanel.Children.Add($Checkbox) | Out-Null
+
   $NameText = New-Object System.Windows.Controls.TextBlock
   $NameText.Text = $Application.Name
   $NameText.TextTrimming = "CharacterEllipsis"
+  $NameText.Foreground = "#E8E9EC"
+  $NameText.FontSize = 12.5
+  $NameText.VerticalAlignment = "Center"
+  $NameText.Margin = "9,0,0,0"
+  $RowPanel.Children.Add($NameText) | Out-Null
 
-  $CheckBox = New-Object System.Windows.Controls.CheckBox
-  $CheckBox.Content = $NameText
-  $CheckBox.IsChecked = [bool]$Application.Selected
-  $CheckBox.Foreground = "#E8E9EC"
-  $CheckBox.FontSize = 12.5
-  $CheckBox.VerticalContentAlignment = "Center"
-  $CheckBox.Tag = $Application
-  $CheckBox.Add_Click({
-    $this.Tag.Selected = [bool]$this.IsChecked
+  $RowPanel.Tag = $Application
+  $RowPanel.Add_MouseLeftButtonUp({
+    $App = $this.Tag
+    $App.Selected = -not [bool]$App.Selected
+    $CheckboxBorder = $this.Children[0]
+
+    if ($App.Selected) {
+      $CheckboxBorder.Background = "#38BDF8"
+      $CheckboxBorder.BorderThickness = "0"
+      $CheckboxBorder.Child.Children[0].Visibility = "Visible"
+    }
+    else {
+      $CheckboxBorder.Background = "Transparent"
+      $CheckboxBorder.BorderBrush = "#565A64"
+      $CheckboxBorder.BorderThickness = "1.5"
+      $CheckboxBorder.Child.Children[0].Visibility = "Collapsed"
+    }
+
+    Update-GuiSelectedCount -CountText $script:GuiSelectedCountText
   })
-  [System.Windows.Controls.Grid]::SetColumn($CheckBox, 0)
-  $RowGrid.Children.Add($CheckBox) | Out-Null
+
+  [System.Windows.Controls.Grid]::SetColumn($RowPanel, 0)
+  $RowGrid.Children.Add($RowPanel) | Out-Null
 
   if ($Application.Recommended -eq $true) {
     $RecommendedIcon = New-GuiRecommendedIcon
@@ -54,11 +213,12 @@ function New-GuiApplicationRow {
   $StatusPanel.Margin = "8,0,0,0"
 
   $StatusColor = if ($Application.Installed) { "#34D399" } else { "#6B6F79" }
+  $StatusDotColor = if ($Application.Installed) { "#34D399" } else { "#4A4E58" }
 
   $StatusDot = New-Object System.Windows.Shapes.Ellipse
   $StatusDot.Width = 5
   $StatusDot.Height = 5
-  $StatusDot.Fill = $StatusColor
+  $StatusDot.Fill = $StatusDotColor
   $StatusDot.VerticalAlignment = "Center"
   $StatusDot.Margin = "0,0,5,0"
   $StatusPanel.Children.Add($StatusDot) | Out-Null
@@ -66,7 +226,7 @@ function New-GuiApplicationRow {
   $StatusText = New-Object System.Windows.Controls.TextBlock
   $StatusText.Text = if ($Application.Installed) { "Installed" } else { "Not Installed" }
   $StatusText.FontSize = 10.5
-  $StatusText.FontWeight = "SemiBold"
+  $StatusText.FontWeight = if ($Application.Installed) { "SemiBold" } else { "Medium" }
   $StatusText.Foreground = $StatusColor
   $StatusPanel.Children.Add($StatusText) | Out-Null
 
@@ -170,7 +330,22 @@ function Start-GuiApplicationQueue {
     [System.Windows.Controls.TextBlock]$CountText,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.Button[]]$ButtonsToDisable
+    [System.Windows.Controls.Button[]]$ButtonsToDisable,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Button]$CancelButton,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Panel]$QueueProgressPanel,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$QueueProgressText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.ProgressBar]$QueueProgressBar,
+
+    [Parameter(Mandatory)]
+    [hashtable]$ModalControls
   )
 
   if (($Applications.Count -eq 0) -and ($PreSkippedCount -eq 0)) {
@@ -179,14 +354,22 @@ function Start-GuiApplicationQueue {
 
   foreach ($Button in $ButtonsToDisable) {
     $Button.IsEnabled = $false
+    $Button.Visibility = "Collapsed"
   }
 
   $script:GuiQueueRunning = $true
-  $CountText.Text = if ($Mode -eq "Install") { "Installing..." } else { "Uninstalling..." }
+  $CountText.Visibility = "Collapsed"
+  $CancelButton.Visibility = "Visible"
+  $CancelButton.IsEnabled = $true
+  $CancelButton.Content = "Cancel"
+  $QueueProgressPanel.Visibility = "Visible"
+  $QueueProgressText.Text = if ($Mode -eq "Install") { "Installing..." } else { "Uninstalling..." }
+  $QueueProgressBar.Value = 0
 
   $RootPath = $script:ITDeploymentToolRoot
   $LogPath = $script:LogFilePath
-  $ProgressQueue = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
+  $ProgressQueue = [System.Collections.Concurrent.ConcurrentQueue[object]]::new()
+  $CancelQueue = [System.Collections.Concurrent.ConcurrentQueue[bool]]::new()
 
   # Deliberately duplicated from Start.ps1's $ModulePaths rather than reused --
   # this is the minimal subset the install/uninstall call graph actually
@@ -199,7 +382,8 @@ function Start-GuiApplicationQueue {
       [string]$LogPath,
       [string]$Mode,
       [object[]]$Applications,
-      [System.Collections.Concurrent.ConcurrentQueue[string]]$ProgressQueue
+      [System.Collections.Concurrent.ConcurrentQueue[object]]$ProgressQueue,
+      [System.Collections.Concurrent.ConcurrentQueue[bool]]$CancelQueue
     )
 
     $ModulePaths = @(
@@ -237,13 +421,24 @@ function Start-GuiApplicationQueue {
 
     $TotalCount = $Applications.Count
     $Index = 0
+    $CancelRequested = $false
 
     if ($Mode -eq "Install") {
       Update-InstalledApplicationRegistryCache
 
       foreach ($Application in $Applications) {
         $Index++
-        $ProgressQueue.Enqueue(("Installing {0} of {1}: {2}..." -f $Index, $TotalCount, $Application.Name))
+
+        if ((-not $CancelRequested) -and ($CancelQueue.Count -gt 0)) {
+          $CancelRequested = $true
+        }
+
+        if ($CancelRequested) {
+          [void]$Results.Add([PSCustomObject]@{ ApplicationName = $Application.Name; Status = "Cancelled"; Message = "$($Application.Name) was cancelled before starting." })
+          continue
+        }
+
+        $ProgressQueue.Enqueue([PSCustomObject]@{ Index = $Index; Total = $TotalCount; Message = ("Installing {0} of {1}: {2}..." -f $Index, $TotalCount, $Application.Name) })
 
         $AlreadyInstalled = Test-ApplicationInstalled -Application $Application
 
@@ -278,7 +473,17 @@ function Start-GuiApplicationQueue {
     else {
       foreach ($Application in $Applications) {
         $Index++
-        $ProgressQueue.Enqueue(("Uninstalling {0} of {1}: {2}..." -f $Index, $TotalCount, $Application.Name))
+
+        if ((-not $CancelRequested) -and ($CancelQueue.Count -gt 0)) {
+          $CancelRequested = $true
+        }
+
+        if ($CancelRequested) {
+          [void]$Results.Add([PSCustomObject]@{ ApplicationName = $Application.Name; Status = "Cancelled"; Message = "$($Application.Name) was cancelled before starting." })
+          continue
+        }
+
+        $ProgressQueue.Enqueue([PSCustomObject]@{ Index = $Index; Total = $TotalCount; Message = ("Uninstalling {0} of {1}: {2}..." -f $Index, $TotalCount, $Application.Name) })
 
         $UninstallationResult = Uninstall-ApplicationByType -Application $Application
 
@@ -301,6 +506,7 @@ function Start-GuiApplicationQueue {
   [void]$PowerShellInstance.AddArgument($Mode)
   [void]$PowerShellInstance.AddArgument($Applications)
   [void]$PowerShellInstance.AddArgument($ProgressQueue)
+  [void]$PowerShellInstance.AddArgument($CancelQueue)
 
   $AsyncResult = $PowerShellInstance.BeginInvoke()
 
@@ -311,9 +517,15 @@ function Start-GuiApplicationQueue {
   $script:GuiQueueGridPanel = $GridPanel
   $script:GuiQueueCountText = $CountText
   $script:GuiQueueButtonsToDisable = $ButtonsToDisable
+  $script:GuiQueueCancelButton = $CancelButton
+  $script:GuiQueueProgressPanel = $QueueProgressPanel
+  $script:GuiQueueProgressText = $QueueProgressText
+  $script:GuiQueueProgressBar = $QueueProgressBar
+  $script:GuiQueueModalControls = $ModalControls
   $script:GuiQueuePreSkippedCount = $PreSkippedCount
   $script:GuiQueuePreFailureMessages = $PreFailureMessages
   $script:GuiQueueProgressQueue = $ProgressQueue
+  $script:GuiQueueCancelQueue = $CancelQueue
 
   $Timer = New-Object System.Windows.Threading.DispatcherTimer
   $Timer.Interval = [TimeSpan]::FromMilliseconds(300)
@@ -328,15 +540,16 @@ function Start-GuiApplicationQueue {
   # mirrors the same proven-safe pattern New-GuiLogListRow's per-row click
   # handler already uses.
   $Timer.Add_Tick({
-    $LatestProgressMessage = $null
-    $DequeuedMessage = $null
+    $LatestProgress = $null
+    $DequeuedProgress = $null
 
-    while ($script:GuiQueueProgressQueue.TryDequeue([ref]$DequeuedMessage)) {
-      $LatestProgressMessage = $DequeuedMessage
+    while ($script:GuiQueueProgressQueue.TryDequeue([ref]$DequeuedProgress)) {
+      $LatestProgress = $DequeuedProgress
     }
 
-    if ($null -ne $LatestProgressMessage) {
-      $script:GuiQueueCountText.Text = $LatestProgressMessage
+    if ($null -ne $LatestProgress) {
+      $script:GuiQueueProgressText.Text = $LatestProgress.Message
+      $script:GuiQueueProgressBar.Value = if ($LatestProgress.Total -gt 0) { ($LatestProgress.Index / $LatestProgress.Total) * 100 } else { 0 }
     }
 
     if (-not $script:GuiQueueAsyncResult.IsCompleted) {
@@ -354,38 +567,59 @@ function Start-GuiApplicationQueue {
         }
       }
 
+      $CancelledCount = @($QueueResults | Where-Object { $_.Status -eq "Cancelled" }).Count
+
       if ($script:GuiQueueMode -eq "Install") {
         $InstalledCount = @($QueueResults | Where-Object { $_.Status -eq "Installed" }).Count
         $SkippedCount = @($QueueResults | Where-Object { $_.Status -eq "Skipped" }).Count
         $BlockedCount = @($QueueResults | Where-Object { $_.Status -eq "Blocked" }).Count
         $NotFoundCount = @($QueueResults | Where-Object { $_.Status -eq "NotFound" }).Count
-        $FailedResults = @($QueueResults | Where-Object { $_.Status -notin @("Installed", "Skipped", "Blocked", "NotFound") })
+        $FailedResults = @($QueueResults | Where-Object { $_.Status -notin @("Installed", "Skipped", "Blocked", "NotFound", "Cancelled") })
         $FailedCount = $FailedResults.Count
 
-        $Summary = "Install summary`n`nInstalled: $InstalledCount`nSkipped: $SkippedCount`nBlocked: $BlockedCount`nFailed: $FailedCount`nNot Found: $NotFoundCount"
+        $Counts = [ordered]@{
+          Installed = $InstalledCount
+          Skipped   = $SkippedCount
+          Blocked   = $BlockedCount
+          Failed    = $FailedCount
+          "Not Found" = $NotFoundCount
+        }
 
         $FailureMessages = @($FailedResults | ForEach-Object { $_.Message })
       }
       else {
         $UninstalledCount = @($QueueResults | Where-Object { $_.Status -eq "Uninstalled" }).Count
         $SkippedCount = @($QueueResults | Where-Object { $_.Status -eq "Skipped" }).Count + $script:GuiQueuePreSkippedCount
-        $FailedResults = @($QueueResults | Where-Object { $_.Status -notin @("Uninstalled", "Skipped") })
+        $FailedResults = @($QueueResults | Where-Object { $_.Status -notin @("Uninstalled", "Skipped", "Cancelled") })
         $FailedCount = $FailedResults.Count
 
-        $Summary = "Uninstall summary`n`nUninstalled: $UninstalledCount`nSkipped: $SkippedCount`nFailed: $FailedCount"
+        $Counts = [ordered]@{
+          Uninstalled = $UninstalledCount
+          Skipped     = $SkippedCount
+          Failed      = $FailedCount
+        }
 
         $FailureMessages = @($script:GuiQueuePreFailureMessages) + @($FailedResults | ForEach-Object { $_.Message })
       }
 
-      if ($FailureMessages.Count -gt 0) {
-        $Summary += "`n`nFailure details:`n" + ($FailureMessages -join "`n")
+      if ($CancelledCount -gt 0) {
+        $Counts["Cancelled"] = $CancelledCount
+      }
+
+      $ModalTitle = if ($script:GuiQueueMode -eq "Install") { "Installation Complete" } else { "Uninstallation Complete" }
+
+      if ($CancelledCount -gt 0) {
+        $ModalTitle += " (Cancelled)"
       }
 
       Update-ApplicationInstallationStatus
       Update-GuiApplicationGrid -GridPanel $script:GuiQueueGridPanel
       Update-GuiSelectedCount -CountText $script:GuiQueueCountText
 
-      [System.Windows.MessageBox]::Show($Summary)
+      Show-GuiCompletionModal -Overlay $script:GuiQueueModalControls.Overlay -IconSuccess $script:GuiQueueModalControls.IconSuccess `
+        -IconWarning $script:GuiQueueModalControls.IconWarning -TitleText $script:GuiQueueModalControls.TitleText `
+        -CountsPanel $script:GuiQueueModalControls.CountsPanel -DetailsCard $script:GuiQueueModalControls.DetailsCard `
+        -DetailsPanel $script:GuiQueueModalControls.DetailsPanel -Title $ModalTitle -Counts $Counts -FailureMessages $FailureMessages
     }
     catch {
       [System.Windows.MessageBox]::Show("Queue error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
@@ -397,7 +631,12 @@ function Start-GuiApplicationQueue {
 
       foreach ($Button in $script:GuiQueueButtonsToDisable) {
         $Button.IsEnabled = $true
+        $Button.Visibility = "Visible"
       }
+
+      $script:GuiQueueCancelButton.Visibility = "Collapsed"
+      $script:GuiQueueProgressPanel.Visibility = "Collapsed"
+      $script:GuiQueueCountText.Visibility = "Visible"
 
       $script:GuiQueueRunning = $false
     }
@@ -418,7 +657,22 @@ function Invoke-GuiInstallQueue {
     [System.Windows.Controls.Button]$InstallButton,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.Button]$UninstallButton
+    [System.Windows.Controls.Button]$UninstallButton,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Button]$CancelButton,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Panel]$QueueProgressPanel,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$QueueProgressText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.ProgressBar]$QueueProgressBar,
+
+    [Parameter(Mandatory)]
+    [hashtable]$ModalControls
   )
 
   $SelectedApplications = @(Get-SelectedApplications)
@@ -430,7 +684,9 @@ function Invoke-GuiInstallQueue {
 
   $ClonedApplications = @($SelectedApplications | ForEach-Object { $_.PSObject.Copy() })
 
-  Start-GuiApplicationQueue -Mode "Install" -Applications $ClonedApplications -GridPanel $GridPanel -CountText $CountText -ButtonsToDisable @($InstallButton, $UninstallButton)
+  Start-GuiApplicationQueue -Mode "Install" -Applications $ClonedApplications -GridPanel $GridPanel -CountText $CountText `
+    -ButtonsToDisable @($InstallButton, $UninstallButton) -CancelButton $CancelButton -QueueProgressPanel $QueueProgressPanel `
+    -QueueProgressText $QueueProgressText -QueueProgressBar $QueueProgressBar -ModalControls $ModalControls
 }
 
 function Invoke-GuiUninstallQueue {
@@ -445,7 +701,22 @@ function Invoke-GuiUninstallQueue {
     [System.Windows.Controls.Button]$InstallButton,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.Button]$UninstallButton
+    [System.Windows.Controls.Button]$UninstallButton,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Button]$CancelButton,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Panel]$QueueProgressPanel,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$QueueProgressText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.ProgressBar]$QueueProgressBar,
+
+    [Parameter(Mandatory)]
+    [hashtable]$ModalControls
   )
 
   $SelectedApplications = @(Get-SelectedApplications)
@@ -483,5 +754,7 @@ function Invoke-GuiUninstallQueue {
     $ApplicationsToUninstall += $Application.PSObject.Copy()
   }
 
-  Start-GuiApplicationQueue -Mode "Uninstall" -Applications $ApplicationsToUninstall -PreSkippedCount $PreSkippedCount -GridPanel $GridPanel -CountText $CountText -ButtonsToDisable @($InstallButton, $UninstallButton)
+  Start-GuiApplicationQueue -Mode "Uninstall" -Applications $ApplicationsToUninstall -PreSkippedCount $PreSkippedCount -GridPanel $GridPanel -CountText $CountText `
+    -ButtonsToDisable @($InstallButton, $UninstallButton) -CancelButton $CancelButton -QueueProgressPanel $QueueProgressPanel `
+    -QueueProgressText $QueueProgressText -QueueProgressBar $QueueProgressBar -ModalControls $ModalControls
 }
