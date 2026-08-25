@@ -138,6 +138,8 @@ function Start-CrowdStrikeInteractiveSetup {
       Write-Host
       Write-Host "$ApplicationName is already installed." -ForegroundColor Yellow
 
+      Write-DeploymentLog -Message "$ApplicationName is already installed. Skipped." -Level "INFO"
+
       return [PSCustomObject][ordered]@{
         Application = $ApplicationName
         Status      = "Skipped"
@@ -199,6 +201,8 @@ function Start-CrowdStrikeInteractiveSetup {
     Write-Host "You must manually accept the Sensor Terms of Use." -ForegroundColor Yellow
     Write-Host "The deployment tool will wait for setup to close." -ForegroundColor DarkGray
 
+    Write-DeploymentLog -Message "CrowdStrike Windows Sensor interactive setup started."
+
     # /quiet is deliberately excluded so the setup window appears.
     $InstallerArguments = @(
       "/install"
@@ -222,6 +226,8 @@ function Start-CrowdStrikeInteractiveSetup {
 
       Write-Host
       Write-Host $Message -ForegroundColor Green
+
+      Write-DeploymentLog -Message $Message -Level "SUCCESS"
     }
     else {
       $Status = "Not Installed"
@@ -229,6 +235,8 @@ function Start-CrowdStrikeInteractiveSetup {
 
       Write-Host
       Write-Host $Message -ForegroundColor Yellow
+
+      Write-DeploymentLog -Message $Message -Level "WARNING"
     }
 
     return [PSCustomObject][ordered]@{
@@ -245,6 +253,8 @@ function Start-CrowdStrikeInteractiveSetup {
     Write-Host
     Write-Host "CrowdStrike setup failed." -ForegroundColor Red
     Write-Host $ErrorMessage -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("CrowdStrike setup failed: {0}" -f $ErrorMessage) -Level "ERROR"
 
     return [PSCustomObject][ordered]@{
       Application = $ApplicationName

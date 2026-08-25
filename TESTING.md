@@ -109,6 +109,7 @@ Record the device used for testing:
 - [x] Installed applications are skipped correctly
 - [x] Missing installers are reported correctly
 - [x] Installation summary displays correct results
+- [x] Fixed a latent gap: `Get-WingetScopeArguments` throws for an invalid `WingetScope` value, and `Test-WingetPackage` (used by the installer-availability check) called it with no try/catch, so a mistyped `WingetScope` in `Applications.json` would have thrown an unhandled exception that terminated the entire install queue instead of failing just that one application. `Test-WingetPackage` now wraps argument construction in a try/catch and reports the package as unavailable rather than throwing. All current catalog entries already use valid `"machine"` values, so this was never triggered in practice (2026-08-25).
 
 > Local, non-destructive acceptance testing is complete. The remaining installation and system-change tests require an authorized clean deployment device. Version `1.1.0-dev` will remain unchanged until those tests pass.
 
@@ -130,6 +131,7 @@ Record the device used for testing:
 - [x] `Start-Office2024Uninstallation` correctly aborts before mounting anything when `office-remove.xml` is missing, and correctly aborts at the administrator check once the file exists (both verified for real, in a non-elevated session)
 - [x] `office-remove.xml` (`<Remove All="TRUE" />`) created locally at `Installers\ISO\Office2024\office-remove.xml` and confirmed resolvable by `Get-Office2024UninstallConfigurationPath`
 - [x] Office 2021 LOP uninstallation routes through the same registry-based EXE uninstaller as ZIP applications, relying on the classic `Uninstall` registry entry Click-to-Run itself registers rather than an invented `OfficeClickToRun.exe` command (verified via mocked dispatch)
+- [x] Fixed: `Uninstall-ApplicationWithExe` previously ran the registry `UninstallString`/`QuietUninstallString` through `cmd.exe /c "..."`, so any shell metacharacter in that value (`&`, `|`, `^`, `%VAR%`) would have been interpreted by `cmd.exe` instead of passed through literally to the uninstaller. Added `Split-UninstallCommandLine` to parse the executable path (quoted or unquoted) and its arguments, and now calls `Start-Process` directly with no shell in between -- the same pattern `Install-ApplicationWithExe` already uses. Verified the parser against a quoted path with arguments, an unquoted path with arguments, and a quoted path with none, 2026-08-25; a real uninstall through the new code path was not exercised live.
 - [x] Unsupported installation types (CrowdStrike) return a clean `Failed` result instead of crashing
 - [x] Per-application confirmation prompt correctly gates uninstallation (Y proceeds, N skips)
 - [x] Applications that are not currently installed are skipped automatically without prompting
@@ -180,6 +182,7 @@ Record the device used for testing:
 - [ ] CrowdStrike installer starts correctly
 - [x] Existing CrowdStrike installation is skipped
 - [x] Falcon service is detected after installation
+- [x] Fixed: `Start-CrowdStrikeInteractiveSetup` logged only via `Write-Host`, so a CrowdStrike install attempt (success, skip, "not detected", or failure) left zero entries in the persistent deployment log, unlike every other installer type. Added `Write-DeploymentLog` calls for all four outcomes, without logging the CID or token values (verified: no logged message references `$CustomerId`/`$ProvisioningToken`, only static status text, 2026-08-25).
 
 > Package preflight passed on the current device. Fresh installation remains untested and requires an authorized clean deployment device.
 
@@ -208,6 +211,7 @@ Record the device used for testing:
 - [ ] IMG is dismounted after processing
 - [x] Conflicting Office installation is blocked
 - [x] Product activation remains manual
+- [x] Fixed: `Get-Office2021MountedVolume` called `Get-DiskImage =ImagePath $ImagePath` (missing the `-` before `ImagePath`), which PowerShell parsed as a positional argument rather than the named parameter. This threw a `ParameterBindingException` that `-ErrorAction SilentlyContinue` could not suppress (parameter-binding failures happen before a cmdlet's own error action applies), so every real Office 2021 LOP installation attempt failed immediately after mounting, with a confusing internal PowerShell error instead of ever reaching Setup.exe. Corrected to `-ImagePath` (verified: the exact call previously threw `ParameterBindingException` in isolation; the corrected call no longer does, 2026-08-25).
 
 > Package preflight passed on the current device. Fresh installation remains untested and requires an authorized clean deployment device.
 
@@ -222,6 +226,7 @@ Record the device used for testing:
 - [x] Password is not displayed or logged
 - [x] Power and sleep configuration works
 - [x] Current Windows configuration report displays correctly
+- [x] Fixed: `New-DeploymentLocalStandardUser` only logged the success path; validation failures, "already exists" skips, missing-administrator failures, and the catch-all failure path all returned silently with no deployment-log entry. Added `Write-DeploymentLog` calls to all four paths. Also fixed a property-name inconsistency (`Username` vs. `UserName`) and a typo ("uderscores") in `Test-DeploymentLocalUserName`'s invalid-character message, both harmless at runtime but worth correcting (2026-08-25).
 
 > These tests require an authorized clean deployment device and will remain unchecked until a suitable test device is available.
 
@@ -266,6 +271,7 @@ The WPF GUI (`Start.ps1 -Gui`) is a separate interface layer that wraps the same
 - [x] The first switch to Deployment Validation or Windows Configuration shows an immediate loading indication (a "Checking deployment readiness..." message, or simply the tab-switch highlight for Windows Configuration) before the underlying checks run, so the click feels acknowledged instead of frozen; the checks themselves still run synchronously and the window is not interactive during that window (verified the mechanism runs without error, 2026-08-24; true non-blocking background loading, like installs already use, was not implemented here)
 - [x] Every `ScrollBar` (Applications grid, Deployment Logs list/viewer, Windows Configuration, Deployment Validation) is a thin borderless thumb matching the mockup's scrollbar spec instead of the native Windows gray gripper chrome, faded to low opacity until the pointer is over it (verified via a rendered screenshot showing the restyled thumb; the hover-brightens behavior was confirmed by inspecting the trigger, not by simulating a live hover, 2026-08-24)
 - [x] Every `ProgressBar` uses a flat accent-colored fill on a dark track instead of the native Aero-gradient chrome (verified the fill's rendered width actually changes proportionally when `Value` changes, from ~30% to ~80%, in an isolated render test, 2026-08-24)
+- [x] Fixed the same hit-testing gap found earlier in the Applications checkbox and Deployment Logs rows, this time in the sidebar navigation: `NavWindowsConfig`, `NavDeploymentLogs`, and `NavDeploymentValidation` had no `Background` set (only the currently-active nav item did), and `Switch-GuiScreen` reset every nav item's `Background` to `$null` on every screen switch -- so for whichever tab wasn't currently selected, clicking anywhere in its padding or icon interior did nothing; only the label text (or an icon's thin stroke) was actually clickable. All three borders now have an explicit `Background="Transparent"` in `MainWindow.xaml`, and the reset loop in `GuiWindow.ps1` now sets `"Transparent"` instead of `$null` (verified the borders and reset now carry a real `Transparent` brush, 2026-08-25; a live mouse click was not simulated, since synthetic mouse input was judged unsafe in this environment earlier in the project).
 
 ### Startup and Elevation
 

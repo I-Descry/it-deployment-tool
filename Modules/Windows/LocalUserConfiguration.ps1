@@ -29,8 +29,8 @@ function Test-DeploymentLocalUserName {
   if ($NormalizedUserName -notmatch "^[A-Za-z0-9._-]+$") {
     return [PSCustomObject]@{
       Valid    = $false
-      Username = $NormalizedUserName
-      Message  = ("Use only letters, numbers, periods, " + "uderscores, and hyphens.")
+      UserName = $NormalizedUserName
+      Message  = ("Use only letters, numbers, periods, " + "underscores, and hyphens.")
     }
   }
 
@@ -149,9 +149,15 @@ function New-DeploymentLocalStandardUser {
   )
 
   try {
+    $LoggingCommand = Get-Command -Name "Write-DeploymentLog" -ErrorAction SilentlyContinue
+
     $Validation = Test-DeploymentLocalUserName -UserName $UserName
 
     if (-not $Validation.Valid) {
+      if ($null -ne $LoggingCommand) {
+        Write-DeploymentLog -Message ("Local standard user creation failed: {0}" -f $Validation.Message) -Level "WARNING"
+      }
+
       return [PSCustomObject]@{
         Status   = "Failed"
         UserName = $Validation.UserName
@@ -162,6 +168,10 @@ function New-DeploymentLocalStandardUser {
     $NormalizedUserName = $Validation.UserName
 
     if (Test-LocalUserExists -UserName $NormalizedUserName) {
+      if ($null -ne $LoggingCommand) {
+        Write-DeploymentLog -Message ("Local standard user creation skipped: {0} already exists." -f $NormalizedUserName) -Level "INFO"
+      }
+
       return [PSCustomObject]@{
         Status   = "Skipped"
         UserName = $NormalizedUserName
@@ -170,6 +180,10 @@ function New-DeploymentLocalStandardUser {
     }
 
     if ((-not $WhatIfPreference) -and (-not (Test-CurrentProcessAdministrator))) {
+      if ($null -ne $LoggingCommand) {
+        Write-DeploymentLog -Message ("Local standard user creation failed: administrator permission is required.") -Level "ERROR"
+      }
+
       return [PSCustomObject]@{
         Status   = "Failed"
         UserName = $NormalizedUserName
@@ -239,8 +253,6 @@ function New-DeploymentLocalStandardUser {
       throw ("The user account could not be configured " + "as a standard user. The account was removed. " + $_.Exception.Message)
     }
 
-    $LoggingCommand = Get-Command -Name "Write-DeploymentLog" -ErrorAction SilentlyContinue
-
     if ($null -ne $LoggingCommand) {
       Write-DeploymentLog -Message ("Created local standard user: {0}" -f $NormalizedUserName) -Level "INFO"
     }
@@ -253,6 +265,12 @@ function New-DeploymentLocalStandardUser {
   }
 
   catch {
+    $LoggingCommand = Get-Command -Name "Write-DeploymentLog" -ErrorAction SilentlyContinue
+
+    if ($null -ne $LoggingCommand) {
+      Write-DeploymentLog -Message ("Local standard user creation failed: {0}" -f $_.Exception.Message) -Level "ERROR"
+    }
+
     return [PSCustomObject]@{
       Status   = "Failed"
       UserName = $UserName

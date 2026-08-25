@@ -81,18 +81,24 @@ function Get-WingetUninstallArguments {
 function Test-WingetPackage {
   param([PSCustomObject]$Application)
 
-  $WingetArguments = @(
-    "show"
-    "--id"
-    $Application.winget
-    "--exact"
-    "--source"
-    (Get-WingetSource -Application $Application)
-    "--accept-source-agreements"
-    "--disable-interactivity"
-  )
+  try {
+    $WingetArguments = @(
+      "show"
+      "--id"
+      $Application.winget
+      "--exact"
+      "--source"
+      (Get-WingetSource -Application $Application)
+      "--accept-source-agreements"
+      "--disable-interactivity"
+    )
 
-  $WingetArguments += @(Get-WingetScopeArguments -Application $Application)
+    $WingetArguments += @(Get-WingetScopeArguments -Application $Application)
+  }
+
+  catch {
+    return $false
+  }
 
   & winget @WingetArguments *> $null
 

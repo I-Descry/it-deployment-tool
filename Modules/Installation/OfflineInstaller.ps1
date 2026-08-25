@@ -146,6 +146,51 @@ function Install-ApplicationWithExe {
   }
 }
 
+function Split-UninstallCommandLine {
+  param(
+    [Parameter(Mandatory)]
+    [string]$Command
+  )
+
+  $Trimmed = $Command.Trim()
+
+  if ($Trimmed.StartsWith('"')) {
+    $ClosingQuoteIndex = $Trimmed.IndexOf('"', 1)
+
+    if ($ClosingQuoteIndex -gt 0) {
+      return [PSCustomObject]@{
+        FilePath  = $Trimmed.Substring(1, $ClosingQuoteIndex - 1)
+        Arguments = $Trimmed.Substring($ClosingQuoteIndex + 1).Trim()
+      }
+    }
+  }
+
+  $Tokens = @($Trimmed -split " ")
+
+  for ($TokenCount = $Tokens.Count; $TokenCount -ge 1; $TokenCount--) {
+    $CandidatePath = ($Tokens[0..($TokenCount - 1)] -join " ")
+
+    if (Test-Path -LiteralPath $CandidatePath -PathType Leaf) {
+      $RemainingArguments = if ($TokenCount -lt $Tokens.Count) {
+        ($Tokens[$TokenCount..($Tokens.Count - 1)] -join " ")
+      }
+      else {
+        ""
+      }
+
+      return [PSCustomObject]@{
+        FilePath  = $CandidatePath
+        Arguments = $RemainingArguments
+      }
+    }
+  }
+
+  return [PSCustomObject]@{
+    FilePath  = $Tokens[0]
+    Arguments = if ($Tokens.Count -gt 1) { ($Tokens[1..($Tokens.Count - 1)] -join " ") } else { "" }
+  }
+}
+
 function Uninstall-ApplicationWithExe {
   param(
     [Parameter(Mandatory)]
@@ -190,15 +235,35 @@ function Uninstall-ApplicationWithExe {
     return $false
   }
 
+  $CommandParts = Split-UninstallCommandLine -Command $Command
+
+  if (-not (Test-Path -LiteralPath $CommandParts.FilePath -PathType Leaf)) {
+    Write-Host
+    Write-Host ("{0} uninstaller executable was not found: {1}" -f $Application.Name, $CommandParts.FilePath) -ForegroundColor Red
+
+    Write-DeploymentLog -Message ("{0} uninstaller executable was not found: {1}" -f $Application.Name, $CommandParts.FilePath) -Level "ERROR"
+
+    return $false
+  }
+
   Write-Host
   Write-Host ("Uninstalling {0}..." -f $Application.Name) -ForegroundColor Cyan
 
   Write-DeploymentLog -Message ("Offline EXE uninstallation started: {0}" -f $Application.Name)
 
-  $CmdArguments = '/c "{0}"' -f $Command
+  $ProcessParameters = @{
+    FilePath    = $CommandParts.FilePath
+    Wait        = $true
+    PassThru    = $true
+    ErrorAction = "Stop"
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($CommandParts.Arguments)) {
+    $ProcessParameters.ArgumentList = $CommandParts.Arguments
+  }
 
   try {
-    $Process = Start-Process -FilePath "cmd.exe" -ArgumentList $CmdArguments -Wait -PassThru -ErrorAction Stop
+    $Process = Start-Process @ProcessParameters
 
     $ExitCode = $Process.ExitCode
 

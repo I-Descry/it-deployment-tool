@@ -91,7 +91,7 @@ function Get-Office2021MountedVolume {
     [string]$ImagePath
   )
 
-  $DiskImage = Get-DiskImage =ImagePath $ImagePath -ErrorAction SilentlyContinue
+  $DiskImage = Get-DiskImage -ImagePath $ImagePath -ErrorAction SilentlyContinue
 
   if (($null -eq $DiskImage) -or (-not $DiskImage.Attached)) {
     return $null

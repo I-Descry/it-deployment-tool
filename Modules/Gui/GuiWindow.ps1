@@ -59,7 +59,7 @@ function Switch-GuiScreen {
   )
 
   foreach ($NavBorder in $script:GuiNavBorders) {
-    $NavBorder.Background = $null
+    $NavBorder.Background = "Transparent"
   }
 
   foreach ($NavText in $script:GuiNavTexts) {
