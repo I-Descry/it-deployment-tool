@@ -208,7 +208,7 @@ function Start-GuiDeploymentValidationLoad {
     param(
       [string]$RootPath,
       [string]$LogPath,
-      [object[]]$Applications
+      [object[]]$ApplicationsParam
     )
 
     $ModulePaths = @(
@@ -228,13 +228,20 @@ function Start-GuiDeploymentValidationLoad {
       "Validation\InstallerPackageReadiness.ps1"
     )
 
+    # ApplicationCatalog.ps1's own top-level code resets $script:Applications
+    # to an empty array when dot-sourced. Dot-sourcing does not create a new
+    # scope, so a parameter literally named $Applications here would be the
+    # same variable as $script:Applications and would get silently clobbered
+    # mid-loop -- that's why this parameter is named $ApplicationsParam
+    # instead, and $script:Applications is only (re)assigned after every
+    # module has finished loading.
     foreach ($ModulePath in $ModulePaths) {
       . (Join-Path $RootPath "Modules\$ModulePath")
     }
 
     $script:ITDeploymentToolRoot = $RootPath
     $script:LogFilePath = $LogPath
-    $script:Applications = $Applications
+    $script:Applications = $ApplicationsParam
 
     $SystemInfo = [PSCustomObject]@{
       ComputerName = $null; LoggedUser = $null; Manufacturer = $null; Model = $null; SerialNumber = $null
@@ -243,7 +250,7 @@ function Start-GuiDeploymentValidationLoad {
 
     $DeviceResults = @(Get-DeploymentValidationResults)
     Write-DeploymentValidationResultsToLog -Results $DeviceResults
-    $ReadinessResults = @(Get-InstallerPackageReadiness -Applications $Applications)
+    $ReadinessResults = @(Get-InstallerPackageReadiness -Applications $ApplicationsParam)
 
     return [PSCustomObject]@{
       DeviceResults    = $DeviceResults

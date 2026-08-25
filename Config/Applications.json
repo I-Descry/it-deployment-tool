@@ -22,6 +22,9 @@
     "DetectionName": "Brave",
     "InstallType": "Winget",
     "Winget": "Brave.Brave",
+    "BlockingProcesses": [
+      "brave"
+    ],
     "Category": "Browsers",
     "Description": "Privacy-focused Chromium web browser",
     "Recommended": false,
@@ -166,9 +169,9 @@
   {
     "Name": "WhatsApp",
     "AppxPackageName": "5319275A.WhatsAppDesktop",
-    "InstallType": "Exe",
-    "InstallerPath": "EXE\\WhatsApp\\WhatsApp Installer.exe",
-    "SilentArguments": "",
+    "InstallType": "Winget",
+    "Winget": "9NKSQGP7F2NH",
+    "WingetSource": "msstore",
     "Category": "Communication",
     "Description": "Messaging application for international communication",
     "Recommended": false

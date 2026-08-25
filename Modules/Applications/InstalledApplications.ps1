@@ -130,7 +130,7 @@ function Test-WingetApplicationInstalled {
     $PackageId
     "--exact"
     "--source"
-    "winget"
+    (Get-WingetSource -Application $Application)
     "--accept-source-agreements"
     "--disable-interactivity"
   )

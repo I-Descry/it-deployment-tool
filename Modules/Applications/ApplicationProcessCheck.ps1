@@ -28,7 +28,10 @@ function Get-BlockingApplicationProcesses {
 function Resolve-BlockingApplicationProcesses {
   param(
     [Parameter(Mandatory)]
-    [PSCustomObject]$Application
+    [PSCustomObject]$Application,
+
+    [ValidateSet("installed", "uninstalled")]
+    [string]$ActionVerb = "installed"
   )
 
   while ($true) {
@@ -44,7 +47,7 @@ function Resolve-BlockingApplicationProcesses {
     $BlockingProcessNames = @($BlockingProcesses | Select-Object -ExpandProperty ProcessName -Unique | Sort-Object)
 
     Write-Host
-    Write-Host ("{0} cannot be installed while these processes are running: {1}" -f $Application.Name, ($BlockingProcessNames -join ", ")) -ForegroundColor Yellow
+    Write-Host ("{0} cannot be {1} while these processes are running: {2}" -f $Application.Name, $ActionVerb, ($BlockingProcessNames -join ", ")) -ForegroundColor Yellow
 
     Write-Host
     Write-Host "[R] Retry after closing the application"

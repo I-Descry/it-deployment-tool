@@ -485,6 +485,15 @@ function Start-GuiApplicationQueue {
 
         $ProgressQueue.Enqueue([PSCustomObject]@{ Index = $Index; Total = $TotalCount; Message = ("Uninstalling {0} of {1}: {2}..." -f $Index, $TotalCount, $Application.Name) })
 
+        $BlockingProcesses = @(Get-BlockingApplicationProcesses -Application $Application)
+
+        if ($BlockingProcesses.Count -gt 0) {
+          $ProcessNames = ($BlockingProcesses | Select-Object -ExpandProperty ProcessName -Unique | Sort-Object) -join ", "
+          Write-DeploymentLog -Message ("{0} was skipped because these processes are running: {1}" -f $Application.Name, $ProcessNames) -Level "WARNING"
+          [void]$Results.Add([PSCustomObject]@{ ApplicationName = $Application.Name; Status = "Skipped"; Message = "$($Application.Name) was skipped because these processes are running: $ProcessNames" })
+          continue
+        }
+
         $UninstallationResult = Uninstall-ApplicationByType -Application $Application
 
         [void]$Results.Add([PSCustomObject]@{ ApplicationName = $Application.Name; Status = $UninstallationResult.Status; Message = $UninstallationResult.Message })

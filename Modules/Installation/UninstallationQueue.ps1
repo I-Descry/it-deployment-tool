@@ -94,6 +94,22 @@ function Uninstall-SelectedApplications {
       continue
     }
 
+    $BlockingResult = Resolve-BlockingApplicationProcesses -Application $Application -ActionVerb "uninstalled"
+
+    if ($BlockingResult.Status -eq "Blocked") {
+      $BlockingProcessText = @($BlockingResult.ProcessNames) -join ", "
+
+      $BlockedMessage = ("{0} was skipped because these processes are still running: {1}" -f $Application.Name, $BlockingProcessText)
+
+      Write-ApplicationUninstallQueueResult -Status "Skipped" -Message $BlockedMessage
+
+      $SkippedCount++
+
+      Write-DeploymentLog -Message $BlockedMessage -Level "WARNING"
+
+      continue
+    }
+
     $Confirmed = Confirm-ApplicationUninstall -ApplicationName $Application.Name
 
     if (-not $Confirmed) {

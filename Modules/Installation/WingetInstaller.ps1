@@ -2,6 +2,20 @@
 # WINGET INSTALLER
 # ============================================================
 
+function Get-WingetSource {
+  param(
+    [PSCustomObject]$Application
+  )
+
+  $ConfiguredSource = [string]$Application.WingetSource
+
+  if ([string]::IsNullOrWhiteSpace($ConfiguredSource)) {
+    return "winget"
+  }
+
+  return $ConfiguredSource.Trim().ToLowerInvariant()
+}
+
 function Get-WingetScopeArguments {
   param(
     [PSCustomObject]$Application
@@ -32,7 +46,7 @@ function Get-WingetInstallArguments {
     $Application.Winget
     "--exact"
     "--source"
-    "winget"
+    (Get-WingetSource -Application $Application)
     "--silent"
     "--accept-package-agreements"
     "--accept-source-agreements"
@@ -53,7 +67,7 @@ function Get-WingetUninstallArguments {
     $Application.Winget
     "--exact"
     "--source"
-    "winget"
+    (Get-WingetSource -Application $Application)
     "--silent"
     "--accept-source-agreements"
     "--disable-interactivity"
@@ -73,7 +87,7 @@ function Test-WingetPackage {
     $Application.winget
     "--exact"
     "--source"
-    "winget"
+    (Get-WingetSource -Application $Application)
     "--accept-source-agreements"
     "--disable-interactivity"
   )
