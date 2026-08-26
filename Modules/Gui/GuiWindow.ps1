@@ -251,6 +251,10 @@ function Show-MainWindow {
   $CopyDeviceDetailsButton = $Window.FindName("CopyDeviceDetailsButton")
   $CurrentComputerNameText = $Window.FindName("CurrentComputerNameText")
   $NewComputerNameTextBox = $Window.FindName("NewComputerNameTextBox")
+  $RestartLaterOption = $Window.FindName("RestartLaterOption")
+  $RestartLaterOptionText = $Window.FindName("RestartLaterOptionText")
+  $RestartNowOption = $Window.FindName("RestartNowOption")
+  $RestartNowOptionText = $Window.FindName("RestartNowOptionText")
   $RenameComputerButton = $Window.FindName("RenameComputerButton")
   $LocalUsersListPanel = $Window.FindName("LocalUsersListPanel")
   $NewUserNameTextBox = $Window.FindName("NewUserNameTextBox")
@@ -432,9 +436,32 @@ function Show-MainWindow {
     }
   })
 
+  # Defaults to Later (today's existing rename behavior) -- Restart Now is
+  # always an explicit choice, never the default, since it restarts the
+  # machine immediately.
+  $script:GuiRenameRestartNow = $false
+
+  $RestartLaterOption.Add_MouseLeftButtonUp({
+    try {
+      Set-GuiRenameRestartChoice -RestartNow $false -LaterOption $RestartLaterOption -LaterOptionText $RestartLaterOptionText -NowOption $RestartNowOption -NowOptionText $RestartNowOptionText
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Restart choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+  })
+
+  $RestartNowOption.Add_MouseLeftButtonUp({
+    try {
+      Set-GuiRenameRestartChoice -RestartNow $true -LaterOption $RestartLaterOption -LaterOptionText $RestartLaterOptionText -NowOption $RestartNowOption -NowOptionText $RestartNowOptionText
+    }
+    catch {
+      [System.Windows.MessageBox]::Show("Restart choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+    }
+  })
+
   $RenameComputerButton.Add_Click({
     try {
-      Invoke-GuiComputerRename -NewNameTextBox $NewComputerNameTextBox -CurrentNameText $CurrentComputerNameText
+      Invoke-GuiComputerRename -NewNameTextBox $NewComputerNameTextBox -CurrentNameText $CurrentComputerNameText -RestartNow $script:GuiRenameRestartNow
     }
     catch {
       [System.Windows.MessageBox]::Show("Rename error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")

@@ -516,6 +516,25 @@
               <TextBox x:Name="NewComputerNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,3"/>
               <TextBlock Text="Letters, numbers, one hyphen, max 15 characters" Foreground="#6B6F79" FontSize="10.5" Margin="0,0,0,12" TextWrapping="Wrap"/>
 
+              <TextBlock Text="AFTER RENAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+              <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="6"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <!-- Restarting a computer is an immediate, hard-to-reverse action, so
+                     "Restart Later" (today's existing behavior: rename now, restart
+                     whenever the technician chooses) is the default selection; "Restart
+                     Now" is an explicit opt-in, never the default. -->
+                <Border x:Name="RestartLaterOption" Grid.Column="0" Background="#2438BDF8" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
+                  <TextBlock x:Name="RestartLaterOptionText" Text="Restart Later" Foreground="#38BDF8" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                </Border>
+                <Border x:Name="RestartNowOption" Grid.Column="2" Background="Transparent" BorderBrush="#3A3E48" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
+                  <TextBlock x:Name="RestartNowOptionText" Text="Restart Now" Foreground="#9A9EA8" FontSize="12" HorizontalAlignment="Center"/>
+                </Border>
+              </Grid>
+
               <Button x:Name="RenameComputerButton" Content="Rename Computer" HorizontalAlignment="Left"
                       Padding="18,8" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
             </StackPanel>

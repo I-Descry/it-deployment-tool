@@ -76,7 +76,15 @@ function Set-DeploymentComputerName {
   [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = "High")]
   param(
     [Parameter(Mandatory)]
-    [string]$NewName
+    [string]$NewName,
+
+    # Renaming a computer always requires a restart to take effect. Left
+    # unset (the default), the rename completes immediately and the restart
+    # is left for the technician to do later -- the existing behavior. Set,
+    # it restarts the machine immediately via Rename-Computer's own -Restart
+    # parameter, which is a real, immediate, hard-to-reverse action, so this
+    # must always be an explicit opt-in rather than a default.
+    [switch]$Restart
   )
 
   try {
@@ -117,18 +125,26 @@ function Set-DeploymentComputerName {
       }
     }
 
-    Rename-Computer -NewName $NormalizedName -Force -ErrorAction Stop
+    Rename-Computer -NewName $NormalizedName -Force -Restart:$Restart -ErrorAction Stop
 
     $LoggingCommand = Get-Command -Name "Write-DeploymentLog" -ErrorAction SilentlyContinue
 
     if ($null -ne $LoggingCommand) {
-      Write-DeploymentLog -Message ("Computer renamed from {0} to {1}. Restart required." -f $CurrentName, $NormalizedName) -Level "INFO"
+      $LogRestartNote = if ($Restart) { "Restarting now." } else { "Restart required." }
+      Write-DeploymentLog -Message ("Computer renamed from {0} to {1}. {2}" -f $CurrentName, $NormalizedName, $LogRestartNote) -Level "INFO"
+    }
+
+    $ResultMessage = if ($Restart) {
+      "The computer was renamed successfully. Restarting now to apply the change."
+    }
+    else {
+      "The computer was renamed successfully. Restart Windows to apply the new name."
     }
 
     return [PSCustomObject]@{
       Status       = "Renamed"
       ComputerName = $NormalizedName
-      Message      = ("The computer was renamed successfully. " + "Restart Windows to apply the new name.")
+      Message      = $ResultMessage
     }
   }
 
@@ -197,7 +213,12 @@ function Start-ComputerRenameWizard {
     return
   }
 
-  $RenameResult = Set-DeploymentComputerName -NewName $NewName -Confirm:$false
+  Write-Host
+  Write-Host "A restart is required for the new name to take effect." -ForegroundColor Yellow
+  $RestartChoice = Read-Host "Restart now, or later? (N)ow / (L)ater [default: Later]"
+  $RestartNow = ($RestartChoice.Trim().ToUpper() -eq "N")
+
+  $RenameResult = Set-DeploymentComputerName -NewName $NewName -Restart:$RestartNow -Confirm:$false
 
   Write-Host
 

@@ -363,13 +363,60 @@ function Invoke-GuiCopyDeviceDetails {
   $Timer.Start()
 }
 
+function Set-GuiRenameRestartChoice {
+  param(
+    [Parameter(Mandatory)]
+    [bool]$RestartNow,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Border]$LaterOption,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$LaterOptionText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Border]$NowOption,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$NowOptionText
+  )
+
+  $script:GuiRenameRestartNow = $RestartNow
+
+  if ($RestartNow) {
+    $LaterOption.Background = "Transparent"
+    $LaterOption.BorderBrush = "#3A3E48"
+    $LaterOptionText.Foreground = "#9A9EA8"
+    $LaterOptionText.FontWeight = "Normal"
+
+    $NowOption.Background = "#2438BDF8"
+    $NowOption.BorderBrush = "#38BDF8"
+    $NowOptionText.Foreground = "#38BDF8"
+    $NowOptionText.FontWeight = "SemiBold"
+  }
+  else {
+    $LaterOption.Background = "#2438BDF8"
+    $LaterOption.BorderBrush = "#38BDF8"
+    $LaterOptionText.Foreground = "#38BDF8"
+    $LaterOptionText.FontWeight = "SemiBold"
+
+    $NowOption.Background = "Transparent"
+    $NowOption.BorderBrush = "#3A3E48"
+    $NowOptionText.Foreground = "#9A9EA8"
+    $NowOptionText.FontWeight = "Normal"
+  }
+}
+
 function Invoke-GuiComputerRename {
   param(
     [Parameter(Mandatory)]
     [System.Windows.Controls.TextBox]$NewNameTextBox,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.TextBlock]$CurrentNameText
+    [System.Windows.Controls.TextBlock]$CurrentNameText,
+
+    [Parameter(Mandatory)]
+    [bool]$RestartNow
   )
 
   $Validation = Test-DeploymentComputerName -ComputerName $NewNameTextBox.Text
@@ -381,8 +428,15 @@ function Invoke-GuiComputerRename {
 
   $CurrentName = Get-CurrentComputerName
 
+  $ConfirmationPrompt = if ($RestartNow) {
+    "Rename this computer from $CurrentName to $($Validation.ComputerName) and restart it immediately?`n`nThe computer will restart as soon as the rename completes. Save any open work first."
+  }
+  else {
+    "Rename this computer from $CurrentName to $($Validation.ComputerName)?`n`nA restart is required to apply the new name. You chose to restart later, so the computer will not restart automatically."
+  }
+
   $Confirmation = [System.Windows.MessageBox]::Show(
-    "Rename this computer from $CurrentName to $($Validation.ComputerName)?",
+    $ConfirmationPrompt,
     "Confirm Rename",
     [System.Windows.MessageBoxButton]::YesNo,
     [System.Windows.MessageBoxImage]::Warning
@@ -392,7 +446,7 @@ function Invoke-GuiComputerRename {
     return
   }
 
-  $RenameResult = Set-DeploymentComputerName -NewName $Validation.ComputerName -Confirm:$false
+  $RenameResult = Set-DeploymentComputerName -NewName $Validation.ComputerName -Restart:$RestartNow -Confirm:$false
 
   [System.Windows.MessageBox]::Show($RenameResult.Message)
 
