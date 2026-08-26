@@ -25,10 +25,17 @@ function Update-GuiWindowsConfigDeviceInfo {
   $Fields.LoggedUser.Text = $Report.LoggedUser
   $Fields.PowerPlan.Text = $Report.ActivePowerPlan
   $Fields.Sleep.Text = "Plugged: {0} | Battery: {1}" -f $Report.SleepAC, $Report.SleepDC
+  $Fields.Processor.Text = $Report.Processor
+  $Fields.Memory.Text = $Report.MemoryGB
+  $Fields.Storage.Text = $Report.Storage
 
   $Fields.AdminStatus.Text = if ($Report.IsAdministrator) { "Yes" } else { "No" }
   $Fields.AdminStatus.Foreground = if ($Report.IsAdministrator) { "#34D399" } else { "#F2555A" }
   $Fields.AdminStatusPill.Background = if ($Report.IsAdministrator) { "#1934D399" } else { "#1AF2555A" }
+
+  $Fields.TpmStatus.Text = $Report.TpmStatus
+  $Fields.TpmStatus.Foreground = if ($Report.TpmReady) { "#34D399" } else { "#6B6F79" }
+  $Fields.TpmStatusPill.Background = if ($Report.TpmReady) { "#1934D399" } else { "#23262E" }
 }
 
 function Update-GuiWindowsConfigCurrentName {
@@ -234,9 +241,15 @@ function Start-GuiWindowsConfigLoad {
       $Fields.LoggedUser.Text = $Report.LoggedUser
       $Fields.PowerPlan.Text = $Report.ActivePowerPlan
       $Fields.Sleep.Text = "Plugged: {0} | Battery: {1}" -f $Report.SleepAC, $Report.SleepDC
+      $Fields.Processor.Text = $Report.Processor
+      $Fields.Memory.Text = $Report.MemoryGB
+      $Fields.Storage.Text = $Report.Storage
       $Fields.AdminStatus.Text = if ($Report.IsAdministrator) { "Yes" } else { "No" }
       $Fields.AdminStatus.Foreground = if ($Report.IsAdministrator) { "#34D399" } else { "#F2555A" }
       $Fields.AdminStatusPill.Background = if ($Report.IsAdministrator) { "#1934D399" } else { "#1AF2555A" }
+      $Fields.TpmStatus.Text = $Report.TpmStatus
+      $Fields.TpmStatus.Foreground = if ($Report.TpmReady) { "#34D399" } else { "#6B6F79" }
+      $Fields.TpmStatusPill.Background = if ($Report.TpmReady) { "#1934D399" } else { "#23262E" }
 
       $script:GuiWindowsConfigLoadCurrentNameText.Text = $Result.CurrentName
 
@@ -301,6 +314,10 @@ function Get-GuiDeviceDetailsSummary {
     "Administrator     : {0}" -f $DeviceFields.AdminStatus.Text
     "Active Power Plan : {0}" -f $DeviceFields.PowerPlan.Text
     "Sleep Settings    : {0}" -f $DeviceFields.Sleep.Text
+    "Processor         : {0}" -f $DeviceFields.Processor.Text
+    "Memory            : {0}" -f $DeviceFields.Memory.Text
+    "Storage           : {0}" -f $DeviceFields.Storage.Text
+    "TPM               : {0}" -f $DeviceFields.TpmStatus.Text
   )
 
   return ($Lines -join [Environment]::NewLine)

@@ -134,6 +134,24 @@ function Get-WindowsConfigurationIdentity {
     $NetworkType = "Domain"
   }
 
+  $Processor = Get-CimInstance -ClassName Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1
+  $MemoryModules = @(Get-CimInstance -ClassName Win32_PhysicalMemory -ErrorAction SilentlyContinue)
+  $TotalMemoryBytes = ($MemoryModules | Measure-Object -Property Capacity -Sum).Sum
+
+  # TPM lives in its own WMI namespace, separate from the general CIM classes
+  # above. It legitimately returns nothing on a VM without a virtual TPM, on a
+  # device with no TPM chip, or when access is denied by policy, so this must
+  # degrade to "not available" rather than treat a null result as an error.
+  $Tpm = Get-CimInstance -Namespace "root\cimv2\Security\MicrosoftTpm" -ClassName Win32_Tpm -ErrorAction SilentlyContinue
+  $TpmReady = $false
+  $TpmStatus = "Not Available"
+
+  if ($null -ne $Tpm) {
+    $TpmReady = [bool]$Tpm.IsActivated_InitialValue -and [bool]$Tpm.IsEnabled_InitialValue
+    $TpmSpecVersion = ([string]$Tpm.SpecVersion -split ",")[0].Trim()
+    $TpmStatus = if ($TpmReady) { "Ready $TpmSpecVersion" } else { "Not Ready" }
+  }
+
   $script:WindowsConfigurationIdentityCache = [PSCustomObject]@{
     ComputerName    = $ComputerName
     Manufacturer    = [string]$ComputerSystem.Manufacturer
@@ -147,9 +165,29 @@ function Get-WindowsConfigurationIdentity {
     OSArchitecture  = [string]$OperatingSystem.OSArchitecture
     IsAdministrator = [bool](Test-CurrentProcessAdministrator)
     ComputerSystemUserName = [string]$ComputerSystem.UserName
+    Processor       = if ($null -ne $Processor) { ([string]$Processor.Name).Trim() } else { "Unknown" }
+    MemoryGB        = if ($TotalMemoryBytes) { "$([math]::Round($TotalMemoryBytes / 1GB, 0)) GB" } else { "Unknown" }
+    TpmReady        = $TpmReady
+    TpmStatus       = $TpmStatus
   }
 
   return $script:WindowsConfigurationIdentityCache
+}
+
+function Get-WindowsConfigurationStorage {
+  # Queried fresh on every report rather than cached with the rest of the
+  # hardware identity above, since free space changes as this tool installs
+  # applications during the same session.
+  $SystemDrive = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='$($env:SystemDrive)'" -ErrorAction SilentlyContinue
+
+  if ($null -eq $SystemDrive -or $null -eq $SystemDrive.Size -or $null -eq $SystemDrive.FreeSpace) {
+    return "Unknown"
+  }
+
+  $FreeGB = [math]::Round($SystemDrive.FreeSpace / 1GB, 0)
+  $TotalGB = [math]::Round($SystemDrive.Size / 1GB, 0)
+
+  return "$FreeGB GB free of $TotalGB GB"
 }
 
 function Get-WindowsConfigurationReport {
@@ -181,6 +219,11 @@ function Get-WindowsConfigurationReport {
     ActivePowerPlan = [string]$PowerConfiguration.ActivePlan
     SleepAC         = [string]$PowerConfiguration.SleepAC
     SleepDC         = [string]$PowerConfiguration.SleepDC
+    Processor       = $Identity.Processor
+    MemoryGB        = $Identity.MemoryGB
+    Storage         = Get-WindowsConfigurationStorage
+    TpmReady        = $Identity.TpmReady
+    TpmStatus       = $Identity.TpmStatus
   }
 }
 

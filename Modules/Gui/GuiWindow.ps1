@@ -280,6 +280,11 @@ function Show-MainWindow {
     PowerPlan       = $Window.FindName("DevicePowerPlanText")
     Sleep           = $Window.FindName("DeviceSleepText")
     AdminStatusPill = $Window.FindName("DeviceAdminStatusPill")
+    Processor       = $Window.FindName("DeviceProcessorText")
+    Memory          = $Window.FindName("DeviceMemoryText")
+    Storage         = $Window.FindName("DeviceStorageText")
+    TpmStatus       = $Window.FindName("DeviceTpmStatusText")
+    TpmStatusPill   = $Window.FindName("DeviceTpmStatusPill")
   }
 
   $CompletionModalControls = @{
