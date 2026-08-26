@@ -28,6 +28,7 @@ function Update-GuiWindowsConfigDeviceInfo {
 
   $Fields.AdminStatus.Text = if ($Report.IsAdministrator) { "Yes" } else { "No" }
   $Fields.AdminStatus.Foreground = if ($Report.IsAdministrator) { "#34D399" } else { "#F2555A" }
+  $Fields.AdminStatusPill.Background = if ($Report.IsAdministrator) { "#1934D399" } else { "#1AF2555A" }
 }
 
 function Update-GuiWindowsConfigCurrentName {
@@ -121,14 +122,18 @@ function Start-GuiWindowsConfigLoad {
     [Parameter(Mandatory)]
     [System.Windows.Controls.TextBlock]$CurrentBatteryText,
 
+    # Windows Setup and Device Details each have their own Refresh button over
+    # this one shared load, so both are disabled for its duration.
     [Parameter(Mandatory)]
-    [System.Windows.Controls.Button]$RefreshButton,
+    [System.Windows.Controls.Button[]]$RefreshButtons,
 
     [Parameter(Mandatory)]
     [System.Windows.Controls.ScrollViewer]$ScrollViewer
   )
 
-  $RefreshButton.IsEnabled = $false
+  foreach ($RefreshButton in $RefreshButtons) {
+    $RefreshButton.IsEnabled = $false
+  }
 
   $RootPath = $script:ITDeploymentToolRoot
 
@@ -188,7 +193,7 @@ function Start-GuiWindowsConfigLoad {
   $script:GuiWindowsConfigLoadLocalUsersListPanel = $LocalUsersListPanel
   $script:GuiWindowsConfigLoadCurrentPluggedInText = $CurrentPluggedInText
   $script:GuiWindowsConfigLoadCurrentBatteryText = $CurrentBatteryText
-  $script:GuiWindowsConfigLoadRefreshButton = $RefreshButton
+  $script:GuiWindowsConfigLoadRefreshButtons = $RefreshButtons
   $script:GuiWindowsConfigLoadScrollViewer = $ScrollViewer
 
   $Timer = New-Object System.Windows.Threading.DispatcherTimer
@@ -231,6 +236,7 @@ function Start-GuiWindowsConfigLoad {
       $Fields.Sleep.Text = "Plugged: {0} | Battery: {1}" -f $Report.SleepAC, $Report.SleepDC
       $Fields.AdminStatus.Text = if ($Report.IsAdministrator) { "Yes" } else { "No" }
       $Fields.AdminStatus.Foreground = if ($Report.IsAdministrator) { "#34D399" } else { "#F2555A" }
+      $Fields.AdminStatusPill.Background = if ($Report.IsAdministrator) { "#1934D399" } else { "#1AF2555A" }
 
       $script:GuiWindowsConfigLoadCurrentNameText.Text = $Result.CurrentName
 
@@ -259,14 +265,82 @@ function Start-GuiWindowsConfigLoad {
       Start-GuiFadeIn -Element $script:GuiWindowsConfigLoadScrollViewer
     }
     catch {
-      [System.Windows.MessageBox]::Show("Windows Configuration load error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      [System.Windows.MessageBox]::Show("Device information load error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
     }
     finally {
       $script:GuiWindowsConfigLoadPowerShell.Dispose()
       $script:GuiWindowsConfigLoadRunspace.Close()
       $script:GuiWindowsConfigLoadRunspace.Dispose()
-      $script:GuiWindowsConfigLoadRefreshButton.IsEnabled = $true
+      foreach ($LoadRefreshButton in $script:GuiWindowsConfigLoadRefreshButtons) {
+        $LoadRefreshButton.IsEnabled = $true
+      }
     }
+  })
+
+  $Timer.Start()
+}
+
+function Get-GuiDeviceDetailsSummary {
+  param(
+    [Parameter(Mandatory)]
+    [hashtable]$DeviceFields
+  )
+
+  $Lines = @(
+    "Computer Name     : {0}" -f $DeviceFields.ComputerName.Text
+    "Manufacturer      : {0}" -f $DeviceFields.Manufacturer.Text
+    "Model             : {0}" -f $DeviceFields.Model.Text
+    "Serial Number     : {0}" -f $DeviceFields.SerialNumber.Text
+    "Network Type      : {0}" -f $DeviceFields.NetworkType.Text
+    "Domain/Workgroup  : {0}" -f $DeviceFields.DomainWorkgroup.Text
+    "OS Edition        : {0}" -f $DeviceFields.OSEdition.Text
+    "OS Version        : {0}" -f $DeviceFields.OSVersion.Text
+    "Build Number      : {0}" -f $DeviceFields.OSBuildNumber.Text
+    "Architecture      : {0}" -f $DeviceFields.OSArchitecture.Text
+    "Logged User       : {0}" -f $DeviceFields.LoggedUser.Text
+    "Administrator     : {0}" -f $DeviceFields.AdminStatus.Text
+    "Active Power Plan : {0}" -f $DeviceFields.PowerPlan.Text
+    "Sleep Settings    : {0}" -f $DeviceFields.Sleep.Text
+  )
+
+  return ($Lines -join [Environment]::NewLine)
+}
+
+function Invoke-GuiCopyDeviceDetails {
+  param(
+    [Parameter(Mandatory)]
+    [hashtable]$DeviceFields,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Button]$CopyButton
+  )
+
+  $SummaryText = Get-GuiDeviceDetailsSummary -DeviceFields $DeviceFields
+
+  try {
+    [System.Windows.Clipboard]::SetText($SummaryText)
+  }
+  catch {
+    [System.Windows.MessageBox]::Show("Could not copy device details to the clipboard: $($_.Exception.Message)")
+    return
+  }
+
+  $script:GuiCopyDeviceDetailsButton = $CopyButton
+  $script:GuiCopyDeviceDetailsOriginalContent = $CopyButton.Content
+
+  $CopyButton.Content = "Copied!"
+  $CopyButton.IsEnabled = $false
+
+  $Timer = New-Object System.Windows.Threading.DispatcherTimer
+  $Timer.Interval = [TimeSpan]::FromMilliseconds(1400)
+  $script:GuiCopyDeviceDetailsResetTimer = $Timer
+
+  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d, matching every
+  # other background-runspace/UI timer handler in this app.
+  $Timer.Add_Tick({
+    $script:GuiCopyDeviceDetailsResetTimer.Stop()
+    $script:GuiCopyDeviceDetailsButton.Content = $script:GuiCopyDeviceDetailsOriginalContent
+    $script:GuiCopyDeviceDetailsButton.IsEnabled = $true
   })
 
   $Timer.Start()

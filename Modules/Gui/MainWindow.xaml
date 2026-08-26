@@ -114,6 +114,65 @@
         </Setter.Value>
       </Setter>
     </Style>
+
+    <!--
+      Plain TextBox/PasswordBox chrome is a flat, hard-cornered rectangle that
+      looks out of place next to the rest of the app's rounded cards and
+      buttons. This softens both to rounded corners matching the existing
+      read-only "current name" display box, and highlights the border with
+      the accent color on focus so a field clearly shows it's active.
+      PART_ContentHost is a required name WPF looks for on both templates to
+      host the actual editable text/password content.
+    -->
+    <Style TargetType="TextBox">
+      <Setter Property="CaretBrush" Value="#E8E9EC"/>
+      <Setter Property="SelectionBrush" Value="#38BDF8"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TextBox">
+            <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="6">
+              <Decorator x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsFocused" Value="True">
+                <Setter TargetName="Chrome" Property="BorderBrush" Value="#38BDF8"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.6"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="PasswordBox">
+      <Setter Property="CaretBrush" Value="#E8E9EC"/>
+      <Setter Property="SelectionBrush" Value="#38BDF8"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="PasswordBox">
+            <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="6">
+              <Decorator x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsFocused" Value="True">
+                <Setter TargetName="Chrome" Property="BorderBrush" Value="#38BDF8"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.6"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
   </Window.Resources>
   <Grid>
   <DockPanel x:Name="RootDockPanel" LastChildFill="True">
@@ -182,13 +241,21 @@
             <TextBlock x:Name="NavApplicationsText" Text="Applications" Foreground="#38BDF8" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
           </StackPanel>
         </Border>
-        <Border x:Name="NavWindowsConfig" Background="Transparent" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand">
+        <Border x:Name="NavWindowsSetup" Background="Transparent" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand">
           <StackPanel Orientation="Horizontal">
-            <Canvas x:Name="NavWindowsConfigIcon" Width="20" Height="20" Margin="0,0,10,0">
+            <Canvas x:Name="NavWindowsSetupIcon" Width="20" Height="20" Margin="0,0,10,0">
+              <Path Stroke="#9A9EA8" StrokeThickness="1.3" StrokeLineJoin="Round" Data="M13.5 3.5a3.5 3.5 0 00-4.6 4.2L3 13.6V17h3.4l5.9-5.9a3.5 3.5 0 004.2-4.6l-2.6 2.6-2-2 2.6-2.6z"/>
+            </Canvas>
+            <TextBlock x:Name="NavWindowsSetupText" Text="Windows Setup" Foreground="#9A9EA8" FontSize="13" VerticalAlignment="Center"/>
+          </StackPanel>
+        </Border>
+        <Border x:Name="NavDeviceDetails" Background="Transparent" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand">
+          <StackPanel Orientation="Horizontal">
+            <Canvas x:Name="NavDeviceDetailsIcon" Width="20" Height="20" Margin="0,0,10,0">
               <Ellipse Canvas.Left="7" Canvas.Top="7" Width="6" Height="6" Stroke="#9A9EA8" StrokeThickness="1.4"/>
               <Path Stroke="#9A9EA8" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M10 2v2.5M10 15.5V18M18 10h-2.5M4.5 10H2M15.5 4.5l-1.8 1.8M6.3 13.7l-1.8 1.8M15.5 15.5l-1.8-1.8M6.3 6.3L4.5 4.5"/>
             </Canvas>
-            <TextBlock x:Name="NavWindowsConfigText" Text="Windows Configuration" Foreground="#9A9EA8" FontSize="13" VerticalAlignment="Center"/>
+            <TextBlock x:Name="NavDeviceDetailsText" Text="Device Details" Foreground="#9A9EA8" FontSize="13" VerticalAlignment="Center"/>
           </StackPanel>
         </Border>
         <Border x:Name="NavDeploymentLogs" Background="Transparent" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand">
@@ -326,9 +393,28 @@
         </StackPanel>
       </DockPanel>
 
-      <!-- Windows Configuration toolbar -->
-      <DockPanel x:Name="WindowsConfigToolbar" Grid.Row="1" Margin="24,14,24,10" LastChildFill="False" Visibility="Collapsed">
-        <Button x:Name="RefreshWindowsConfigButton" Content="Refresh" DockPanel.Dock="Right"
+      <!-- Windows Setup toolbar -->
+      <DockPanel x:Name="WindowsSetupToolbar" Grid.Row="1" Margin="24,14,24,10" LastChildFill="False" Visibility="Collapsed">
+        <Button x:Name="RefreshWindowsSetupButton" Content="Refresh" DockPanel.Dock="Right"
+                Padding="14,8" Background="#23262E" Foreground="#E8E9EC"
+                BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
+        <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal">
+            <Canvas Width="16" Height="16" Margin="0,0,9,0">
+              <Path Stroke="#38BDF8" StrokeThickness="1.3" StrokeLineJoin="Round" Data="M10.8 2.8a2.8 2.8 0 00-3.7 3.4L2.4 10.9V13.6h2.7l4.7-4.7a2.8 2.8 0 003.4-3.7l-2.1 2.1-1.6-1.6 2.1-2.1z"/>
+            </Canvas>
+            <TextBlock Text="Windows Setup" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+          </StackPanel>
+          <TextBlock Text="Rename this device, create a local user, and configure power settings." Foreground="#9A9EA8" FontSize="11.5" Margin="25,3,0,0"/>
+        </StackPanel>
+      </DockPanel>
+
+      <!-- Device Details toolbar -->
+      <DockPanel x:Name="DeviceDetailsToolbar" Grid.Row="1" Margin="24,14,24,10" LastChildFill="False" Visibility="Collapsed">
+        <Button x:Name="RefreshDeviceDetailsButton" Content="Refresh" DockPanel.Dock="Right"
+                Padding="14,8" Background="#23262E" Foreground="#E8E9EC"
+                BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
+        <Button x:Name="CopyDeviceDetailsButton" Content="Copy Device Details" DockPanel.Dock="Right" Margin="0,0,10,0"
                 Padding="14,8" Background="#23262E" Foreground="#E8E9EC"
                 BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
@@ -337,9 +423,9 @@
               <Ellipse Canvas.Left="5" Canvas.Top="5" Width="6" Height="6" Stroke="#38BDF8" StrokeThickness="1.4"/>
               <Path Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round" Data="M8 1.6v2M8 12.4v2M14.4 8h-2M3.6 8h-2M12.4 3.6l-1.4 1.4M4.9 11.1l-1.4 1.4M12.4 12.4l-1.4-1.4M4.9 4.9L3.6 3.6"/>
             </Canvas>
-            <TextBlock Text="Windows Configuration" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+            <TextBlock Text="Device Details" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
           </StackPanel>
-          <TextBlock Text="Rename this device, create a local user, and configure power settings." Foreground="#9A9EA8" FontSize="11.5" Margin="25,3,0,0"/>
+          <TextBlock Text="Full identity, system, and session profile for this device." Foreground="#9A9EA8" FontSize="11.5" Margin="25,3,0,0"/>
         </StackPanel>
       </DockPanel>
 
@@ -397,177 +483,229 @@
         </Border>
       </Grid>
 
-      <!-- Windows Configuration content -->
-      <ScrollViewer x:Name="WindowsConfigScrollViewer" Grid.Row="2" Padding="24,2,24,4" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
-        <StackPanel x:Name="WindowsConfigPanel">
+      <!-- Windows Setup content: three action cards side by side -->
+      <ScrollViewer x:Name="WindowsSetupScrollViewer" Grid.Row="2" Padding="24,2,24,12" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <Grid x:Name="WindowsSetupPanel">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="14"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="14"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
 
-          <!-- Device Information -->
-          <Border Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="8" Margin="0,0,0,6">
+          <!-- Computer Rename -->
+          <Border Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" VerticalAlignment="Top">
             <StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <Canvas Width="16" Height="16" Margin="0,0,9,0">
-                  <Ellipse Canvas.Left="1" Canvas.Top="1" Width="14" Height="14" Stroke="#38BDF8" StrokeThickness="1.4"/>
-                  <Line X1="8" Y1="7.2" X2="8" Y2="11.5" Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                  <Line X1="8" Y1="4.7" X2="8" Y2="4.9" Stroke="#38BDF8" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                  <Rectangle Canvas.Left="1.5" Canvas.Top="3.5" Width="13" Height="9" RadiusX="1.4" RadiusY="1.4" Stroke="#38BDF8" StrokeThickness="1.4"/>
+                  <Line X1="4" Y1="9.5" X2="6" Y2="9.5" Stroke="#38BDF8" StrokeThickness="1.4"/>
                 </Canvas>
-                <TextBlock Text="Device Information" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Text="Computer Rename" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
               </StackPanel>
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="130"/>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="28"/>
-                  <ColumnDefinition Width="110"/>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="28"/>
-                  <ColumnDefinition Width="150"/>
-                  <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
-                </Grid.RowDefinitions>
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,10"/>
+              <TextBlock Text="Rename this device. A restart is required to apply the change." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,10" TextWrapping="Wrap"/>
 
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Computer Name" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock x:Name="DeviceComputerNameText" Grid.Row="0" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Manufacturer" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock x:Name="DeviceManufacturerText" Grid.Row="1" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Model" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock x:Name="DeviceModelText" Grid.Row="2" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Serial Number" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock x:Name="DeviceSerialNumberText" Grid.Row="3" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock Grid.Row="4" Grid.Column="0" Text="Network Type" Foreground="#9A9EA8" FontSize="12"/>
-                <TextBlock x:Name="DeviceNetworkTypeText" Grid.Row="4" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+              <TextBlock Text="CURRENT NAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+              <Border Background="#14161B" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,3,0,9">
+                <TextBlock x:Name="CurrentComputerNameText" Text="-" Foreground="#9A9EA8" FontSize="13"/>
+              </Border>
 
-                <TextBlock Grid.Row="0" Grid.Column="3" Text="Domain/Workgroup" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock x:Name="DeviceDomainWorkgroupText" Grid.Row="0" Grid.Column="4" Text="-" Foreground="#E8E9EC" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock Grid.Row="1" Grid.Column="3" Text="OS Edition" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock x:Name="DeviceOSEditionText" Grid.Row="1" Grid.Column="4" Text="-" Foreground="#E8E9EC" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock Grid.Row="2" Grid.Column="3" Text="OS Version" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock x:Name="DeviceOSVersionText" Grid.Row="2" Grid.Column="4" Text="-" Foreground="#E8E9EC" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock Grid.Row="3" Grid.Column="3" Text="Build Number" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock x:Name="DeviceOSBuildNumberText" Grid.Row="3" Grid.Column="4" Text="-" Foreground="#E8E9EC" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock Grid.Row="4" Grid.Column="3" Text="Architecture" Foreground="#9A9EA8" FontSize="12"/>
-                <TextBlock x:Name="DeviceOSArchitectureText" Grid.Row="4" Grid.Column="4" Text="-" Foreground="#E8E9EC" FontSize="12"/>
+              <TextBlock Text="NEW NAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+              <TextBox x:Name="NewComputerNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,3"/>
+              <TextBlock Text="Letters, numbers, one hyphen, max 15 characters" Foreground="#6B6F79" FontSize="10.5" Margin="0,0,0,12" TextWrapping="Wrap"/>
 
-                <TextBlock Grid.Row="0" Grid.Column="6" Text="Logged User" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock x:Name="DeviceLoggedUserText" Grid.Row="0" Grid.Column="7" Text="-" Foreground="#E8E9EC" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock Grid.Row="1" Grid.Column="6" Text="Administrator" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock x:Name="DeviceAdminStatusText" Grid.Row="1" Grid.Column="7" Text="-" Foreground="#6B6F79" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock Grid.Row="2" Grid.Column="6" Text="Active Power Plan" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock x:Name="DevicePowerPlanText" Grid.Row="2" Grid.Column="7" Text="-" Foreground="#E8E9EC" FontSize="12" Margin="0,0,0,2"/>
-                <TextBlock Grid.Row="3" Grid.Column="6" Text="Sleep (Plugged/Battery)" Foreground="#9A9EA8" FontSize="12"/>
-                <TextBlock x:Name="DeviceSleepText" Grid.Row="3" Grid.Column="7" Text="-" Foreground="#E8E9EC" FontSize="12"/>
-              </Grid>
+              <Button x:Name="RenameComputerButton" Content="Rename Computer" HorizontalAlignment="Left"
+                      Padding="18,8" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
             </StackPanel>
           </Border>
 
-          <!-- Computer Rename + Local Standard User -->
-          <Grid Margin="0,0,0,6">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*"/>
-              <ColumnDefinition Width="16"/>
-              <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Computer Rename -->
-            <Border Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="8">
-              <StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                  <Canvas Width="16" Height="16" Margin="0,0,9,0">
-                    <Rectangle Canvas.Left="1.5" Canvas.Top="3.5" Width="13" Height="9" RadiusX="1.4" RadiusY="1.4" Stroke="#38BDF8" StrokeThickness="1.4"/>
-                    <Line X1="4" Y1="9.5" X2="6" Y2="9.5" Stroke="#38BDF8" StrokeThickness="1.4"/>
-                  </Canvas>
-                  <TextBlock Text="Computer Rename" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
-                </StackPanel>
-                <TextBlock Text="Rename this device. A restart is required to apply the change." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,7" TextWrapping="Wrap"/>
-
-                <TextBlock Text="CURRENT NAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-                <Border Background="#14161B" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,3,0,7">
-                  <TextBlock x:Name="CurrentComputerNameText" Text="-" Foreground="#9A9EA8" FontSize="13"/>
-                </Border>
-
-                <TextBlock Text="NEW NAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="NewComputerNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,3"/>
-                <TextBlock Text="Letters, numbers, one hyphen, max 15 characters" Foreground="#6B6F79" FontSize="10.5" Margin="0,0,0,7" TextWrapping="Wrap"/>
-
-                <Button x:Name="RenameComputerButton" Content="Rename Computer" HorizontalAlignment="Left"
-                        Padding="18,8" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
+          <!-- Create Local Standard User -->
+          <Border Grid.Column="2" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" VerticalAlignment="Top">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Canvas Width="16" Height="16" Margin="0,0,9,0">
+                  <Ellipse Canvas.Left="5" Canvas.Top="2" Width="6" Height="6" Stroke="#38BDF8" StrokeThickness="1.4"/>
+                  <Path Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round" Data="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
+                </Canvas>
+                <TextBlock Text="Local Standard User" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
               </StackPanel>
-            </Border>
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,10"/>
+              <TextBlock Text="Create a non-administrator local account for the assigned user." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,10" TextWrapping="Wrap"/>
 
-            <!-- Create Local Standard User -->
-            <Border Grid.Column="2" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="8">
-              <StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                  <Canvas Width="16" Height="16" Margin="0,0,9,0">
-                    <Ellipse Canvas.Left="5" Canvas.Top="2" Width="6" Height="6" Stroke="#38BDF8" StrokeThickness="1.4"/>
-                    <Path Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round" Data="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
-                  </Canvas>
-                  <TextBlock Text="Local Standard User" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
-                </StackPanel>
-                <TextBlock Text="Create a non-administrator local account for the assigned user." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,7" TextWrapping="Wrap"/>
+              <TextBlock Text="EXISTING" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+              <StackPanel x:Name="LocalUsersListPanel" Margin="0,0,0,10"/>
 
-                <StackPanel x:Name="LocalUsersListPanel" Margin="0,0,0,5"/>
+              <TextBlock Text="ADD NEW USER" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+              <TextBlock Text="USERNAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+              <TextBox x:Name="NewUserNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
+              <TextBlock Text="FULL NAME (OPTIONAL)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+              <TextBox x:Name="NewUserFullNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
+              <TextBlock Text="PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+              <PasswordBox x:Name="NewUserPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
+              <TextBlock Text="CONFIRM PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+              <PasswordBox x:Name="NewUserConfirmPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,12"/>
 
-                <TextBlock Text="USERNAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="NewUserNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
-                <TextBlock Text="FULL NAME (OPTIONAL)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="NewUserFullNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
-                <TextBlock Text="PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-                <PasswordBox x:Name="NewUserPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
-                <TextBlock Text="CONFIRM PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-                <PasswordBox x:Name="NewUserConfirmPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,7"/>
-
-                <Button x:Name="CreateUserButton" Content="Create User" HorizontalAlignment="Left"
-                        Padding="18,7" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
-              </StackPanel>
-            </Border>
-          </Grid>
+              <Button x:Name="CreateUserButton" Content="Create User" HorizontalAlignment="Left"
+                      Padding="18,7" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
+            </StackPanel>
+          </Border>
 
           <!-- Power and Sleep Settings -->
-          <Border Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="8">
+          <Border Grid.Column="4" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" VerticalAlignment="Top">
             <StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <Canvas Width="16" Height="16" Margin="0,0,9,0">
                   <Line X1="8" Y1="1.5" X2="8" Y2="7.5" Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round"/>
                   <Path Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round" Data="M4.2 3.6a6 6 0 108 0"/>
                 </Canvas>
-                <TextBlock Text="Power and Sleep Settings" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Text="Power &amp; Sleep" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
               </StackPanel>
-              <TextBlock Text="Configure sleep timeouts recommended for company deployment devices." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,7" TextWrapping="Wrap"/>
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,10"/>
+              <TextBlock Text="Recommended sleep timeouts for company deployment devices." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,10" TextWrapping="Wrap"/>
 
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                <TextBlock Text="Current plugged in: " Foreground="#9A9EA8" FontSize="12"/>
+              <TextBlock Text="CURRENT" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                <TextBlock Text="Plugged in: " Foreground="#9A9EA8" FontSize="12"/>
                 <TextBlock x:Name="CurrentPluggedInText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
               </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock Text="Current on battery: " Foreground="#9A9EA8" FontSize="12"/>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                <TextBlock Text="On battery: " Foreground="#9A9EA8" FontSize="12"/>
                 <TextBlock x:Name="CurrentBatteryText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
               </StackPanel>
 
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="14"/>
-                  <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
-                  <TextBlock Text="SLEEP TIMEOUT WHEN PLUGGED IN (MINUTES)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" TextWrapping="Wrap"/>
-                  <TextBox x:Name="PluggedInMinutesTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,0"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2">
-                  <TextBlock Text="SLEEP TIMEOUT ON BATTERY (MINUTES)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" TextWrapping="Wrap"/>
-                  <TextBox x:Name="BatteryMinutesTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,0"/>
-                </StackPanel>
-              </Grid>
-              <TextBlock Text="Minutes, 0 to 1440. Enter 0 for Never." Foreground="#6B6F79" FontSize="10.5" Margin="0,5,0,7"/>
+              <TextBlock Text="APPLY NEW TIMEOUTS" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+              <TextBlock Text="PLUGGED IN (MINUTES)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+              <TextBox x:Name="PluggedInMinutesTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,7"/>
+              <TextBlock Text="ON BATTERY (MINUTES)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+              <TextBox x:Name="BatteryMinutesTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,0"/>
+              <TextBlock Text="Minutes, 0 to 1440. Enter 0 for Never." Foreground="#6B6F79" FontSize="10.5" Margin="0,5,0,12" TextWrapping="Wrap"/>
 
               <Button x:Name="ApplyPowerSettingsButton" Content="Apply Power Settings" HorizontalAlignment="Left"
                       Padding="18,8" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
             </StackPanel>
           </Border>
+        </Grid>
+      </ScrollViewer>
 
-        </StackPanel>
+      <!-- Device Details content: two cards, grouped sections inside each -->
+      <ScrollViewer x:Name="DeviceDetailsScrollViewer" Grid.Row="2" Padding="24,2,24,12" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <Grid x:Name="DeviceDetailsPanel">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="14"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+
+          <!-- Identity & System -->
+          <Border Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" VerticalAlignment="Top">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Canvas Width="16" Height="16" Margin="0,0,9,0">
+                  <Rectangle Canvas.Left="2" Canvas.Top="3" Width="12" Height="10" RadiusX="1.5" RadiusY="1.5" Stroke="#38BDF8" StrokeThickness="1.4"/>
+                  <Line X1="4.5" Y1="6" X2="9" Y2="6" Stroke="#38BDF8" StrokeThickness="1.3"/>
+                  <Line X1="4.5" Y1="8.5" X2="11.5" Y2="8.5" Stroke="#38BDF8" StrokeThickness="1.3"/>
+                </Canvas>
+                <TextBlock Text="Identity &amp; System" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+              </StackPanel>
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,12"/>
+
+              <TextBlock Text="IDENTITY" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,7"/>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="132"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Computer Name" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceComputerNameText" Grid.Row="0" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" FontWeight="SemiBold" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Manufacturer" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceManufacturerText" Grid.Row="1" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Model" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceModelText" Grid.Row="2" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Serial Number" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceSerialNumberText" Grid.Row="3" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Network Type" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceNetworkTypeText" Grid.Row="4" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" TextWrapping="Wrap"/>
+              </Grid>
+
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,14,0,14"/>
+
+              <TextBlock Text="SYSTEM" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,7"/>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="132"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="OS Edition" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceOSEditionText" Grid.Row="0" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" FontWeight="SemiBold" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="OS Version" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceOSVersionText" Grid.Row="1" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Build Number" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceOSBuildNumberText" Grid.Row="2" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Architecture" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceOSArchitectureText" Grid.Row="3" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Domain/Workgroup" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceDomainWorkgroupText" Grid.Row="4" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" TextWrapping="Wrap"/>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <!-- Session & Power -->
+          <Border Grid.Column="2" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" VerticalAlignment="Top">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Canvas Width="16" Height="16" Margin="0,0,9,0">
+                  <Ellipse Canvas.Left="5" Canvas.Top="2" Width="6" Height="6" Stroke="#38BDF8" StrokeThickness="1.3"/>
+                  <Path Stroke="#38BDF8" StrokeThickness="1.3" StrokeStartLineCap="Round" Data="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
+                  <Line X1="13" Y1="2" X2="13" Y2="5.5" Stroke="#38BDF8" StrokeThickness="1.3" StrokeStartLineCap="Round"/>
+                </Canvas>
+                <TextBlock Text="Session &amp; Power" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+              </StackPanel>
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,12"/>
+
+              <TextBlock Text="SESSION" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,7"/>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="132"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition/><RowDefinition/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Logged User" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceLoggedUserText" Grid.Row="0" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" FontWeight="SemiBold" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Administrator" Foreground="#9A9EA8" FontSize="12" VerticalAlignment="Center"/>
+                <Border x:Name="DeviceAdminStatusPill" Grid.Row="1" Grid.Column="1" CornerRadius="9" Padding="8,1" HorizontalAlignment="Left" Background="#23262E">
+                  <TextBlock x:Name="DeviceAdminStatusText" Text="-" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
+                </Border>
+              </Grid>
+
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,14,0,14"/>
+
+              <TextBlock Text="POWER" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,7"/>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="132"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition/><RowDefinition/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Power Plan" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DevicePowerPlanText" Grid.Row="0" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" FontWeight="SemiBold" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Sleep" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceSleepText" Grid.Row="1" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" TextWrapping="Wrap"/>
+              </Grid>
+            </StackPanel>
+          </Border>
+        </Grid>
       </ScrollViewer>
 
       <!-- Placeholder for not-yet-built screens -->
