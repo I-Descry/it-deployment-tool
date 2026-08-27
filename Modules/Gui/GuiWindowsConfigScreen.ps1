@@ -1,8 +1,64 @@
 # ============================================================
 # GUI WINDOWS CONFIGURATION SCREEN
 # ============================================================
-# Update-GuiWindowsConfigLocalUsersList reuses New-GuiValidationStatusRow
-# from GuiDeploymentValidationScreen.ps1, so this file must load after it.
+
+function New-GuiLocalUserRow {
+  # Purpose-built for the narrow Local Standard User card. The Deployment
+  # Validation screen's New-GuiValidationStatusRow uses fixed-width columns
+  # sized for that screen's full-width rows; reusing it here squeezed the
+  # detail text into a sliver a few pixels wide and made it wrap letter by
+  # letter. This stacks the detail below the name instead, so it always has
+  # the full card width to wrap into.
+  param(
+    [Parameter(Mandatory)]
+    [string]$UserName,
+
+    [string]$DetailText
+  )
+
+  $Stack = New-Object System.Windows.Controls.StackPanel
+  $Stack.Margin = "0,0,0,5"
+
+  $TopLine = New-Object System.Windows.Controls.StackPanel
+  $TopLine.Orientation = "Horizontal"
+
+  $StatusPill = New-Object System.Windows.Controls.Border
+  $StatusPill.Background = "#1934D399"
+  $StatusPill.CornerRadius = "9"
+  $StatusPill.Padding = "7,1"
+  $StatusPill.VerticalAlignment = "Center"
+  $StatusPillText = New-Object System.Windows.Controls.TextBlock
+  $StatusPillText.Text = "ACTIVE"
+  $StatusPillText.FontSize = 9.5
+  $StatusPillText.FontWeight = "Bold"
+  $StatusPillText.Foreground = "#34D399"
+  $StatusPill.Child = $StatusPillText
+  $TopLine.Children.Add($StatusPill) | Out-Null
+
+  $NameText = New-Object System.Windows.Controls.TextBlock
+  $NameText.Text = $UserName
+  $NameText.FontSize = 12.5
+  $NameText.FontWeight = "SemiBold"
+  $NameText.Foreground = "#E8E9EC"
+  $NameText.TextTrimming = "CharacterEllipsis"
+  $NameText.VerticalAlignment = "Center"
+  $NameText.Margin = "8,0,0,0"
+  $TopLine.Children.Add($NameText) | Out-Null
+
+  $Stack.Children.Add($TopLine) | Out-Null
+
+  if (-not [string]::IsNullOrWhiteSpace($DetailText) -and $DetailText -ne $UserName) {
+    $DetailBlock = New-Object System.Windows.Controls.TextBlock
+    $DetailBlock.Text = $DetailText
+    $DetailBlock.FontSize = 11
+    $DetailBlock.Foreground = "#6B6F79"
+    $DetailBlock.TextWrapping = "Wrap"
+    $DetailBlock.Margin = "0,2,0,0"
+    $Stack.Children.Add($DetailBlock) | Out-Null
+  }
+
+  return $Stack
+}
 
 function Update-GuiWindowsConfigDeviceInfo {
   param(
@@ -68,7 +124,7 @@ function Update-GuiWindowsConfigLocalUsersList {
 
   foreach ($User in $DeploymentUsers) {
     $DetailText = if ([string]::IsNullOrWhiteSpace([string]$User.FullName)) { "Standard user" } else { [string]$User.FullName }
-    $Row = New-GuiValidationStatusRow -StatusLabel "ACTIVE" -Passed $true -PrimaryText $User.Name -DetailText $DetailText
+    $Row = New-GuiLocalUserRow -UserName $User.Name -DetailText $DetailText
     $ListPanel.Children.Add($Row) | Out-Null
   }
 }
@@ -593,7 +649,7 @@ function Set-GuiCreateUserPasswordChoice {
     [System.Windows.Controls.StackPanel]$PasswordFieldsPanel,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.TextBlock]$NoticeText,
+    [System.Windows.Controls.Border]$NoticeText,
 
     [Parameter(Mandatory)]
     [System.Windows.Controls.PasswordBox]$PasswordBox,

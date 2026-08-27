@@ -497,7 +497,7 @@
           </Grid.ColumnDefinitions>
 
           <!-- Computer Rename -->
-          <Border Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" VerticalAlignment="Top">
+          <Border Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
             <StackPanel>
               <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <Canvas Width="16" Height="16" Margin="0,0,9,0">
@@ -543,7 +543,7 @@
           </Border>
 
           <!-- Create Local Standard User -->
-          <Border Grid.Column="2" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" VerticalAlignment="Top">
+          <Border Grid.Column="2" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
             <StackPanel>
               <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <Canvas Width="16" Height="16" Margin="0,0,9,0">
@@ -588,7 +588,16 @@
                 <TextBlock Text="CONFIRM PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
                 <PasswordBox x:Name="NewUserConfirmPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,12"/>
               </StackPanel>
-              <TextBlock x:Name="NoPasswordNoticeText" Text="This account will sign in with no password. By default, Windows only allows this at the console, not over the network." Foreground="#6B6F79" FontSize="10.5" Margin="0,0,0,12" TextWrapping="Wrap" Visibility="Collapsed"/>
+              <Border x:Name="NoPasswordNoticeBox" Background="#14F2555A" BorderBrush="#3DF2555A" BorderThickness="1" CornerRadius="6" Padding="9,7" Margin="0,0,0,12" Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal">
+                  <Canvas Width="12" Height="12" Margin="0,1,7,0" VerticalAlignment="Top">
+                    <Path Stroke="#F2555A" StrokeThickness="1.3" StrokeLineJoin="Round" Data="M6 1l5.2 9H0.8L6 1z"/>
+                    <Line X1="6" Y1="4.6" X2="6" Y2="7.2" Stroke="#F2555A" StrokeThickness="1.3" StrokeStartLineCap="Round"/>
+                    <Line X1="6" Y1="8.6" X2="6" Y2="8.75" Stroke="#F2555A" StrokeThickness="1.6" StrokeStartLineCap="Round"/>
+                  </Canvas>
+                  <TextBlock Text="This account will sign in with no password. By default, Windows only allows this at the console, not over the network." Foreground="#D9A5A7" FontSize="10.5" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
 
               <Button x:Name="CreateUserButton" Content="Create User" HorizontalAlignment="Left"
                       Padding="18,7" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
@@ -596,7 +605,7 @@
           </Border>
 
           <!-- Power and Sleep Settings -->
-          <Border Grid.Column="4" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" VerticalAlignment="Top">
+          <Border Grid.Column="4" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
             <StackPanel>
               <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <Canvas Width="16" Height="16" Margin="0,0,9,0">
@@ -635,7 +644,7 @@
              on any other device. Fields are pre-filled from the current
              Sample.txt (if WinAIA is installed and already has values) and
              every field is optional. -->
-        <Border x:Name="AssetIdCard" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="12,7" Margin="0,4,0,0" Visibility="Collapsed">
+        <Border x:Name="AssetIdCard" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="14,8" Margin="0,3,0,0" Visibility="Collapsed">
           <StackPanel>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
               <Canvas Width="16" Height="16" Margin="0,0,9,0">
@@ -651,15 +660,15 @@
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="12"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="12"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="22"/>
+                <ColumnDefinition Width="26"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="12"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="12"/>
                 <ColumnDefinition Width="*"/>
               </Grid.ColumnDefinitions>
               <Grid.RowDefinitions>
@@ -668,20 +677,19 @@
               </Grid.RowDefinitions>
 
               <!-- Owner Data and Asset Data are each split across 3 sub-columns
-                   instead of 2, so the tallest column is 2 fields instead of 3.
-                   Real Nunito font metrics (not the Segoe UI fallback this
-                   layout was first measured with) render taller than expected,
-                   so this needed more headroom than the 2-column version had. -->
-              <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Text="OWNER DATA" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,2"/>
+                   instead of 2, so the tallest column is 2 fields instead of 3
+                   and stays within the real (Nunito, not the Segoe UI fallback
+                   an isolated probe would show) rendered height budget. -->
+              <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Text="OWNER DATA" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,3"/>
               <StackPanel Grid.Row="1" Grid.Column="0">
                 <TextBlock Text="OWNER NAME" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetOwnerNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,3"/>
+                <TextBox x:Name="AssetOwnerNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,4"/>
                 <TextBlock Text="DEPARTMENT" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
                 <TextBox x:Name="AssetDepartmentTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
               </StackPanel>
               <StackPanel Grid.Row="1" Grid.Column="2">
                 <TextBlock Text="LOCATION" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetLocationTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,3"/>
+                <TextBox x:Name="AssetLocationTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,4"/>
                 <TextBlock Text="PHONE NUMBER" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
                 <TextBox x:Name="AssetPhoneNumberTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
               </StackPanel>
@@ -690,10 +698,10 @@
                 <TextBox x:Name="AssetOwnerPositionTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
               </StackPanel>
 
-              <TextBlock Grid.Row="0" Grid.Column="6" Grid.ColumnSpan="5" Text="ASSET DATA" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,2"/>
+              <TextBlock Grid.Row="0" Grid.Column="6" Grid.ColumnSpan="5" Text="ASSET DATA" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,3"/>
               <StackPanel Grid.Row="1" Grid.Column="6">
                 <TextBlock Text="PURCHASE DATE (YYYYMMDD)" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetPurchaseDateTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,3"/>
+                <TextBox x:Name="AssetPurchaseDateTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,4"/>
                 <TextBlock Text="LAST INVENTORIED (YYYYMMDD)" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
                 <TextBox x:Name="AssetLastInventoriedTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
               </StackPanel>
@@ -728,7 +736,7 @@
           </Grid.ColumnDefinitions>
 
           <!-- Identity & System -->
-          <Border Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" VerticalAlignment="Top">
+          <Border Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
             <StackPanel>
               <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <Canvas Width="16" Height="16" Margin="0,0,9,0">
@@ -787,7 +795,7 @@
           </Border>
 
           <!-- Session & Power -->
-          <Border Grid.Column="2" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" VerticalAlignment="Top">
+          <Border Grid.Column="2" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
             <StackPanel>
               <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <Canvas Width="16" Height="16" Margin="0,0,9,0">

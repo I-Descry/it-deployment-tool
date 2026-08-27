@@ -294,7 +294,8 @@ function Update-GuiApplicationGrid {
   $Grouped = $script:Applications | Group-Object Category
 
   foreach ($Group in $Grouped) {
-    $Card = New-GuiCategoryCard -CategoryName $Group.Name -Applications $Group.Group
+    $SortedApplications = $Group.Group | Sort-Object Name
+    $Card = New-GuiCategoryCard -CategoryName $Group.Name -Applications $SortedApplications
     $GridPanel.Items.Add($Card) | Out-Null
   }
 }

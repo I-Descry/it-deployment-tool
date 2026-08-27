@@ -269,7 +269,7 @@ function Show-MainWindow {
   $NoPasswordOption = $Window.FindName("NoPasswordOption")
   $NoPasswordOptionText = $Window.FindName("NoPasswordOptionText")
   $NewUserPasswordFieldsPanel = $Window.FindName("NewUserPasswordFieldsPanel")
-  $NoPasswordNoticeText = $Window.FindName("NoPasswordNoticeText")
+  $NoPasswordNoticeBox = $Window.FindName("NoPasswordNoticeBox")
   $NewUserPasswordBox = $Window.FindName("NewUserPasswordBox")
   $NewUserConfirmPasswordBox = $Window.FindName("NewUserConfirmPasswordBox")
   $CreateUserButton = $Window.FindName("CreateUserButton")
@@ -517,7 +517,7 @@ function Show-MainWindow {
 
   $SetPasswordOption.Add_MouseLeftButtonUp({
     try {
-      Set-GuiCreateUserPasswordChoice -NoPassword $false -SetOption $SetPasswordOption -SetOptionText $SetPasswordOptionText -NoPasswordOption $NoPasswordOption -NoPasswordOptionText $NoPasswordOptionText -PasswordFieldsPanel $NewUserPasswordFieldsPanel -NoticeText $NoPasswordNoticeText -PasswordBox $NewUserPasswordBox -ConfirmPasswordBox $NewUserConfirmPasswordBox
+      Set-GuiCreateUserPasswordChoice -NoPassword $false -SetOption $SetPasswordOption -SetOptionText $SetPasswordOptionText -NoPasswordOption $NoPasswordOption -NoPasswordOptionText $NoPasswordOptionText -PasswordFieldsPanel $NewUserPasswordFieldsPanel -NoticeText $NoPasswordNoticeBox -PasswordBox $NewUserPasswordBox -ConfirmPasswordBox $NewUserConfirmPasswordBox
     }
     catch {
       Show-GuiDialog -Title "Error" -Icon Warning -Message "Password choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
@@ -526,7 +526,7 @@ function Show-MainWindow {
 
   $NoPasswordOption.Add_MouseLeftButtonUp({
     try {
-      Set-GuiCreateUserPasswordChoice -NoPassword $true -SetOption $SetPasswordOption -SetOptionText $SetPasswordOptionText -NoPasswordOption $NoPasswordOption -NoPasswordOptionText $NoPasswordOptionText -PasswordFieldsPanel $NewUserPasswordFieldsPanel -NoticeText $NoPasswordNoticeText -PasswordBox $NewUserPasswordBox -ConfirmPasswordBox $NewUserConfirmPasswordBox
+      Set-GuiCreateUserPasswordChoice -NoPassword $true -SetOption $SetPasswordOption -SetOptionText $SetPasswordOptionText -NoPasswordOption $NoPasswordOption -NoPasswordOptionText $NoPasswordOptionText -PasswordFieldsPanel $NewUserPasswordFieldsPanel -NoticeText $NoPasswordNoticeBox -PasswordBox $NewUserPasswordBox -ConfirmPasswordBox $NewUserConfirmPasswordBox
     }
     catch {
       Show-GuiDialog -Title "Error" -Icon Warning -Message "Password choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
