@@ -35,7 +35,12 @@ function Get-CurrentComputerName {
 
 function Test-DeploymentComputerName {
   param(
+    # AllowEmptyString so a genuinely empty name field falls through to the
+    # friendly "cannot be empty" message below, rather than PowerShell's own
+    # mandatory-parameter binder rejecting the empty string outright (which
+    # would throw before this function's body ever runs).
     [Parameter(Mandatory)]
+    [AllowEmptyString()]
     [string]$ComputerName
   )
 

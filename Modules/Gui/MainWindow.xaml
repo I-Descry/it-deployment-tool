@@ -483,8 +483,10 @@
         </Border>
       </Grid>
 
-      <!-- Windows Setup content: three action cards side by side -->
-      <ScrollViewer x:Name="WindowsSetupScrollViewer" Grid.Row="2" Padding="24,2,24,12" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+      <!-- Windows Setup content: three action cards side by side, plus the
+           ThinkPad-only Lenovo Asset ID card below them. -->
+      <ScrollViewer x:Name="WindowsSetupScrollViewer" Grid.Row="2" Padding="24,0,24,6" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <StackPanel>
         <Grid x:Name="WindowsSetupPanel">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -561,10 +563,32 @@
               <TextBox x:Name="NewUserNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
               <TextBlock Text="FULL NAME (OPTIONAL)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
               <TextBox x:Name="NewUserFullNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
-              <TextBlock Text="PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-              <PasswordBox x:Name="NewUserPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
-              <TextBlock Text="CONFIRM PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-              <PasswordBox x:Name="NewUserConfirmPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,12"/>
+              <TextBlock Text="PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="6"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <!-- Blank-password local accounts are unusual enough to require an
+                     explicit opt-in, so "Set Password" (today's existing behavior)
+                     is the default selection, matching the Restart Later/Restart
+                     Now pattern on the Computer Rename card. -->
+                <Border x:Name="SetPasswordOption" Grid.Column="0" Background="#2438BDF8" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
+                  <TextBlock x:Name="SetPasswordOptionText" Text="Set Password" Foreground="#38BDF8" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                </Border>
+                <Border x:Name="NoPasswordOption" Grid.Column="2" Background="Transparent" BorderBrush="#3A3E48" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
+                  <TextBlock x:Name="NoPasswordOptionText" Text="No Password" Foreground="#9A9EA8" FontSize="12" HorizontalAlignment="Center"/>
+                </Border>
+              </Grid>
+
+              <StackPanel x:Name="NewUserPasswordFieldsPanel">
+                <TextBlock Text="PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                <PasswordBox x:Name="NewUserPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
+                <TextBlock Text="CONFIRM PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                <PasswordBox x:Name="NewUserConfirmPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,12"/>
+              </StackPanel>
+              <TextBlock x:Name="NoPasswordNoticeText" Text="This account will sign in with no password. By default, Windows only allows this at the console, not over the network." Foreground="#6B6F79" FontSize="10.5" Margin="0,0,0,12" TextWrapping="Wrap" Visibility="Collapsed"/>
 
               <Button x:Name="CreateUserButton" Content="Create User" HorizontalAlignment="Left"
                       Padding="18,7" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
@@ -606,6 +630,92 @@
             </StackPanel>
           </Border>
         </Grid>
+
+        <!-- Lenovo Asset ID: ThinkPad-only, hidden entirely (not just disabled)
+             on any other device. Fields are pre-filled from the current
+             Sample.txt (if WinAIA is installed and already has values) and
+             every field is optional. -->
+        <Border x:Name="AssetIdCard" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="12,7" Margin="0,4,0,0" Visibility="Collapsed">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+              <Canvas Width="16" Height="16" Margin="0,0,9,0">
+                <Rectangle Canvas.Left="1.5" Canvas.Top="3" Width="13" Height="10" RadiusX="1.3" RadiusY="1.3" Stroke="#38BDF8" StrokeThickness="1.3"/>
+                <Line X1="4" Y1="7" X2="12" Y2="7" Stroke="#38BDF8" StrokeThickness="1.1"/>
+                <Ellipse Canvas.Left="5.2" Canvas.Top="4.2" Width="1.6" Height="1.6" Stroke="#38BDF8" StrokeThickness="1"/>
+              </Canvas>
+              <TextBlock Text="Lenovo Asset ID" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+              <TextBlock Text="All fields optional. Saving opens WinAIA to confirm." Foreground="#6B6F79" FontSize="11" Margin="10,2,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+            <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,5"/>
+
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="22"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
+
+              <!-- Owner Data and Asset Data are each split across 3 sub-columns
+                   instead of 2, so the tallest column is 2 fields instead of 3.
+                   Real Nunito font metrics (not the Segoe UI fallback this
+                   layout was first measured with) render taller than expected,
+                   so this needed more headroom than the 2-column version had. -->
+              <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Text="OWNER DATA" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,2"/>
+              <StackPanel Grid.Row="1" Grid.Column="0">
+                <TextBlock Text="OWNER NAME" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="AssetOwnerNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,3"/>
+                <TextBlock Text="DEPARTMENT" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="AssetDepartmentTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
+              </StackPanel>
+              <StackPanel Grid.Row="1" Grid.Column="2">
+                <TextBlock Text="LOCATION" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="AssetLocationTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,3"/>
+                <TextBlock Text="PHONE NUMBER" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="AssetPhoneNumberTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
+              </StackPanel>
+              <StackPanel Grid.Row="1" Grid.Column="4">
+                <TextBlock Text="POSITION" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="AssetOwnerPositionTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
+              </StackPanel>
+
+              <TextBlock Grid.Row="0" Grid.Column="6" Grid.ColumnSpan="5" Text="ASSET DATA" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,2"/>
+              <StackPanel Grid.Row="1" Grid.Column="6">
+                <TextBlock Text="PURCHASE DATE (YYYYMMDD)" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="AssetPurchaseDateTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,3"/>
+                <TextBlock Text="LAST INVENTORIED (YYYYMMDD)" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="AssetLastInventoriedTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
+              </StackPanel>
+              <StackPanel Grid.Row="1" Grid.Column="8">
+                <TextBlock Text="WARRANTY END (YYYYMMDD)" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="AssetWarrantyEndTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,4"/>
+                <TextBlock Text="WARRANTY DURATION (MONTHS)" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="AssetWarrantyDurationTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
+              </StackPanel>
+              <StackPanel Grid.Row="1" Grid.Column="10">
+                <TextBlock Text="AMOUNT" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="AssetAmountTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,4"/>
+                <TextBlock Text="ASSET NUMBER" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="AssetNumberTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
+              </StackPanel>
+            </Grid>
+
+            <Button x:Name="SaveAssetIdButton" Content="Save Asset ID" HorizontalAlignment="Left" Margin="0,5,0,0"
+                    Padding="18,7" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
+          </StackPanel>
+        </Border>
+        </StackPanel>
       </ScrollViewer>
 
       <!-- Device Details content: two cards, grouped sections inside each -->

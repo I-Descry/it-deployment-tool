@@ -88,6 +88,43 @@ function Update-GuiWindowsConfigPowerCurrentValues {
   $CurrentBatteryText.Text = Convert-SleepTimeoutMinutesToText -Minutes $Timeouts.BatteryMinutes
 }
 
+function Update-GuiAssetIdDisplay {
+  # Shared by the synchronous refresh path and the background-load completion
+  # handler below. Hides the card entirely (not just disables it) on any
+  # non-ThinkPad device, per explicit instruction that this should not even
+  # appear rather than show up permanently greyed out for the common case of
+  # a non-Lenovo deployment.
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Border]$Card,
+
+    [Parameter(Mandatory)]
+    [hashtable]$FieldTextBoxes,
+
+    [Parameter(Mandatory)]
+    [bool]$IsThinkPad,
+
+    [hashtable]$Fields
+  )
+
+  if (-not $IsThinkPad) {
+    $Card.Visibility = "Collapsed"
+    return
+  }
+
+  $Card.Visibility = "Visible"
+
+  if ($null -eq $Fields) {
+    return
+  }
+
+  foreach ($Key in $FieldTextBoxes.Keys) {
+    if ($Fields.ContainsKey($Key)) {
+      $FieldTextBoxes[$Key].Text = [string]$Fields[$Key]
+    }
+  }
+}
+
 function Invoke-GuiWindowsConfigurationRefresh {
   param(
     [Parameter(Mandatory)]
@@ -103,13 +140,58 @@ function Invoke-GuiWindowsConfigurationRefresh {
     [System.Windows.Controls.TextBlock]$CurrentPluggedInText,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.TextBlock]$CurrentBatteryText
+    [System.Windows.Controls.TextBlock]$CurrentBatteryText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Border]$AssetIdCard,
+
+    [Parameter(Mandatory)]
+    [hashtable]$AssetIdFieldTextBoxes
   )
 
   Update-GuiWindowsConfigDeviceInfo -Fields $DeviceFields
   Update-GuiWindowsConfigCurrentName -CurrentNameText $CurrentNameText
   Update-GuiWindowsConfigLocalUsersList -ListPanel $LocalUsersListPanel
   Update-GuiWindowsConfigPowerCurrentValues -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText
+
+  $IsThinkPad = [bool](Get-WindowsConfigurationIdentity).IsThinkPad
+  $AssetFields = if ($IsThinkPad) { Get-DeploymentAssetIdFields } else { $null }
+  Update-GuiAssetIdDisplay -Card $AssetIdCard -FieldTextBoxes $AssetIdFieldTextBoxes -IsThinkPad $IsThinkPad -Fields $AssetFields
+}
+
+function Invoke-GuiAssetIdSave {
+  # Writes the 11 fields to Sample.txt, then launches WinAIA against it.
+  # WinAIA opens its own confirmation dialog before committing anything to
+  # BIOS -- this function cannot and does not try to click through that on
+  # the technician's behalf, only the confirmation before launching it and
+  # the result after it exits are this tool's own.
+  param(
+    [Parameter(Mandatory)]
+    [hashtable]$FieldTextBoxes
+  )
+
+  $Fields = @{}
+
+  foreach ($Key in $FieldTextBoxes.Keys) {
+    $Fields[$Key] = $FieldTextBoxes[$Key].Text
+  }
+
+  $Confirmation = Show-GuiDialog -Title "Confirm Asset ID Save" -Icon Warning -Buttons YesNo -Message "Save these values and launch WinAIA to write them to BIOS?`n`nWinAIA will open its own confirmation window -- review the changes there and confirm to finish."
+
+  if ($Confirmation -ne "Yes") {
+    return
+  }
+
+  try {
+    Set-DeploymentAssetIdFields -Fields $Fields | Out-Null
+  }
+  catch {
+    Show-GuiDialog -Title "Error" -Icon Warning -Message "Could not save Sample.txt: $($_.Exception.Message)"
+    return
+  }
+
+  $Result = Invoke-DeploymentAssetIdWrite
+  Show-GuiResultDialog -Result $Result -SuccessTitle "Asset ID Saved"
 }
 
 function Start-GuiWindowsConfigLoad {
@@ -135,7 +217,13 @@ function Start-GuiWindowsConfigLoad {
     [System.Windows.Controls.Button[]]$RefreshButtons,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.ScrollViewer]$ScrollViewer
+    [System.Windows.Controls.ScrollViewer]$ScrollViewer,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Border]$AssetIdCard,
+
+    [Parameter(Mandatory)]
+    [hashtable]$AssetIdFieldTextBoxes
   )
 
   foreach ($RefreshButton in $RefreshButtons) {
@@ -160,6 +248,7 @@ function Start-GuiWindowsConfigLoad {
       "Windows\LocalUserConfiguration.ps1"
       "Windows\PowerConfiguration.ps1"
       "Windows\WindowsConfiguration.ps1"
+      "Windows\LenovoAssetId.ps1"
     )
 
     foreach ($ModulePath in $ModulePaths) {
@@ -172,12 +261,14 @@ function Start-GuiWindowsConfigLoad {
     $CurrentName = Get-CurrentComputerName
     $LocalUsers = @(Get-DeploymentLocalStandardUsers)
     $Timeouts = Get-CurrentSleepTimeoutMinutes
+    $AssetFields = if ($Report.IsThinkPad) { Get-DeploymentAssetIdFields } else { $null }
 
     return [PSCustomObject]@{
       Report      = $Report
       CurrentName = $CurrentName
       LocalUsers  = $LocalUsers
       Timeouts    = $Timeouts
+      AssetFields = $AssetFields
     }
   }
 
@@ -202,6 +293,8 @@ function Start-GuiWindowsConfigLoad {
   $script:GuiWindowsConfigLoadCurrentBatteryText = $CurrentBatteryText
   $script:GuiWindowsConfigLoadRefreshButtons = $RefreshButtons
   $script:GuiWindowsConfigLoadScrollViewer = $ScrollViewer
+  $script:GuiWindowsConfigLoadAssetIdCard = $AssetIdCard
+  $script:GuiWindowsConfigLoadAssetIdFieldTextBoxes = $AssetIdFieldTextBoxes
 
   $Timer = New-Object System.Windows.Threading.DispatcherTimer
   $Timer.Interval = [TimeSpan]::FromMilliseconds(200)
@@ -275,10 +368,12 @@ function Start-GuiWindowsConfigLoad {
       $script:GuiWindowsConfigLoadCurrentPluggedInText.Text = Convert-SleepTimeoutMinutesToText -Minutes $Result.Timeouts.PluggedInMinutes
       $script:GuiWindowsConfigLoadCurrentBatteryText.Text = Convert-SleepTimeoutMinutesToText -Minutes $Result.Timeouts.BatteryMinutes
 
+      Update-GuiAssetIdDisplay -Card $script:GuiWindowsConfigLoadAssetIdCard -FieldTextBoxes $script:GuiWindowsConfigLoadAssetIdFieldTextBoxes -IsThinkPad $Report.IsThinkPad -Fields $Result.AssetFields
+
       Start-GuiFadeIn -Element $script:GuiWindowsConfigLoadScrollViewer
     }
     catch {
-      [System.Windows.MessageBox]::Show("Device information load error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Device information load error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
     finally {
       $script:GuiWindowsConfigLoadPowerShell.Dispose()
@@ -338,7 +433,7 @@ function Invoke-GuiCopyDeviceDetails {
     [System.Windows.Clipboard]::SetText($SummaryText)
   }
   catch {
-    [System.Windows.MessageBox]::Show("Could not copy device details to the clipboard: $($_.Exception.Message)")
+    Show-GuiDialog -Title "Error" -Icon Warning -Message "Could not copy device details to the clipboard: $($_.Exception.Message)"
     return
   }
 
@@ -361,6 +456,31 @@ function Invoke-GuiCopyDeviceDetails {
   })
 
   $Timer.Start()
+}
+
+function Show-GuiResultDialog {
+  # Shared by every action on this screen that returns the common
+  # {Status, Message} shape (Set-DeploymentComputerName, New-DeploymentLocalStandardUser,
+  # Set-DeploymentSleepTimeouts): maps the result's Status to the matching
+  # dialog icon and title, rather than repeating that mapping at each call site.
+  param(
+    [Parameter(Mandatory)]
+    [PSCustomObject]$Result,
+
+    [Parameter(Mandatory)]
+    [string]$SuccessTitle
+  )
+
+  $Icon = switch ($Result.Status) {
+    "Failed" { "Warning" }
+    "Skipped" { "Info" }
+    "Preview Only" { "Info" }
+    default { "Success" }
+  }
+
+  $Title = if ($Result.Status -eq "Failed") { "Error" } else { $SuccessTitle }
+
+  Show-GuiDialog -Title $Title -Icon $Icon -Message $Result.Message
 }
 
 function Set-GuiRenameRestartChoice {
@@ -422,7 +542,7 @@ function Invoke-GuiComputerRename {
   $Validation = Test-DeploymentComputerName -ComputerName $NewNameTextBox.Text
 
   if (-not $Validation.Valid) {
-    [System.Windows.MessageBox]::Show($Validation.Message)
+    Show-GuiDialog -Title "Invalid Name" -Icon Warning -Message $Validation.Message
     return
   }
 
@@ -435,26 +555,85 @@ function Invoke-GuiComputerRename {
     "Rename this computer from $CurrentName to $($Validation.ComputerName)?`n`nA restart is required to apply the new name. You chose to restart later, so the computer will not restart automatically."
   }
 
-  $Confirmation = [System.Windows.MessageBox]::Show(
-    $ConfirmationPrompt,
-    "Confirm Rename",
-    [System.Windows.MessageBoxButton]::YesNo,
-    [System.Windows.MessageBoxImage]::Warning
-  )
+  $Confirmation = Show-GuiDialog -Title "Confirm Rename" -Icon Warning -Buttons YesNo -Message $ConfirmationPrompt
 
-  if ($Confirmation -ne [System.Windows.MessageBoxResult]::Yes) {
+  if ($Confirmation -ne "Yes") {
     return
   }
 
   $RenameResult = Set-DeploymentComputerName -NewName $Validation.ComputerName -Restart:$RestartNow -Confirm:$false
 
-  [System.Windows.MessageBox]::Show($RenameResult.Message)
+  Show-GuiResultDialog -Result $RenameResult -SuccessTitle "Computer Renamed"
 
   if ($RenameResult.Status -eq "Renamed") {
     $NewNameTextBox.Text = ""
   }
 
   Update-GuiWindowsConfigCurrentName -CurrentNameText $CurrentNameText
+}
+
+function Set-GuiCreateUserPasswordChoice {
+  param(
+    [Parameter(Mandatory)]
+    [bool]$NoPassword,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Border]$SetOption,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$SetOptionText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Border]$NoPasswordOption,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$NoPasswordOptionText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.StackPanel]$PasswordFieldsPanel,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.TextBlock]$NoticeText,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.PasswordBox]$PasswordBox,
+
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.PasswordBox]$ConfirmPasswordBox
+  )
+
+  $script:GuiCreateUserNoPassword = $NoPassword
+
+  if ($NoPassword) {
+    $SetOption.Background = "Transparent"
+    $SetOption.BorderBrush = "#3A3E48"
+    $SetOptionText.Foreground = "#9A9EA8"
+    $SetOptionText.FontWeight = "Normal"
+
+    $NoPasswordOption.Background = "#2438BDF8"
+    $NoPasswordOption.BorderBrush = "#38BDF8"
+    $NoPasswordOptionText.Foreground = "#38BDF8"
+    $NoPasswordOptionText.FontWeight = "SemiBold"
+
+    $PasswordFieldsPanel.Visibility = "Collapsed"
+    $NoticeText.Visibility = "Visible"
+    $PasswordBox.Clear()
+    $ConfirmPasswordBox.Clear()
+  }
+  else {
+    $SetOption.Background = "#2438BDF8"
+    $SetOption.BorderBrush = "#38BDF8"
+    $SetOptionText.Foreground = "#38BDF8"
+    $SetOptionText.FontWeight = "SemiBold"
+
+    $NoPasswordOption.Background = "Transparent"
+    $NoPasswordOption.BorderBrush = "#3A3E48"
+    $NoPasswordOptionText.Foreground = "#9A9EA8"
+    $NoPasswordOptionText.FontWeight = "Normal"
+
+    $PasswordFieldsPanel.Visibility = "Visible"
+    $NoticeText.Visibility = "Collapsed"
+  }
 }
 
 function Invoke-GuiLocalUserCreation {
@@ -472,56 +651,61 @@ function Invoke-GuiLocalUserCreation {
     [System.Windows.Controls.PasswordBox]$ConfirmPasswordBox,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.StackPanel]$ListPanel
+    [System.Windows.Controls.StackPanel]$ListPanel,
+
+    [Parameter(Mandatory)]
+    [bool]$NoPassword
   )
 
   try {
     $Validation = Test-DeploymentLocalUserName -UserName $UserNameTextBox.Text
 
     if (-not $Validation.Valid) {
-      [System.Windows.MessageBox]::Show($Validation.Message)
+      Show-GuiDialog -Title "Invalid Username" -Icon Warning -Message $Validation.Message
       return
     }
 
     $UserName = $Validation.UserName
 
     if (Test-LocalUserExists -UserName $UserName) {
-      [System.Windows.MessageBox]::Show("The local user already exists.")
+      Show-GuiDialog -Title "User Exists" -Icon Warning -Message "The local user already exists."
       return
     }
 
-    if ($PasswordBox.SecurePassword.Length -eq 0) {
-      [System.Windows.MessageBox]::Show("The password cannot be empty.")
-      return
-    }
+    if (-not $NoPassword) {
+      if ($PasswordBox.SecurePassword.Length -eq 0) {
+        Show-GuiDialog -Title "Password Required" -Icon Warning -Message "The password cannot be empty. Choose No Password above if you want to create this account without one."
+        return
+      }
 
-    if (-not (Test-SecurePasswordMatch -Password $PasswordBox.SecurePassword -Confirmation $ConfirmPasswordBox.SecurePassword)) {
-      [System.Windows.MessageBox]::Show("The passwords do not match.")
-      return
+      if (-not (Test-SecurePasswordMatch -Password $PasswordBox.SecurePassword -Confirmation $ConfirmPasswordBox.SecurePassword)) {
+        Show-GuiDialog -Title "Password Mismatch" -Icon Warning -Message "The passwords do not match."
+        return
+      }
     }
 
     $FullName = $FullNameTextBox.Text
 
-    $ConfirmationMessage = "Create local standard user '$UserName'?"
-
-    if (-not [string]::IsNullOrWhiteSpace($FullName)) {
-      $ConfirmationMessage = "Create local standard user '$UserName' ($FullName)?"
+    $ConfirmationMessage = if ([string]::IsNullOrWhiteSpace($FullName)) {
+      "Create local standard user '$UserName'?"
+    }
+    else {
+      "Create local standard user '$UserName' ($FullName)?"
     }
 
-    $Confirmation = [System.Windows.MessageBox]::Show(
-      $ConfirmationMessage,
-      "Confirm Create User",
-      [System.Windows.MessageBoxButton]::YesNo,
-      [System.Windows.MessageBoxImage]::Warning
-    )
+    if ($NoPassword) {
+      $ConfirmationMessage += "`n`nThis account will be created with no password."
+    }
 
-    if ($Confirmation -ne [System.Windows.MessageBoxResult]::Yes) {
+    $Confirmation = Show-GuiDialog -Title "Confirm Create User" -Icon Warning -Buttons YesNo -Message $ConfirmationMessage
+
+    if ($Confirmation -ne "Yes") {
       return
     }
 
-    $CreationResult = New-DeploymentLocalStandardUser -UserName $UserName -Password $PasswordBox.SecurePassword -FullName $FullName -Confirm:$false
+    $CreationResult = New-DeploymentLocalStandardUser -UserName $UserName -Password $PasswordBox.SecurePassword -NoPassword:$NoPassword -FullName $FullName -Confirm:$false
 
-    [System.Windows.MessageBox]::Show($CreationResult.Message)
+    Show-GuiResultDialog -Result $CreationResult -SuccessTitle "User Created"
 
     if ($CreationResult.Status -eq "Created") {
       $UserNameTextBox.Text = ""
@@ -555,31 +739,26 @@ function Invoke-GuiPowerSettingsApply {
   $PluggedInTest = Test-SleepTimeoutMinutes -Value $PluggedInMinutesTextBox.Text -SettingName "Plugged-in sleep timeout"
 
   if (-not $PluggedInTest.Valid) {
-    [System.Windows.MessageBox]::Show($PluggedInTest.Message)
+    Show-GuiDialog -Title "Invalid Value" -Icon Warning -Message $PluggedInTest.Message
     return
   }
 
   $BatteryTest = Test-SleepTimeoutMinutes -Value $BatteryMinutesTextBox.Text -SettingName "Battery sleep timeout"
 
   if (-not $BatteryTest.Valid) {
-    [System.Windows.MessageBox]::Show($BatteryTest.Message)
+    Show-GuiDialog -Title "Invalid Value" -Icon Warning -Message $BatteryTest.Message
     return
   }
 
-  $Confirmation = [System.Windows.MessageBox]::Show(
-    "Set plugged-in sleep to $($PluggedInTest.Minutes) minutes and battery sleep to $($BatteryTest.Minutes) minutes?",
-    "Confirm Power Settings",
-    [System.Windows.MessageBoxButton]::YesNo,
-    [System.Windows.MessageBoxImage]::Warning
-  )
+  $Confirmation = Show-GuiDialog -Title "Confirm Power Settings" -Icon Warning -Buttons YesNo -Message "Set plugged-in sleep to $($PluggedInTest.Minutes) minutes and battery sleep to $($BatteryTest.Minutes) minutes?"
 
-  if ($Confirmation -ne [System.Windows.MessageBoxResult]::Yes) {
+  if ($Confirmation -ne "Yes") {
     return
   }
 
   $Result = Set-DeploymentSleepTimeouts -PluggedInMinutes $PluggedInTest.Minutes -BatteryMinutes $BatteryTest.Minutes -Confirm:$false
 
-  [System.Windows.MessageBox]::Show($Result.Message)
+  Show-GuiResultDialog -Result $Result -SuccessTitle "Power Settings Applied"
 
   Update-GuiWindowsConfigPowerCurrentValues -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText
 }

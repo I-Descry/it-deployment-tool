@@ -92,7 +92,7 @@ function New-GuiLogListRow {
       Show-GuiLogContent -ContentTextBox $script:GuiLogContentTextBox -NameText $script:GuiSelectedLogNameText -LogFile $this.Tag
     }
     catch {
-      [System.Windows.MessageBox]::Show("Log view error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Log view error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 

@@ -326,7 +326,7 @@ function Start-GuiDeploymentValidationLoad {
       Start-GuiFadeIn -Element $Panel
     }
     catch {
-      [System.Windows.MessageBox]::Show("Deployment validation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Deployment validation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
     finally {
       $script:GuiValidationPowerShell.Dispose()

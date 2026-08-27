@@ -631,7 +631,7 @@ function Start-GuiApplicationQueue {
         -DetailsPanel $script:GuiQueueModalControls.DetailsPanel -Title $ModalTitle -Counts $Counts -FailureMessages $FailureMessages
     }
     catch {
-      [System.Windows.MessageBox]::Show("Queue error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Queue error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
     finally {
       $script:GuiQueuePowerShell.Dispose()
@@ -687,7 +687,7 @@ function Invoke-GuiInstallQueue {
   $SelectedApplications = @(Get-SelectedApplications)
 
   if ($SelectedApplications.Count -eq 0) {
-    [System.Windows.MessageBox]::Show("No applications selected.")
+    Show-GuiDialog -Title "Nothing Selected" -Icon Info -Message "No applications selected."
     return
   }
 
@@ -731,7 +731,7 @@ function Invoke-GuiUninstallQueue {
   $SelectedApplications = @(Get-SelectedApplications)
 
   if ($SelectedApplications.Count -eq 0) {
-    [System.Windows.MessageBox]::Show("No applications selected.")
+    Show-GuiDialog -Title "Nothing Selected" -Icon Info -Message "No applications selected."
     return
   }
 
@@ -747,14 +747,9 @@ function Invoke-GuiUninstallQueue {
       continue
     }
 
-    $Confirmation = [System.Windows.MessageBox]::Show(
-      "Uninstall $($Application.Name)?",
-      "Confirm Uninstall",
-      [System.Windows.MessageBoxButton]::YesNo,
-      [System.Windows.MessageBoxImage]::Warning
-    )
+    $Confirmation = Show-GuiDialog -Title "Confirm Uninstall" -Icon Warning -Buttons YesNo -Message "Uninstall $($Application.Name)?"
 
-    if ($Confirmation -ne [System.Windows.MessageBoxResult]::Yes) {
+    if ($Confirmation -ne "Yes") {
       $PreSkippedCount++
       Write-DeploymentLog -Message ("{0} uninstallation was declined." -f $Application.Name) -Level "INFO"
       continue

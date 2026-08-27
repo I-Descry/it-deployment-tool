@@ -4,7 +4,12 @@
 
 function Test-DeploymentLocalUserName {
   param(
+    # AllowEmptyString so a genuinely empty username field falls through to
+    # the friendly "cannot be empty" message below, rather than PowerShell's
+    # own mandatory-parameter binder rejecting the empty string outright
+    # (which would throw before this function's body ever runs).
     [Parameter(Mandatory)]
+    [AllowEmptyString()]
     [string]$UserName
   )
 
@@ -142,8 +147,13 @@ function New-DeploymentLocalStandardUser {
     [Parameter(Mandatory)]
     [string]$UserName,
 
-    [Parameter(Mandatory)]
     [Security.SecureString]$Password,
+
+    # An explicit opt-in for creating the account with a blank password via
+    # New-LocalUser's own -NoPassword parameter. Never implied by simply
+    # leaving $Password unset, so a caller can't create a passwordless
+    # account by accident.
+    [switch]$NoPassword,
 
     [string]$FullName
   )
@@ -162,6 +172,14 @@ function New-DeploymentLocalStandardUser {
         Status   = "Failed"
         UserName = $Validation.UserName
         Message  = $Validation.Message
+      }
+    }
+
+    if ((-not $NoPassword) -and (($null -eq $Password) -or ($Password.Length -eq 0))) {
+      return [PSCustomObject]@{
+        Status   = "Failed"
+        UserName = $Validation.UserName
+        Message  = "A password is required unless creating the account without one."
       }
     }
 
@@ -201,9 +219,15 @@ function New-DeploymentLocalStandardUser {
 
     $NewUserParameters = @{
       Name        = $NormalizedUserName
-      Password    = $Password
       Description = "Created by IT Deployment Tool"
       ErrorAction = "Stop"
+    }
+
+    if ($NoPassword) {
+      $NewUserParameters.NoPassword = $true
+    }
+    else {
+      $NewUserParameters.Password = $Password
     }
 
     if (-not [string]::IsNullOrWhiteSpace($Fullname)) {
@@ -254,13 +278,22 @@ function New-DeploymentLocalStandardUser {
     }
 
     if ($null -ne $LoggingCommand) {
-      Write-DeploymentLog -Message ("Created local standard user: {0}" -f $NormalizedUserName) -Level "INFO"
+      $LogPasswordNote = if ($NoPassword) { "Created without a password." } else { "" }
+      Write-DeploymentLog -Message ("Created local standard user: {0}. {1}" -f $NormalizedUserName, $LogPasswordNote).Trim() -Level "INFO"
+    }
+
+    $CreatedMessage = if ($NoPassword) {
+      "The local standard user was created successfully without a password. " +
+      "By default Windows only allows a blank-password local account to sign in at the console, not over the network (RDP, file sharing, etc.)."
+    }
+    else {
+      "The local standard user was created successfully."
     }
 
     return [PSCustomObject]@{
       Status   = "Created"
       UserName = $NormalizedUserName
-      Message  = "The local standard user was created successfully."
+      Message  = $CreatedMessage
     }
   }
 
@@ -326,16 +359,19 @@ function Start-LocalStandardUserWizard {
 
   Write-Host
 
-  $Password = Read-Host "Enter the password" -AsSecureString
+  $Password = Read-Host "Enter the password, or press ENTER to create the account with no password" -AsSecureString
+  $NoPasswordChosen = ($Password.Length -eq 0)
 
-  $PasswordConfirmation = Read-Host "Confirm the password" -AsSecureString
+  if (-not $NoPasswordChosen) {
+    $PasswordConfirmation = Read-Host "Confirm the password" -AsSecureString
 
-  if (-not (Test-SecurePasswordMatch -Password $Password -Confirmation $PasswordConfirmation)) {
-    Write-Host
-    Write-Host "The passwords do not match." -ForegroundColor Red
+    if (-not (Test-SecurePasswordMatch -Password $Password -Confirmation $PasswordConfirmation)) {
+      Write-Host
+      Write-Host "The passwords do not match." -ForegroundColor Red
 
-    Pause-Application
-    return
+      Pause-Application
+      return
+    }
   }
 
   Write-Section -Title "Account Preview"
@@ -346,6 +382,12 @@ function Start-LocalStandardUserWizard {
   }
 
   Write-Info -Name "Account Type" -Value "Standard User"
+  Write-Info -Name "Password" -Value $(if ($NoPasswordChosen) { "None" } else { "Set" })
+
+  if ($NoPasswordChosen) {
+    Write-Host
+    Write-Host "By default Windows only allows a blank-password local account to sign in at the console, not over the network (RDP, file sharing, etc.)." -ForegroundColor Yellow
+  }
 
   Write-Host
 
@@ -359,7 +401,7 @@ function Start-LocalStandardUserWizard {
     return
   }
 
-  $CreationResult = New-DeploymentLocalStandardUser -UserName $UserName -Password $Password -FullName $FullName -Confirm:$false
+  $CreationResult = New-DeploymentLocalStandardUser -UserName $UserName -Password $Password -NoPassword:$NoPasswordChosen -FullName $FullName -Confirm:$false
 
   Write-Host
 

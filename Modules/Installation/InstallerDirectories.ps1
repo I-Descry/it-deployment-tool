@@ -14,6 +14,7 @@ function Initialize-InstallerDirectories {
     "Installers\EXE",
     "Installers\EXE\CrowdStrike",
     "Installers\EXE\SAP",
+    "Installers\EXE\ThinkPadAssetID",
     "Installers\MSI",
     "Installers\ISO",
     "Installers\ISO\Office2024",

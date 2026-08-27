@@ -167,6 +167,16 @@
     "Recommended": false
   },
   {
+    "Name": "Lenovo Windows Asset ID Utility",
+    "InstallType": "Exe",
+    "InstallerPath": "EXE\\ThinkPadAssetID\\giaw03ww.exe",
+    "SilentArguments": "",
+    "DetectionPath": "C:\\DRIVERS\\WINAIA\\WinAIA64.exe",
+    "Category": "Utilities",
+    "Description": "Lenovo utility to read and write ThinkPad BIOS asset ID fields (owner, department, warranty, etc.)",
+    "Recommended": false
+  },
+  {
     "Name": "WhatsApp",
     "AppxPackageName": "5319275A.WhatsAppDesktop",
     "InstallType": "Winget",

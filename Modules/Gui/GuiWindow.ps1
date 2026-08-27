@@ -141,7 +141,7 @@ function Switch-GuiScreen {
       # blocks the UI thread. Start-GuiFadeIn runs once the data actually
       # arrives, inside Start-GuiWindowsConfigLoad's own completion handler,
       # rather than immediately below like the other screens.
-      Start-GuiWindowsConfigLoad -DeviceFields $script:GuiWindowsConfigDeviceFields -CurrentNameText $script:GuiCurrentComputerNameText -LocalUsersListPanel $script:GuiLocalUsersListPanel -CurrentPluggedInText $script:GuiCurrentPluggedInText -CurrentBatteryText $script:GuiCurrentBatteryText -RefreshButtons $script:GuiRefreshWindowsConfigButtons -ScrollViewer $ActiveScrollViewer
+      Start-GuiWindowsConfigLoad -DeviceFields $script:GuiWindowsConfigDeviceFields -CurrentNameText $script:GuiCurrentComputerNameText -LocalUsersListPanel $script:GuiLocalUsersListPanel -CurrentPluggedInText $script:GuiCurrentPluggedInText -CurrentBatteryText $script:GuiCurrentBatteryText -RefreshButtons $script:GuiRefreshWindowsConfigButtons -ScrollViewer $ActiveScrollViewer -AssetIdCard $script:GuiAssetIdCard -AssetIdFieldTextBoxes $script:GuiAssetIdFieldTextBoxes
     }
     else {
       Start-GuiFadeIn -Element $ActiveScrollViewer
@@ -202,6 +202,11 @@ function Show-MainWindow {
   $Reader = New-Object System.Xml.XmlNodeReader $WindowXaml
   $Window = [Windows.Markup.XamlReader]::Load($Reader)
 
+  # Show-GuiDialog (GuiDialog.ps1) needs a reference to this window to size and
+  # center itself as an owned dialog, without threading an -Owner parameter
+  # through every one of its call sites across the Gui modules.
+  $script:GuiMainWindow = $Window
+
   # Nunito is bundled as a variable font rather than installed system-wide,
   # since this tool is copied directly to technician machines rather than
   # installed. Loaded via an absolute folder URI (not a relative XAML path)
@@ -259,6 +264,12 @@ function Show-MainWindow {
   $LocalUsersListPanel = $Window.FindName("LocalUsersListPanel")
   $NewUserNameTextBox = $Window.FindName("NewUserNameTextBox")
   $NewUserFullNameTextBox = $Window.FindName("NewUserFullNameTextBox")
+  $SetPasswordOption = $Window.FindName("SetPasswordOption")
+  $SetPasswordOptionText = $Window.FindName("SetPasswordOptionText")
+  $NoPasswordOption = $Window.FindName("NoPasswordOption")
+  $NoPasswordOptionText = $Window.FindName("NoPasswordOptionText")
+  $NewUserPasswordFieldsPanel = $Window.FindName("NewUserPasswordFieldsPanel")
+  $NoPasswordNoticeText = $Window.FindName("NoPasswordNoticeText")
   $NewUserPasswordBox = $Window.FindName("NewUserPasswordBox")
   $NewUserConfirmPasswordBox = $Window.FindName("NewUserConfirmPasswordBox")
   $CreateUserButton = $Window.FindName("CreateUserButton")
@@ -267,6 +278,37 @@ function Show-MainWindow {
   $PluggedInMinutesTextBox = $Window.FindName("PluggedInMinutesTextBox")
   $BatteryMinutesTextBox = $Window.FindName("BatteryMinutesTextBox")
   $ApplyPowerSettingsButton = $Window.FindName("ApplyPowerSettingsButton")
+
+  $AssetIdCard = $Window.FindName("AssetIdCard")
+  $AssetOwnerNameTextBox = $Window.FindName("AssetOwnerNameTextBox")
+  $AssetDepartmentTextBox = $Window.FindName("AssetDepartmentTextBox")
+  $AssetLocationTextBox = $Window.FindName("AssetLocationTextBox")
+  $AssetPhoneNumberTextBox = $Window.FindName("AssetPhoneNumberTextBox")
+  $AssetOwnerPositionTextBox = $Window.FindName("AssetOwnerPositionTextBox")
+  $AssetPurchaseDateTextBox = $Window.FindName("AssetPurchaseDateTextBox")
+  $AssetLastInventoriedTextBox = $Window.FindName("AssetLastInventoriedTextBox")
+  $AssetWarrantyEndTextBox = $Window.FindName("AssetWarrantyEndTextBox")
+  $AssetWarrantyDurationTextBox = $Window.FindName("AssetWarrantyDurationTextBox")
+  $AssetAmountTextBox = $Window.FindName("AssetAmountTextBox")
+  $AssetNumberTextBox = $Window.FindName("AssetNumberTextBox")
+  $SaveAssetIdButton = $Window.FindName("SaveAssetIdButton")
+
+  # Keyed the same way Get-DeploymentAssetIdFieldNames orders them, so
+  # Update-GuiAssetIdFields/Invoke-GuiAssetIdSave can loop instead of
+  # repeating each field name by hand.
+  $AssetIdFieldTextBoxes = @{
+    "OWNERDATA.OWNERNAME"              = $AssetOwnerNameTextBox
+    "OWNERDATA.DEPARTMENT"             = $AssetDepartmentTextBox
+    "OWNERDATA.LOCATION"               = $AssetLocationTextBox
+    "OWNERDATA.PHONE_NUMBER"           = $AssetPhoneNumberTextBox
+    "OWNERDATA.OWNERPOSITION"          = $AssetOwnerPositionTextBox
+    "USERASSETDATA.PURCHASE_DATE"      = $AssetPurchaseDateTextBox
+    "USERASSETDATA.LAST_INVENTORIED"   = $AssetLastInventoriedTextBox
+    "USERASSETDATA.WARRANTY_END"       = $AssetWarrantyEndTextBox
+    "USERASSETDATA.WARRANTY_DURATION"  = $AssetWarrantyDurationTextBox
+    "USERASSETDATA.AMOUNT"             = $AssetAmountTextBox
+    "USERASSETDATA.ASSET_NUMBER"       = $AssetNumberTextBox
+  }
 
   $WindowsConfigDeviceFields = @{
     ComputerName    = $Window.FindName("DeviceComputerNameText")
@@ -317,7 +359,7 @@ function Show-MainWindow {
       Update-GuiSelectedCount -CountText $SelectedCountText
     }
     catch {
-      [System.Windows.MessageBox]::Show("Select All error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Select All error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -328,7 +370,7 @@ function Show-MainWindow {
       Update-GuiSelectedCount -CountText $SelectedCountText
     }
     catch {
-      [System.Windows.MessageBox]::Show("Select Recommended error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Select Recommended error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -339,7 +381,7 @@ function Show-MainWindow {
       Update-GuiSelectedCount -CountText $SelectedCountText
     }
     catch {
-      [System.Windows.MessageBox]::Show("Clear All error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Clear All error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -350,7 +392,7 @@ function Show-MainWindow {
         -ModalControls $CompletionModalControls
     }
     catch {
-      [System.Windows.MessageBox]::Show("Install error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Install error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -361,7 +403,7 @@ function Show-MainWindow {
         -ModalControls $CompletionModalControls
     }
     catch {
-      [System.Windows.MessageBox]::Show("Uninstall error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Uninstall error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -372,7 +414,7 @@ function Show-MainWindow {
       $script:GuiQueueCancelQueue.Enqueue($true)
     }
     catch {
-      [System.Windows.MessageBox]::Show("Cancel error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Cancel error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -385,7 +427,7 @@ function Show-MainWindow {
       Start-GuiDeploymentValidationLoad -ValidationPanel $DeploymentValidationPanel -SummaryText $ValidationSummaryText -RerunButton $RerunValidationButton
     }
     catch {
-      [System.Windows.MessageBox]::Show("Deployment validation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Deployment validation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -394,7 +436,7 @@ function Show-MainWindow {
       Update-GuiLogsList -ListPanel $DeploymentLogsPanel -ContentTextBox $LogContentTextBox -NameText $SelectedLogNameText
     }
     catch {
-      [System.Windows.MessageBox]::Show("Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -403,7 +445,7 @@ function Show-MainWindow {
       Open-DeploymentLogsFolder
     }
     catch {
-      [System.Windows.MessageBox]::Show("Unable to open the Logs folder: $($_.Exception.Message)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Unable to open the Logs folder: $($_.Exception.Message)"
     }
   })
 
@@ -411,19 +453,19 @@ function Show-MainWindow {
   # so both Refresh buttons run the same full refresh.
   $RefreshWindowsSetupButton.Add_Click({
     try {
-      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText
+      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText -AssetIdCard $AssetIdCard -AssetIdFieldTextBoxes $AssetIdFieldTextBoxes
     }
     catch {
-      [System.Windows.MessageBox]::Show("Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
   $RefreshDeviceDetailsButton.Add_Click({
     try {
-      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText
+      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText -AssetIdCard $AssetIdCard -AssetIdFieldTextBoxes $AssetIdFieldTextBoxes
     }
     catch {
-      [System.Windows.MessageBox]::Show("Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -432,7 +474,7 @@ function Show-MainWindow {
       Invoke-GuiCopyDeviceDetails -DeviceFields $WindowsConfigDeviceFields -CopyButton $CopyDeviceDetailsButton
     }
     catch {
-      [System.Windows.MessageBox]::Show("Copy device details error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Copy device details error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -446,7 +488,7 @@ function Show-MainWindow {
       Set-GuiRenameRestartChoice -RestartNow $false -LaterOption $RestartLaterOption -LaterOptionText $RestartLaterOptionText -NowOption $RestartNowOption -NowOptionText $RestartNowOptionText
     }
     catch {
-      [System.Windows.MessageBox]::Show("Restart choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Restart choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -455,7 +497,7 @@ function Show-MainWindow {
       Set-GuiRenameRestartChoice -RestartNow $true -LaterOption $RestartLaterOption -LaterOptionText $RestartLaterOptionText -NowOption $RestartNowOption -NowOptionText $RestartNowOptionText
     }
     catch {
-      [System.Windows.MessageBox]::Show("Restart choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Restart choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -464,16 +506,39 @@ function Show-MainWindow {
       Invoke-GuiComputerRename -NewNameTextBox $NewComputerNameTextBox -CurrentNameText $CurrentComputerNameText -RestartNow $script:GuiRenameRestartNow
     }
     catch {
-      [System.Windows.MessageBox]::Show("Rename error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Rename error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  # Defaults to Set Password (today's existing behavior) -- No Password is
+  # always an explicit choice, never the default, since a blank-password
+  # local account is an unusual security posture.
+  $script:GuiCreateUserNoPassword = $false
+
+  $SetPasswordOption.Add_MouseLeftButtonUp({
+    try {
+      Set-GuiCreateUserPasswordChoice -NoPassword $false -SetOption $SetPasswordOption -SetOptionText $SetPasswordOptionText -NoPasswordOption $NoPasswordOption -NoPasswordOptionText $NoPasswordOptionText -PasswordFieldsPanel $NewUserPasswordFieldsPanel -NoticeText $NoPasswordNoticeText -PasswordBox $NewUserPasswordBox -ConfirmPasswordBox $NewUserConfirmPasswordBox
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Password choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $NoPasswordOption.Add_MouseLeftButtonUp({
+    try {
+      Set-GuiCreateUserPasswordChoice -NoPassword $true -SetOption $SetPasswordOption -SetOptionText $SetPasswordOptionText -NoPasswordOption $NoPasswordOption -NoPasswordOptionText $NoPasswordOptionText -PasswordFieldsPanel $NewUserPasswordFieldsPanel -NoticeText $NoPasswordNoticeText -PasswordBox $NewUserPasswordBox -ConfirmPasswordBox $NewUserConfirmPasswordBox
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Password choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
   $CreateUserButton.Add_Click({
     try {
-      Invoke-GuiLocalUserCreation -UserNameTextBox $NewUserNameTextBox -FullNameTextBox $NewUserFullNameTextBox -PasswordBox $NewUserPasswordBox -ConfirmPasswordBox $NewUserConfirmPasswordBox -ListPanel $LocalUsersListPanel
+      Invoke-GuiLocalUserCreation -UserNameTextBox $NewUserNameTextBox -FullNameTextBox $NewUserFullNameTextBox -PasswordBox $NewUserPasswordBox -ConfirmPasswordBox $NewUserConfirmPasswordBox -ListPanel $LocalUsersListPanel -NoPassword $script:GuiCreateUserNoPassword
     }
     catch {
-      [System.Windows.MessageBox]::Show("Create user error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Create user error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -482,7 +547,16 @@ function Show-MainWindow {
       Invoke-GuiPowerSettingsApply -PluggedInMinutesTextBox $PluggedInMinutesTextBox -BatteryMinutesTextBox $BatteryMinutesTextBox -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText
     }
     catch {
-      [System.Windows.MessageBox]::Show("Apply power settings error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Apply power settings error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $SaveAssetIdButton.Add_Click({
+    try {
+      Invoke-GuiAssetIdSave -FieldTextBoxes $AssetIdFieldTextBoxes
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Save asset ID error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -533,13 +607,15 @@ function Show-MainWindow {
   $script:GuiLocalUsersListPanel = $LocalUsersListPanel
   $script:GuiCurrentPluggedInText = $CurrentPluggedInText
   $script:GuiCurrentBatteryText = $CurrentBatteryText
+  $script:GuiAssetIdCard = $AssetIdCard
+  $script:GuiAssetIdFieldTextBoxes = $AssetIdFieldTextBoxes
 
   $NavApplications.Add_MouseLeftButtonUp({
     try {
       Switch-GuiScreen -ScreenName "Applications" -ActiveBorder $NavApplications -ActiveText $NavApplicationsText -ActiveIcon $NavApplicationsIcon
     }
     catch {
-      [System.Windows.MessageBox]::Show("Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -548,7 +624,7 @@ function Show-MainWindow {
       Switch-GuiScreen -ScreenName "Windows Setup" -ActiveBorder $NavWindowsSetup -ActiveText $NavWindowsSetupText -ActiveIcon $NavWindowsSetupIcon
     }
     catch {
-      [System.Windows.MessageBox]::Show("Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -557,7 +633,7 @@ function Show-MainWindow {
       Switch-GuiScreen -ScreenName "Device Details" -ActiveBorder $NavDeviceDetails -ActiveText $NavDeviceDetailsText -ActiveIcon $NavDeviceDetailsIcon
     }
     catch {
-      [System.Windows.MessageBox]::Show("Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -566,7 +642,7 @@ function Show-MainWindow {
       Switch-GuiScreen -ScreenName "Deployment Logs" -ActiveBorder $NavDeploymentLogs -ActiveText $NavDeploymentLogsText -ActiveIcon $NavDeploymentLogsIcon
     }
     catch {
-      [System.Windows.MessageBox]::Show("Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -575,7 +651,7 @@ function Show-MainWindow {
       Switch-GuiScreen -ScreenName "Deployment Validation" -ActiveBorder $NavDeploymentValidation -ActiveText $NavDeploymentValidationText -ActiveIcon $NavDeploymentValidationIcon
     }
     catch {
-      [System.Windows.MessageBox]::Show("Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
@@ -584,7 +660,7 @@ function Show-MainWindow {
       [System.Windows.SystemCommands]::MinimizeWindow($Window)
     }
     catch {
-      [System.Windows.MessageBox]::Show("Minimize error: $($_.Exception.Message)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Minimize error: $($_.Exception.Message)"
     }
   })
 
@@ -598,7 +674,7 @@ function Show-MainWindow {
       }
     }
     catch {
-      [System.Windows.MessageBox]::Show("Maximize error: $($_.Exception.Message)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Maximize error: $($_.Exception.Message)"
     }
   })
 
@@ -607,7 +683,7 @@ function Show-MainWindow {
       [System.Windows.SystemCommands]::CloseWindow($Window)
     }
     catch {
-      [System.Windows.MessageBox]::Show("Close error: $($_.Exception.Message)")
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Close error: $($_.Exception.Message)"
     }
   })
 
@@ -628,7 +704,7 @@ function Show-MainWindow {
   $Window.Add_Closing({
     if ($script:GuiQueueRunning) {
       $_.Cancel = $true
-      [System.Windows.MessageBox]::Show("An install or uninstall is still running. Please wait for it to finish before closing.")
+      Show-GuiDialog -Title "Please Wait" -Icon Warning -Message "An install or uninstall is still running. Please wait for it to finish before closing."
     }
   })
 

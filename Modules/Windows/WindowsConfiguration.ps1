@@ -169,6 +169,12 @@ function Get-WindowsConfigurationIdentity {
     MemoryGB        = if ($TotalMemoryBytes) { "$([math]::Round($TotalMemoryBytes / 1GB, 0)) GB" } else { "Unknown" }
     TpmReady        = $TpmReady
     TpmStatus       = $TpmStatus
+    # Win32_ComputerSystem.Model is a raw machine-type code on Lenovo systems
+    # (e.g. "21SR0038PH"), not a usable product name -- SystemFamily is the
+    # field that actually holds the human-readable family name (e.g. "ThinkPad
+    # E16 Gen 3"), confirmed against this exact CIM query on real Lenovo
+    # hardware before relying on it.
+    IsThinkPad      = ([string]$ComputerSystem.Manufacturer).Trim() -eq "LENOVO" -and ([string]$ComputerSystem.SystemFamily) -match "ThinkPad"
   }
 
   return $script:WindowsConfigurationIdentityCache
@@ -224,6 +230,7 @@ function Get-WindowsConfigurationReport {
     Storage         = Get-WindowsConfigurationStorage
     TpmReady        = $Identity.TpmReady
     TpmStatus       = $Identity.TpmStatus
+    IsThinkPad      = $Identity.IsThinkPad
   }
 }
 

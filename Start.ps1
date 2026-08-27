@@ -79,10 +79,12 @@ $ModulePaths = @(
   "Windows\LocalUserConfiguration.ps1"
   "Windows\PowerConfiguration.ps1"
   "Windows\WindowsConfiguration.ps1"
+  "Windows\LenovoAssetId.ps1"
 
   "Validation\DeploymentValidation.ps1"
   "Validation\InstallerPackageReadiness.ps1"
 
+  "Gui\GuiDialog.ps1"
   "Gui\GuiIcons.ps1"
   "Gui\GuiDeploymentValidationScreen.ps1"
   "Gui\GuiApplicationsScreen.ps1"
@@ -112,6 +114,10 @@ foreach ($ModulePath in $ModulePaths) {
 if ($ValidateOnly) {
   $RequiredFunctions = @(
     "Request-Administrator"
+    "Show-GuiDialog"
+    "Get-DeploymentAssetIdFields"
+    "Set-DeploymentAssetIdFields"
+    "Invoke-DeploymentAssetIdWrite"
     "Start-Application"
     "Install-SelectedApplications"
     "Install-ApplicationByType"
@@ -149,7 +155,7 @@ if ($ValidateOnly) {
 
   $ValidationProblems = @()
 
-  if ($ModulePaths.Count -ne 45) {
+  if ($ModulePaths.Count -ne 47) {
     $ValidationProblems += ("Expected 45 modules but the loader contains {0}." -f $ModulePaths.Count)
   }
 
