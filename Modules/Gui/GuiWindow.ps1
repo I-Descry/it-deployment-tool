@@ -89,6 +89,8 @@ function Switch-GuiScreen {
   $script:GuiWindowsSetupScrollViewer.Visibility = "Collapsed"
   $script:GuiDeviceDetailsToolbar.Visibility = "Collapsed"
   $script:GuiDeviceDetailsScrollViewer.Visibility = "Collapsed"
+  $script:GuiAssetIdToolbar.Visibility = "Collapsed"
+  $script:GuiAssetIdScrollViewer.Visibility = "Collapsed"
   $script:GuiPlaceholderText.Visibility = "Collapsed"
 
   if ($ScreenName -eq "Applications") {
@@ -119,18 +121,26 @@ function Switch-GuiScreen {
 
     Start-GuiFadeIn -Element $script:GuiDeploymentLogsContent
   }
-  elseif ($ScreenName -eq "Windows Setup" -or $ScreenName -eq "Device Details") {
-    # Both screens are fed by one shared device report, so whichever is opened
-    # first performs the load and the other reuses it.
+  elseif ($ScreenName -eq "Windows Setup" -or $ScreenName -eq "Device Details" -or $ScreenName -eq "Asset ID") {
+    # All three screens are fed by one shared device report, so whichever is
+    # opened first performs the load and the others reuse it. Asset ID can
+    # only ever be opened via NavAssetId, which stays Collapsed until that
+    # shared load confirms this device is a ThinkPad, so there is no path
+    # here where this screen shows without real data behind it.
     if ($ScreenName -eq "Windows Setup") {
       $script:GuiWindowsSetupToolbar.Visibility = "Visible"
       $script:GuiWindowsSetupScrollViewer.Visibility = "Visible"
       $ActiveScrollViewer = $script:GuiWindowsSetupScrollViewer
     }
-    else {
+    elseif ($ScreenName -eq "Device Details") {
       $script:GuiDeviceDetailsToolbar.Visibility = "Visible"
       $script:GuiDeviceDetailsScrollViewer.Visibility = "Visible"
       $ActiveScrollViewer = $script:GuiDeviceDetailsScrollViewer
+    }
+    else {
+      $script:GuiAssetIdToolbar.Visibility = "Visible"
+      $script:GuiAssetIdScrollViewer.Visibility = "Visible"
+      $ActiveScrollViewer = $script:GuiAssetIdScrollViewer
     }
 
     if (-not $script:GuiWindowsConfigLoaded) {
@@ -141,7 +151,7 @@ function Switch-GuiScreen {
       # blocks the UI thread. Start-GuiFadeIn runs once the data actually
       # arrives, inside Start-GuiWindowsConfigLoad's own completion handler,
       # rather than immediately below like the other screens.
-      Start-GuiWindowsConfigLoad -DeviceFields $script:GuiWindowsConfigDeviceFields -CurrentNameText $script:GuiCurrentComputerNameText -LocalUsersListPanel $script:GuiLocalUsersListPanel -CurrentPluggedInText $script:GuiCurrentPluggedInText -CurrentBatteryText $script:GuiCurrentBatteryText -RefreshButtons $script:GuiRefreshWindowsConfigButtons -ScrollViewer $ActiveScrollViewer -AssetIdCard $script:GuiAssetIdCard -AssetIdFieldTextBoxes $script:GuiAssetIdFieldTextBoxes
+      Start-GuiWindowsConfigLoad -DeviceFields $script:GuiWindowsConfigDeviceFields -CurrentNameText $script:GuiCurrentComputerNameText -LocalUsersListPanel $script:GuiLocalUsersListPanel -CurrentPluggedInText $script:GuiCurrentPluggedInText -CurrentBatteryText $script:GuiCurrentBatteryText -RefreshButtons $script:GuiRefreshWindowsConfigButtons -ScrollViewer $ActiveScrollViewer -NavAssetId $script:GuiNavAssetId -AssetIdFieldTextBoxes $script:GuiAssetIdFieldTextBoxes
     }
     else {
       Start-GuiFadeIn -Element $ActiveScrollViewer
@@ -279,7 +289,12 @@ function Show-MainWindow {
   $BatteryMinutesTextBox = $Window.FindName("BatteryMinutesTextBox")
   $ApplyPowerSettingsButton = $Window.FindName("ApplyPowerSettingsButton")
 
-  $AssetIdCard = $Window.FindName("AssetIdCard")
+  $NavAssetId = $Window.FindName("NavAssetId")
+  $NavAssetIdText = $Window.FindName("NavAssetIdText")
+  $NavAssetIdIcon = $Window.FindName("NavAssetIdIcon")
+  $AssetIdToolbar = $Window.FindName("AssetIdToolbar")
+  $RefreshAssetIdButton = $Window.FindName("RefreshAssetIdButton")
+  $AssetIdScrollViewer = $Window.FindName("AssetIdScrollViewer")
   $AssetOwnerNameTextBox = $Window.FindName("AssetOwnerNameTextBox")
   $AssetDepartmentTextBox = $Window.FindName("AssetDepartmentTextBox")
   $AssetLocationTextBox = $Window.FindName("AssetLocationTextBox")
@@ -449,11 +464,11 @@ function Show-MainWindow {
     }
   })
 
-  # Windows Setup and Device Details are two screens over one shared data load,
-  # so both Refresh buttons run the same full refresh.
+  # Windows Setup, Device Details, and Asset ID are three screens over one
+  # shared data load, so all three Refresh buttons run the same full refresh.
   $RefreshWindowsSetupButton.Add_Click({
     try {
-      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText -AssetIdCard $AssetIdCard -AssetIdFieldTextBoxes $AssetIdFieldTextBoxes
+      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText -NavAssetId $NavAssetId -AssetIdFieldTextBoxes $AssetIdFieldTextBoxes
     }
     catch {
       Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
@@ -462,7 +477,16 @@ function Show-MainWindow {
 
   $RefreshDeviceDetailsButton.Add_Click({
     try {
-      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText -AssetIdCard $AssetIdCard -AssetIdFieldTextBoxes $AssetIdFieldTextBoxes
+      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText -NavAssetId $NavAssetId -AssetIdFieldTextBoxes $AssetIdFieldTextBoxes
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $RefreshAssetIdButton.Add_Click({
+    try {
+      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText -NavAssetId $NavAssetId -AssetIdFieldTextBoxes $AssetIdFieldTextBoxes
     }
     catch {
       Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
@@ -581,9 +605,9 @@ function Show-MainWindow {
   $script:GuiDeploymentValidationLoaded = $false
   $script:GuiDeploymentLogsLoaded = $false
   $script:GuiWindowsConfigLoaded = $false
-  $script:GuiNavBorders = @($NavApplications, $NavWindowsSetup, $NavDeviceDetails, $NavDeploymentLogs, $NavDeploymentValidation)
-  $script:GuiNavTexts = @($NavApplicationsText, $NavWindowsSetupText, $NavDeviceDetailsText, $NavDeploymentLogsText, $NavDeploymentValidationText)
-  $script:GuiNavIcons = @($NavApplicationsIcon, $NavWindowsSetupIcon, $NavDeviceDetailsIcon, $NavDeploymentLogsIcon, $NavDeploymentValidationIcon)
+  $script:GuiNavBorders = @($NavApplications, $NavWindowsSetup, $NavDeviceDetails, $NavAssetId, $NavDeploymentLogs, $NavDeploymentValidation)
+  $script:GuiNavTexts = @($NavApplicationsText, $NavWindowsSetupText, $NavDeviceDetailsText, $NavAssetIdText, $NavDeploymentLogsText, $NavDeploymentValidationText)
+  $script:GuiNavIcons = @($NavApplicationsIcon, $NavWindowsSetupIcon, $NavDeviceDetailsIcon, $NavAssetIdIcon, $NavDeploymentLogsIcon, $NavDeploymentValidationIcon)
   $script:GuiApplicationsToolbar = $Window.FindName("ApplicationsToolbar")
   $script:GuiApplicationsScrollViewer = $Window.FindName("ApplicationsScrollViewer")
   $script:GuiPlaceholderText = $Window.FindName("PlaceholderText")
@@ -592,7 +616,7 @@ function Show-MainWindow {
   $script:GuiDeploymentValidationPanel = $DeploymentValidationPanel
   $script:GuiValidationSummaryText = $ValidationSummaryText
   $script:GuiRerunValidationButton = $RerunValidationButton
-  $script:GuiRefreshWindowsConfigButtons = @($RefreshWindowsSetupButton, $RefreshDeviceDetailsButton)
+  $script:GuiRefreshWindowsConfigButtons = @($RefreshWindowsSetupButton, $RefreshDeviceDetailsButton, $RefreshAssetIdButton)
   $script:GuiDeploymentLogsToolbar = $Window.FindName("DeploymentLogsToolbar")
   $script:GuiDeploymentLogsContent = $Window.FindName("DeploymentLogsContent")
   $script:GuiDeploymentLogsPanel = $DeploymentLogsPanel
@@ -607,7 +631,9 @@ function Show-MainWindow {
   $script:GuiLocalUsersListPanel = $LocalUsersListPanel
   $script:GuiCurrentPluggedInText = $CurrentPluggedInText
   $script:GuiCurrentBatteryText = $CurrentBatteryText
-  $script:GuiAssetIdCard = $AssetIdCard
+  $script:GuiNavAssetId = $NavAssetId
+  $script:GuiAssetIdToolbar = $AssetIdToolbar
+  $script:GuiAssetIdScrollViewer = $AssetIdScrollViewer
   $script:GuiAssetIdFieldTextBoxes = $AssetIdFieldTextBoxes
 
   $NavApplications.Add_MouseLeftButtonUp({
@@ -631,6 +657,15 @@ function Show-MainWindow {
   $NavDeviceDetails.Add_MouseLeftButtonUp({
     try {
       Switch-GuiScreen -ScreenName "Device Details" -ActiveBorder $NavDeviceDetails -ActiveText $NavDeviceDetailsText -ActiveIcon $NavDeviceDetailsIcon
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $NavAssetId.Add_MouseLeftButtonUp({
+    try {
+      Switch-GuiScreen -ScreenName "Asset ID" -ActiveBorder $NavAssetId -ActiveText $NavAssetIdText -ActiveIcon $NavAssetIdIcon
     }
     catch {
       Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"

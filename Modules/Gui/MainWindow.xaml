@@ -258,6 +258,19 @@
             <TextBlock x:Name="NavDeviceDetailsText" Text="Device Details" Foreground="#9A9EA8" FontSize="13" VerticalAlignment="Center"/>
           </StackPanel>
         </Border>
+        <!-- ThinkPad-only, hidden entirely (not just disabled) on any other device:
+             starts Collapsed since IsThinkPad isn't known until the shared
+             Windows Setup/Device Details background load completes. -->
+        <Border x:Name="NavAssetId" Background="Transparent" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand" Visibility="Collapsed">
+          <StackPanel Orientation="Horizontal">
+            <Canvas x:Name="NavAssetIdIcon" Width="20" Height="20" Margin="0,0,10,0">
+              <Rectangle Canvas.Left="2" Canvas.Top="4" Width="16" Height="12" RadiusX="1.6" RadiusY="1.6" Stroke="#9A9EA8" StrokeThickness="1.4"/>
+              <Line X1="5" Y1="8.5" X2="15" Y2="8.5" Stroke="#9A9EA8" StrokeThickness="1.2"/>
+              <Ellipse Canvas.Left="6.5" Canvas.Top="5.6" Width="1.8" Height="1.8" Stroke="#9A9EA8" StrokeThickness="1.1"/>
+            </Canvas>
+            <TextBlock x:Name="NavAssetIdText" Text="Asset ID" Foreground="#9A9EA8" FontSize="13" VerticalAlignment="Center"/>
+          </StackPanel>
+        </Border>
         <Border x:Name="NavDeploymentLogs" Background="Transparent" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand">
           <StackPanel Orientation="Horizontal">
             <Canvas x:Name="NavDeploymentLogsIcon" Width="20" Height="20" Margin="0,0,10,0">
@@ -429,6 +442,24 @@
         </StackPanel>
       </DockPanel>
 
+      <!-- Asset ID toolbar: ThinkPad-only, matching NavAssetId's own Collapsed default -->
+      <DockPanel x:Name="AssetIdToolbar" Grid.Row="1" Margin="24,14,24,10" LastChildFill="False" Visibility="Collapsed">
+        <Button x:Name="RefreshAssetIdButton" Content="Refresh" DockPanel.Dock="Right"
+                Padding="14,8" Background="#23262E" Foreground="#E8E9EC"
+                BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
+        <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal">
+            <Canvas Width="16" Height="16" Margin="0,0,9,0">
+              <Rectangle Canvas.Left="1.5" Canvas.Top="3" Width="13" Height="10" RadiusX="1.3" RadiusY="1.3" Stroke="#38BDF8" StrokeThickness="1.3"/>
+              <Line X1="4" Y1="7" X2="12" Y2="7" Stroke="#38BDF8" StrokeThickness="1.1"/>
+              <Ellipse Canvas.Left="5.2" Canvas.Top="4.2" Width="1.6" Height="1.6" Stroke="#38BDF8" StrokeThickness="1"/>
+            </Canvas>
+            <TextBlock Text="Lenovo Asset ID" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+          </StackPanel>
+          <TextBlock Text="Edit and save this ThinkPad's BIOS asset-tracking fields." Foreground="#9A9EA8" FontSize="11.5" Margin="25,3,0,0"/>
+        </StackPanel>
+      </DockPanel>
+
       <!-- Applications grid -->
       <ScrollViewer x:Name="ApplicationsScrollViewer" Grid.Row="2" Padding="24,4,24,24" VerticalScrollBarVisibility="Auto">
         <ItemsControl x:Name="AppGridPanel">
@@ -483,10 +514,11 @@
         </Border>
       </Grid>
 
-      <!-- Windows Setup content: three action cards side by side, plus the
-           ThinkPad-only Lenovo Asset ID card below them. -->
+      <!-- Windows Setup content: three action cards side by side. The
+           Lenovo Asset ID card used to live below them; it's now its own
+           ThinkPad-only tab (AssetIdScrollViewer, further down) instead of
+           being buried inside this screen. -->
       <ScrollViewer x:Name="WindowsSetupScrollViewer" Grid.Row="2" Padding="24,0,24,6" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
-        <StackPanel>
         <Grid x:Name="WindowsSetupPanel">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -498,232 +530,264 @@
 
           <!-- Computer Rename -->
           <Border Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <Canvas Width="16" Height="16" Margin="0,0,9,0">
-                  <Rectangle Canvas.Left="1.5" Canvas.Top="3.5" Width="13" Height="9" RadiusX="1.4" RadiusY="1.4" Stroke="#38BDF8" StrokeThickness="1.4"/>
-                  <Line X1="4" Y1="9.5" X2="6" Y2="9.5" Stroke="#38BDF8" StrokeThickness="1.4"/>
-                </Canvas>
-                <TextBlock Text="Computer Rename" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
-              </StackPanel>
-              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,10"/>
-              <TextBlock Text="Rename this device. A restart is required to apply the change." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,10" TextWrapping="Wrap"/>
-
-              <TextBlock Text="CURRENT NAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-              <Border Background="#14161B" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,3,0,9">
-                <TextBlock x:Name="CurrentComputerNameText" Text="-" Foreground="#9A9EA8" FontSize="13"/>
-              </Border>
-
-              <TextBlock Text="NEW NAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-              <TextBox x:Name="NewComputerNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,3"/>
-              <TextBlock Text="Letters, numbers, one hyphen, max 15 characters" Foreground="#6B6F79" FontSize="10.5" Margin="0,0,0,12" TextWrapping="Wrap"/>
-
-              <TextBlock Text="AFTER RENAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
-              <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="6"/>
-                  <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <!-- Restarting a computer is an immediate, hard-to-reverse action, so
-                     "Restart Later" (today's existing behavior: rename now, restart
-                     whenever the technician chooses) is the default selection; "Restart
-                     Now" is an explicit opt-in, never the default. -->
-                <Border x:Name="RestartLaterOption" Grid.Column="0" Background="#2438BDF8" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
-                  <TextBlock x:Name="RestartLaterOptionText" Text="Restart Later" Foreground="#38BDF8" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                </Border>
-                <Border x:Name="RestartNowOption" Grid.Column="2" Background="Transparent" BorderBrush="#3A3E48" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
-                  <TextBlock x:Name="RestartNowOptionText" Text="Restart Now" Foreground="#9A9EA8" FontSize="12" HorizontalAlignment="Center"/>
-                </Border>
-              </Grid>
-
-              <Button x:Name="RenameComputerButton" Content="Rename Computer" HorizontalAlignment="Left"
+            <DockPanel LastChildFill="True">
+              <Button x:Name="RenameComputerButton" Content="Rename Computer" HorizontalAlignment="Left" DockPanel.Dock="Bottom"
                       Padding="18,8" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
-            </StackPanel>
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                  <Canvas Width="16" Height="16" Margin="0,0,9,0">
+                    <Rectangle Canvas.Left="1.5" Canvas.Top="3.5" Width="13" Height="9" RadiusX="1.4" RadiusY="1.4" Stroke="#38BDF8" StrokeThickness="1.4"/>
+                    <Line X1="4" Y1="9.5" X2="6" Y2="9.5" Stroke="#38BDF8" StrokeThickness="1.4"/>
+                  </Canvas>
+                  <TextBlock Text="Computer Rename" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,10"/>
+                <TextBlock Text="Rename this device. A restart is required to apply the change." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,10" TextWrapping="Wrap"/>
+
+                <TextBlock Text="CURRENT NAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                <Border Background="#14161B" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,3,0,9">
+                  <TextBlock x:Name="CurrentComputerNameText" Text="-" Foreground="#9A9EA8" FontSize="13"/>
+                </Border>
+
+                <TextBlock Text="NEW NAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="NewComputerNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,3"/>
+                <TextBlock Text="Letters, numbers, one hyphen, max 15 characters" Foreground="#6B6F79" FontSize="10.5" Margin="0,0,0,12" TextWrapping="Wrap"/>
+
+                <TextBlock Text="AFTER RENAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+                <Grid Margin="0,0,0,12">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="6"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <!-- Restarting a computer is an immediate, hard-to-reverse action, so
+                       "Restart Later" (today's existing behavior: rename now, restart
+                       whenever the technician chooses) is the default selection; "Restart
+                       Now" is an explicit opt-in, never the default. -->
+                  <Border x:Name="RestartLaterOption" Grid.Column="0" Background="#2438BDF8" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
+                    <TextBlock x:Name="RestartLaterOptionText" Text="Restart Later" Foreground="#38BDF8" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                  </Border>
+                  <Border x:Name="RestartNowOption" Grid.Column="2" Background="Transparent" BorderBrush="#3A3E48" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
+                    <TextBlock x:Name="RestartNowOptionText" Text="Restart Now" Foreground="#9A9EA8" FontSize="12" HorizontalAlignment="Center"/>
+                  </Border>
+                </Grid>
+              </StackPanel>
+            </DockPanel>
           </Border>
 
           <!-- Create Local Standard User -->
           <Border Grid.Column="2" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <Canvas Width="16" Height="16" Margin="0,0,9,0">
-                  <Ellipse Canvas.Left="5" Canvas.Top="2" Width="6" Height="6" Stroke="#38BDF8" StrokeThickness="1.4"/>
-                  <Path Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round" Data="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
-                </Canvas>
-                <TextBlock Text="Local Standard User" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
-              </StackPanel>
-              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,10"/>
-              <TextBlock Text="Create a non-administrator local account for the assigned user." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,10" TextWrapping="Wrap"/>
-
-              <TextBlock Text="EXISTING" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
-              <StackPanel x:Name="LocalUsersListPanel" Margin="0,0,0,10"/>
-
-              <TextBlock Text="ADD NEW USER" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
-              <TextBlock Text="USERNAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-              <TextBox x:Name="NewUserNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
-              <TextBlock Text="FULL NAME (OPTIONAL)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-              <TextBox x:Name="NewUserFullNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
-              <TextBlock Text="PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
-              <Grid Margin="0,0,0,8">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="6"/>
-                  <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <!-- Blank-password local accounts are unusual enough to require an
-                     explicit opt-in, so "Set Password" (today's existing behavior)
-                     is the default selection, matching the Restart Later/Restart
-                     Now pattern on the Computer Rename card. -->
-                <Border x:Name="SetPasswordOption" Grid.Column="0" Background="#2438BDF8" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
-                  <TextBlock x:Name="SetPasswordOptionText" Text="Set Password" Foreground="#38BDF8" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                </Border>
-                <Border x:Name="NoPasswordOption" Grid.Column="2" Background="Transparent" BorderBrush="#3A3E48" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
-                  <TextBlock x:Name="NoPasswordOptionText" Text="No Password" Foreground="#9A9EA8" FontSize="12" HorizontalAlignment="Center"/>
-                </Border>
-              </Grid>
-
-              <StackPanel x:Name="NewUserPasswordFieldsPanel">
-                <TextBlock Text="PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-                <PasswordBox x:Name="NewUserPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,5"/>
-                <TextBlock Text="CONFIRM PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-                <PasswordBox x:Name="NewUserConfirmPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,5" FontSize="13" Margin="0,2,0,12"/>
-              </StackPanel>
-              <Border x:Name="NoPasswordNoticeBox" Background="#14F2555A" BorderBrush="#3DF2555A" BorderThickness="1" CornerRadius="6" Padding="9,7" Margin="0,0,0,12" Visibility="Collapsed">
-                <StackPanel Orientation="Horizontal">
-                  <Canvas Width="12" Height="12" Margin="0,1,7,0" VerticalAlignment="Top">
-                    <Path Stroke="#F2555A" StrokeThickness="1.3" StrokeLineJoin="Round" Data="M6 1l5.2 9H0.8L6 1z"/>
-                    <Line X1="6" Y1="4.6" X2="6" Y2="7.2" Stroke="#F2555A" StrokeThickness="1.3" StrokeStartLineCap="Round"/>
-                    <Line X1="6" Y1="8.6" X2="6" Y2="8.75" Stroke="#F2555A" StrokeThickness="1.6" StrokeStartLineCap="Round"/>
-                  </Canvas>
-                  <TextBlock Text="This account will sign in with no password. By default, Windows only allows this at the console, not over the network." Foreground="#D9A5A7" FontSize="10.5" TextWrapping="Wrap"/>
-                </StackPanel>
-              </Border>
-
-              <Button x:Name="CreateUserButton" Content="Create User" HorizontalAlignment="Left"
+            <DockPanel LastChildFill="True">
+              <Button x:Name="CreateUserButton" Content="Create User" HorizontalAlignment="Left" DockPanel.Dock="Bottom"
                       Padding="18,7" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
-            </StackPanel>
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                  <Canvas Width="16" Height="16" Margin="0,0,9,0">
+                    <Ellipse Canvas.Left="5" Canvas.Top="2" Width="6" Height="6" Stroke="#38BDF8" StrokeThickness="1.4"/>
+                    <Path Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round" Data="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
+                  </Canvas>
+                  <TextBlock Text="Local Standard User" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,10"/>
+                <TextBlock Text="Create a non-administrator local account for the assigned user." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,10" TextWrapping="Wrap"/>
+
+                <TextBlock Text="EXISTING" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+                <StackPanel x:Name="LocalUsersListPanel" Margin="0,0,0,10"/>
+
+                <TextBlock Text="ADD NEW USER" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+                <!-- Username and Full Name side by side instead of stacked: this
+                     card has the most going on of the three (existing users list,
+                     password toggle, both password fields), so it needs to be
+                     genuinely more compact, not just bottom-anchored, to avoid
+                     dwarfing Computer Rename and Power & Sleep when all three
+                     stretch to an equal height. -->
+                <Grid Margin="0,0,0,5">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Column="0">
+                    <TextBlock Text="USERNAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                    <TextBox x:Name="NewUserNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,6" FontSize="13" Margin="0,3,0,0"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2">
+                    <TextBlock Text="FULL NAME (OPTIONAL)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                    <TextBox x:Name="NewUserFullNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,6" FontSize="13" Margin="0,3,0,0"/>
+                  </StackPanel>
+                </Grid>
+                <TextBlock Text="PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+                <Grid Margin="0,0,0,8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="6"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <!-- Blank-password local accounts are unusual enough to require an
+                       explicit opt-in, so "Set Password" (today's existing behavior)
+                       is the default selection, matching the Restart Later/Restart
+                       Now pattern on the Computer Rename card. -->
+                  <Border x:Name="SetPasswordOption" Grid.Column="0" Background="#2438BDF8" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
+                    <TextBlock x:Name="SetPasswordOptionText" Text="Set Password" Foreground="#38BDF8" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                  </Border>
+                  <Border x:Name="NoPasswordOption" Grid.Column="2" Background="Transparent" BorderBrush="#3A3E48" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
+                    <TextBlock x:Name="NoPasswordOptionText" Text="No Password" Foreground="#9A9EA8" FontSize="12" HorizontalAlignment="Center"/>
+                  </Border>
+                </Grid>
+
+                <StackPanel x:Name="NewUserPasswordFieldsPanel">
+                  <TextBlock Text="PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <PasswordBox x:Name="NewUserPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,5"/>
+                  <TextBlock Text="CONFIRM PASSWORD" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <PasswordBox x:Name="NewUserConfirmPasswordBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,0"/>
+                </StackPanel>
+                <Border x:Name="NoPasswordNoticeBox" Background="#14F2555A" BorderBrush="#3DF2555A" BorderThickness="1" CornerRadius="6" Padding="9,7" Margin="0,0,0,12" Visibility="Collapsed">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Canvas Grid.Column="0" Width="12" Height="12" Margin="0,1,7,0" VerticalAlignment="Top">
+                      <Path Stroke="#F2555A" StrokeThickness="1.3" StrokeLineJoin="Round" Data="M6 1l5.2 9H0.8L6 1z"/>
+                      <Line X1="6" Y1="4.6" X2="6" Y2="7.2" Stroke="#F2555A" StrokeThickness="1.3" StrokeStartLineCap="Round"/>
+                      <Line X1="6" Y1="8.6" X2="6" Y2="8.75" Stroke="#F2555A" StrokeThickness="1.6" StrokeStartLineCap="Round"/>
+                    </Canvas>
+                    <!-- A horizontal StackPanel gives its children unconstrained width, so
+                         TextWrapping="Wrap" never actually wrapped: the text just ran on
+                         and got clipped at the card's edge. A Grid column constrains the
+                         text to the remaining width, so it wraps as intended. -->
+                    <TextBlock Grid.Column="1" Text="This account will sign in with no password. By default, Windows only allows this at the console, not over the network." Foreground="#D9A5A7" FontSize="10.5" TextWrapping="Wrap"/>
+                  </Grid>
+                </Border>
+              </StackPanel>
+            </DockPanel>
           </Border>
 
           <!-- Power and Sleep Settings -->
           <Border Grid.Column="4" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <Canvas Width="16" Height="16" Margin="0,0,9,0">
-                  <Line X1="8" Y1="1.5" X2="8" Y2="7.5" Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round"/>
-                  <Path Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round" Data="M4.2 3.6a6 6 0 108 0"/>
-                </Canvas>
-                <TextBlock Text="Power &amp; Sleep" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
-              </StackPanel>
-              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,10"/>
-              <TextBlock Text="Recommended sleep timeouts for company deployment devices." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,10" TextWrapping="Wrap"/>
-
-              <TextBlock Text="CURRENT" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
-                <TextBlock Text="Plugged in: " Foreground="#9A9EA8" FontSize="12"/>
-                <TextBlock x:Name="CurrentPluggedInText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                <TextBlock Text="On battery: " Foreground="#9A9EA8" FontSize="12"/>
-                <TextBlock x:Name="CurrentBatteryText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
-              </StackPanel>
-
-              <TextBlock Text="APPLY NEW TIMEOUTS" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
-              <TextBlock Text="PLUGGED IN (MINUTES)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-              <TextBox x:Name="PluggedInMinutesTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,7"/>
-              <TextBlock Text="ON BATTERY (MINUTES)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
-              <TextBox x:Name="BatteryMinutesTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,0"/>
-              <TextBlock Text="Minutes, 0 to 1440. Enter 0 for Never." Foreground="#6B6F79" FontSize="10.5" Margin="0,5,0,12" TextWrapping="Wrap"/>
-
-              <Button x:Name="ApplyPowerSettingsButton" Content="Apply Power Settings" HorizontalAlignment="Left"
+            <DockPanel LastChildFill="True">
+              <Button x:Name="ApplyPowerSettingsButton" Content="Apply Power Settings" HorizontalAlignment="Left" DockPanel.Dock="Bottom"
                       Padding="18,8" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
-            </StackPanel>
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                  <Canvas Width="16" Height="16" Margin="0,0,9,0">
+                    <Line X1="8" Y1="1.5" X2="8" Y2="7.5" Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round"/>
+                    <Path Stroke="#38BDF8" StrokeThickness="1.4" StrokeStartLineCap="Round" Data="M4.2 3.6a6 6 0 108 0"/>
+                  </Canvas>
+                  <TextBlock Text="Power &amp; Sleep" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,10"/>
+                <TextBlock Text="Recommended sleep timeouts for company deployment devices." Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,10" TextWrapping="Wrap"/>
+
+                <TextBlock Text="CURRENT" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                  <TextBlock Text="Plugged in: " Foreground="#9A9EA8" FontSize="12"/>
+                  <TextBlock x:Name="CurrentPluggedInText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                  <TextBlock Text="On battery: " Foreground="#9A9EA8" FontSize="12"/>
+                  <TextBlock x:Name="CurrentBatteryText" Text="-" Foreground="#E8E9EC" FontSize="12" FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <TextBlock Text="APPLY NEW TIMEOUTS" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
+                <TextBlock Text="PLUGGED IN (MINUTES)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="PluggedInMinutesTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,7"/>
+                <TextBlock Text="ON BATTERY (MINUTES)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                <TextBox x:Name="BatteryMinutesTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="12,6" FontSize="13" Margin="0,3,0,0"/>
+                <TextBlock Text="Minutes, 0 to 1440. Enter 0 for Never." Foreground="#6B6F79" FontSize="10.5" Margin="0,5,0,12" TextWrapping="Wrap"/>
+              </StackPanel>
+            </DockPanel>
           </Border>
         </Grid>
+      </ScrollViewer>
 
-        <!-- Lenovo Asset ID: ThinkPad-only, hidden entirely (not just disabled)
-             on any other device. Fields are pre-filled from the current
-             Sample.txt (if WinAIA is installed and already has values) and
-             every field is optional. -->
-        <Border x:Name="AssetIdCard" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="14,8" Margin="0,3,0,0" Visibility="Collapsed">
-          <StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-              <Canvas Width="16" Height="16" Margin="0,0,9,0">
-                <Rectangle Canvas.Left="1.5" Canvas.Top="3" Width="13" Height="10" RadiusX="1.3" RadiusY="1.3" Stroke="#38BDF8" StrokeThickness="1.3"/>
-                <Line X1="4" Y1="7" X2="12" Y2="7" Stroke="#38BDF8" StrokeThickness="1.1"/>
-                <Ellipse Canvas.Left="5.2" Canvas.Top="4.2" Width="1.6" Height="1.6" Stroke="#38BDF8" StrokeThickness="1"/>
-              </Canvas>
-              <TextBlock Text="Lenovo Asset ID" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
-              <TextBlock Text="All fields optional. Saving opens WinAIA to confirm." Foreground="#6B6F79" FontSize="11" Margin="10,2,0,0" VerticalAlignment="Center"/>
+      <!-- Lenovo Asset ID content: its own ThinkPad-only tab now, matching
+           NavAssetId/AssetIdToolbar's Collapsed default. The card no longer
+           needs its own accent border/icon-chip/"THINKPAD" pill: those
+           existed to make it stand out while buried inside Windows Setup;
+           the toolbar above already establishes "Lenovo Asset ID" now that
+           it has its own tab, so the card matches Device Details' plain
+           card style instead. Fields are pre-filled from the current
+           Sample.txt (if WinAIA is installed and already has values) and
+           every field is optional. -->
+      <ScrollViewer x:Name="AssetIdScrollViewer" Grid.Row="2" Padding="24,4,24,24" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <Border Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="20" VerticalAlignment="Top">
+          <DockPanel LastChildFill="True">
+            <Button x:Name="SaveAssetIdButton" Content="Save Asset ID" HorizontalAlignment="Left" DockPanel.Dock="Bottom" Margin="0,20,0,0"
+                    Padding="18,8" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
+            <StackPanel>
+              <!-- No repeated "Lenovo Asset ID" title here: the toolbar right
+                   above this card already says that, and this is the only
+                   card on the page, so a second identical heading was just
+                   noise, confirmed by a real screenshot. Went from 11 fields
+                   crammed into a single narrow row (which clipped real values
+                   like "VILLACORTA, JOHN PAUL..." and "IT ASSISTANT") back to
+                   3 columns / up to 2 rows per group: this screen has its
+                   own full page now (no longer squeezed alongside three other
+                   cards on Windows Setup), so there's no reason to keep
+                   fields this narrow. -->
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="16"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="16"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="36"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="16"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="16"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Text="OWNER DATA" FontSize="11" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,8"/>
+                <StackPanel Grid.Row="1" Grid.Column="0">
+                  <TextBlock Text="OWNER NAME" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <TextBox x:Name="AssetOwnerNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,7" FontSize="13" Margin="0,4,0,10"/>
+                  <TextBlock Text="DEPARTMENT" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <TextBox x:Name="AssetDepartmentTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,7" FontSize="13" Margin="0,4,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="2">
+                  <TextBlock Text="LOCATION" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <TextBox x:Name="AssetLocationTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,7" FontSize="13" Margin="0,4,0,10"/>
+                  <TextBlock Text="PHONE NUMBER" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <TextBox x:Name="AssetPhoneNumberTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,7" FontSize="13" Margin="0,4,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="4">
+                  <TextBlock Text="POSITION" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <TextBox x:Name="AssetOwnerPositionTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,7" FontSize="13" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="5" Width="1" Background="#2C2F38" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+
+                <TextBlock Grid.Row="0" Grid.Column="6" Grid.ColumnSpan="5" Text="ASSET DATA (DATES AS YYYYMMDD)" FontSize="11" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,8"/>
+                <StackPanel Grid.Row="1" Grid.Column="6">
+                  <TextBlock Text="PURCHASE DATE" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <TextBox x:Name="AssetPurchaseDateTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,7" FontSize="13" Margin="0,4,0,10"/>
+                  <TextBlock Text="LAST INVENTORIED" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <TextBox x:Name="AssetLastInventoriedTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,7" FontSize="13" Margin="0,4,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="8">
+                  <TextBlock Text="WARRANTY END" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <TextBox x:Name="AssetWarrantyEndTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,7" FontSize="13" Margin="0,4,0,10"/>
+                  <TextBlock Text="WARRANTY DURATION (MONTHS)" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <TextBox x:Name="AssetWarrantyDurationTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,7" FontSize="13" Margin="0,4,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="10">
+                  <TextBlock Text="AMOUNT" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <TextBox x:Name="AssetAmountTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,7" FontSize="13" Margin="0,4,0,10"/>
+                  <TextBlock Text="ASSET NUMBER" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79"/>
+                  <TextBox x:Name="AssetNumberTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="10,7" FontSize="13" Margin="0,4,0,0"/>
+                </StackPanel>
+              </Grid>
             </StackPanel>
-            <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,5"/>
-
-            <Grid>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="12"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="12"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="26"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="12"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="12"/>
-                <ColumnDefinition Width="*"/>
-              </Grid.ColumnDefinitions>
-              <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-              </Grid.RowDefinitions>
-
-              <!-- Owner Data and Asset Data are each split across 3 sub-columns
-                   instead of 2, so the tallest column is 2 fields instead of 3
-                   and stays within the real (Nunito, not the Segoe UI fallback
-                   an isolated probe would show) rendered height budget. -->
-              <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Text="OWNER DATA" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,3"/>
-              <StackPanel Grid.Row="1" Grid.Column="0">
-                <TextBlock Text="OWNER NAME" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetOwnerNameTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,4"/>
-                <TextBlock Text="DEPARTMENT" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetDepartmentTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
-              </StackPanel>
-              <StackPanel Grid.Row="1" Grid.Column="2">
-                <TextBlock Text="LOCATION" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetLocationTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,4"/>
-                <TextBlock Text="PHONE NUMBER" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetPhoneNumberTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
-              </StackPanel>
-              <StackPanel Grid.Row="1" Grid.Column="4">
-                <TextBlock Text="POSITION" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetOwnerPositionTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
-              </StackPanel>
-
-              <TextBlock Grid.Row="0" Grid.Column="6" Grid.ColumnSpan="5" Text="ASSET DATA" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,3"/>
-              <StackPanel Grid.Row="1" Grid.Column="6">
-                <TextBlock Text="PURCHASE DATE (YYYYMMDD)" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetPurchaseDateTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,4"/>
-                <TextBlock Text="LAST INVENTORIED (YYYYMMDD)" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetLastInventoriedTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
-              </StackPanel>
-              <StackPanel Grid.Row="1" Grid.Column="8">
-                <TextBlock Text="WARRANTY END (YYYYMMDD)" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetWarrantyEndTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,4"/>
-                <TextBlock Text="WARRANTY DURATION (MONTHS)" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetWarrantyDurationTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
-              </StackPanel>
-              <StackPanel Grid.Row="1" Grid.Column="10">
-                <TextBlock Text="AMOUNT" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetAmountTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,4"/>
-                <TextBlock Text="ASSET NUMBER" FontSize="10" FontWeight="Bold" Foreground="#6B6F79"/>
-                <TextBox x:Name="AssetNumberTextBox" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#3A3E48" BorderThickness="1" Padding="8,2" FontSize="12.5" Margin="0,2,0,0"/>
-              </StackPanel>
-            </Grid>
-
-            <Button x:Name="SaveAssetIdButton" Content="Save Asset ID" HorizontalAlignment="Left" Margin="0,5,0,0"
-                    Padding="18,7" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
-          </StackPanel>
+          </DockPanel>
         </Border>
-        </StackPanel>
       </ScrollViewer>
 
       <!-- Device Details content: two cards, grouped sections inside each -->

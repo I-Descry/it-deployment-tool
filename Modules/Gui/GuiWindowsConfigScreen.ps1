@@ -146,13 +146,13 @@ function Update-GuiWindowsConfigPowerCurrentValues {
 
 function Update-GuiAssetIdDisplay {
   # Shared by the synchronous refresh path and the background-load completion
-  # handler below. Hides the card entirely (not just disables it) on any
-  # non-ThinkPad device, per explicit instruction that this should not even
-  # appear rather than show up permanently greyed out for the common case of
-  # a non-Lenovo deployment.
+  # handler below. Asset ID is its own sidebar tab (NavAssetId), hidden
+  # entirely (not just disabled) on any non-ThinkPad device, per explicit
+  # instruction that this should not even appear rather than show up
+  # permanently greyed out for the common case of a non-Lenovo deployment.
   param(
     [Parameter(Mandatory)]
-    [System.Windows.Controls.Border]$Card,
+    [System.Windows.Controls.Border]$NavAssetId,
 
     [Parameter(Mandatory)]
     [hashtable]$FieldTextBoxes,
@@ -164,11 +164,11 @@ function Update-GuiAssetIdDisplay {
   )
 
   if (-not $IsThinkPad) {
-    $Card.Visibility = "Collapsed"
+    $NavAssetId.Visibility = "Collapsed"
     return
   }
 
-  $Card.Visibility = "Visible"
+  $NavAssetId.Visibility = "Visible"
 
   if ($null -eq $Fields) {
     return
@@ -199,7 +199,7 @@ function Invoke-GuiWindowsConfigurationRefresh {
     [System.Windows.Controls.TextBlock]$CurrentBatteryText,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.Border]$AssetIdCard,
+    [System.Windows.Controls.Border]$NavAssetId,
 
     [Parameter(Mandatory)]
     [hashtable]$AssetIdFieldTextBoxes
@@ -212,7 +212,7 @@ function Invoke-GuiWindowsConfigurationRefresh {
 
   $IsThinkPad = [bool](Get-WindowsConfigurationIdentity).IsThinkPad
   $AssetFields = if ($IsThinkPad) { Get-DeploymentAssetIdFields } else { $null }
-  Update-GuiAssetIdDisplay -Card $AssetIdCard -FieldTextBoxes $AssetIdFieldTextBoxes -IsThinkPad $IsThinkPad -Fields $AssetFields
+  Update-GuiAssetIdDisplay -NavAssetId $NavAssetId -FieldTextBoxes $AssetIdFieldTextBoxes -IsThinkPad $IsThinkPad -Fields $AssetFields
 }
 
 function Invoke-GuiAssetIdSave {
@@ -267,8 +267,8 @@ function Start-GuiWindowsConfigLoad {
     [Parameter(Mandatory)]
     [System.Windows.Controls.TextBlock]$CurrentBatteryText,
 
-    # Windows Setup and Device Details each have their own Refresh button over
-    # this one shared load, so both are disabled for its duration.
+    # Windows Setup, Device Details, and Asset ID each have their own Refresh
+    # button over this one shared load, so all three are disabled for its duration.
     [Parameter(Mandatory)]
     [System.Windows.Controls.Button[]]$RefreshButtons,
 
@@ -276,7 +276,7 @@ function Start-GuiWindowsConfigLoad {
     [System.Windows.Controls.ScrollViewer]$ScrollViewer,
 
     [Parameter(Mandatory)]
-    [System.Windows.Controls.Border]$AssetIdCard,
+    [System.Windows.Controls.Border]$NavAssetId,
 
     [Parameter(Mandatory)]
     [hashtable]$AssetIdFieldTextBoxes
@@ -285,6 +285,14 @@ function Start-GuiWindowsConfigLoad {
   foreach ($RefreshButton in $RefreshButtons) {
     $RefreshButton.IsEnabled = $false
   }
+
+  # Hides the screen for the duration of the load instead of leaving it fully
+  # visible with stale "-" placeholders and the ThinkPad-only Asset ID card
+  # missing (indistinguishable from "this isn't a ThinkPad" until the load
+  # finishes). Start-GuiFadeIn below reveals it once, fully populated, rather
+  # than flashing hidden-then-visible at the end on top of already-visible
+  # stale content.
+  $ScrollViewer.Opacity = 0
 
   $RootPath = $script:ITDeploymentToolRoot
 
@@ -349,7 +357,7 @@ function Start-GuiWindowsConfigLoad {
   $script:GuiWindowsConfigLoadCurrentBatteryText = $CurrentBatteryText
   $script:GuiWindowsConfigLoadRefreshButtons = $RefreshButtons
   $script:GuiWindowsConfigLoadScrollViewer = $ScrollViewer
-  $script:GuiWindowsConfigLoadAssetIdCard = $AssetIdCard
+  $script:GuiWindowsConfigLoadNavAssetId = $NavAssetId
   $script:GuiWindowsConfigLoadAssetIdFieldTextBoxes = $AssetIdFieldTextBoxes
 
   $Timer = New-Object System.Windows.Threading.DispatcherTimer
@@ -416,7 +424,7 @@ function Start-GuiWindowsConfigLoad {
       else {
         foreach ($User in $LocalUsers) {
           $DetailText = if ([string]::IsNullOrWhiteSpace([string]$User.FullName)) { "Standard user" } else { [string]$User.FullName }
-          $Row = New-GuiValidationStatusRow -StatusLabel "ACTIVE" -Passed $true -PrimaryText $User.Name -DetailText $DetailText
+          $Row = New-GuiLocalUserRow -UserName $User.Name -DetailText $DetailText
           $ListPanel.Children.Add($Row) | Out-Null
         }
       }
@@ -424,7 +432,7 @@ function Start-GuiWindowsConfigLoad {
       $script:GuiWindowsConfigLoadCurrentPluggedInText.Text = Convert-SleepTimeoutMinutesToText -Minutes $Result.Timeouts.PluggedInMinutes
       $script:GuiWindowsConfigLoadCurrentBatteryText.Text = Convert-SleepTimeoutMinutesToText -Minutes $Result.Timeouts.BatteryMinutes
 
-      Update-GuiAssetIdDisplay -Card $script:GuiWindowsConfigLoadAssetIdCard -FieldTextBoxes $script:GuiWindowsConfigLoadAssetIdFieldTextBoxes -IsThinkPad $Report.IsThinkPad -Fields $Result.AssetFields
+      Update-GuiAssetIdDisplay -NavAssetId $script:GuiWindowsConfigLoadNavAssetId -FieldTextBoxes $script:GuiWindowsConfigLoadAssetIdFieldTextBoxes -IsThinkPad $Report.IsThinkPad -Fields $Result.AssetFields
 
       Start-GuiFadeIn -Element $script:GuiWindowsConfigLoadScrollViewer
     }
