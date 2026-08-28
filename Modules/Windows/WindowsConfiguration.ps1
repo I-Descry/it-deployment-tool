@@ -170,6 +170,86 @@ function Get-WindowsConfigurationIdentity {
     # Leave $DiskMediaType unset if Get-PhysicalDisk is unavailable.
   }
 
+  # Confirm-SecureBootUEFI hit the same "Access denied" elevation-token issue
+  # BitLocker did when that was tried and dropped -- unlike BitLocker, though,
+  # it fails fast (~180ms measured), so keeping it here costs nothing
+  # meaningful even when it can't answer. Degrades to "Unknown" on any
+  # failure (including a non-UEFI/legacy BIOS system, which also throws
+  # here) rather than treating it as On/Off.
+  $SecureBootStatus = "Unknown"
+
+  try {
+    $SecureBootStatus = if (Confirm-SecureBootUEFI -ErrorAction Stop) { "On" } else { "Off" }
+  }
+  catch {
+    # Keep "Unknown" on any failure (access denied, legacy BIOS, etc.)
+  }
+
+  # Get-HotFix (Win32_QuickFixEngineering) measured ~3s per call -- real,
+  # but cached here once per session rather than queried fresh, the same
+  # fix already applied to disk media type above.
+  $LastUpdateInstalled = "Unknown"
+
+  try {
+    $LatestHotfix = Get-HotFix -ErrorAction Stop | Sort-Object -Property InstalledOn -Descending | Select-Object -First 1
+
+    if ($null -ne $LatestHotfix -and $null -ne $LatestHotfix.InstalledOn) {
+      $LastUpdateInstalled = "{0} ({1:yyyy-MM-dd})" -f $LatestHotfix.HotFixID, $LatestHotfix.InstalledOn
+    }
+  }
+  catch {
+    # Keep "Unknown" if the hotfix query itself is unavailable.
+  }
+
+  # Battery health (design vs. full-charge capacity) is not exposed by any
+  # single fast WMI class on this real hardware -- the natural-looking
+  # root\wmi BatteryStaticData/BatteryFullChargedCapacity classes returned
+  # "Generic failure" here, and Win32_Battery alone has no capacity fields.
+  # powercfg's own battery report (the same one Windows' own battery
+  # troubleshooting docs point to) does have both figures and measured
+  # ~1.3s end to end, so that's the real source used here. Win32_Battery is
+  # checked first and is fast (~600ms) specifically to skip the report
+  # entirely on a desktop with no battery, rather than spend 1.3s to learn
+  # the same "no battery" answer a cheaper check already gives.
+  $BatteryHealth = "No Battery"
+
+  $HasBattery = $false
+
+  try {
+    $HasBattery = $null -ne (Get-CimInstance -ClassName Win32_Battery -ErrorAction Stop | Select-Object -First 1)
+  }
+  catch {
+    $HasBattery = $false
+  }
+
+  if ($HasBattery) {
+    $BatteryHealth = "Unknown"
+    $BatteryReportPath = Join-Path $env:TEMP "it-deployment-tool-battery-report.xml"
+
+    try {
+      Start-Process -FilePath "powercfg.exe" -ArgumentList @("/batteryreport", "/xml", "/output", $BatteryReportPath) -Wait -WindowStyle Hidden -ErrorAction Stop
+
+      if (Test-Path -LiteralPath $BatteryReportPath -PathType Leaf) {
+        [xml]$BatteryReportXml = Get-Content -LiteralPath $BatteryReportPath -Raw
+        $BatteryNode = $BatteryReportXml.BatteryReport.Batteries.Battery | Select-Object -First 1
+
+        $DesignCapacity = [double]$BatteryNode.DesignCapacity
+        $FullChargeCapacity = [double]$BatteryNode.FullChargeCapacity
+
+        if ($DesignCapacity -gt 0) {
+          $HealthPercent = [math]::Round(($FullChargeCapacity / $DesignCapacity) * 100, 0)
+          $BatteryHealth = "$HealthPercent% of design capacity"
+        }
+      }
+    }
+    catch {
+      # Keep "Unknown" if the battery report cannot be generated or parsed.
+    }
+    finally {
+      Remove-Item -LiteralPath $BatteryReportPath -Force -ErrorAction SilentlyContinue
+    }
+  }
+
   # The Windows-only Software Licensing entry is isolated via its real,
   # documented Application ID (55c92734-d682-4d71-983e-d6ec3f16059f) --
   # without this filter, a device with Office also installed returns a
@@ -213,6 +293,9 @@ function Get-WindowsConfigurationIdentity {
     TpmReady        = $TpmReady
     TpmStatus       = $TpmStatus
     DiskMediaType   = $DiskMediaType
+    SecureBootStatus = $SecureBootStatus
+    LastUpdateInstalled = $LastUpdateInstalled
+    BatteryHealth   = $BatteryHealth
     # Win32_ComputerSystem.Model is a raw machine-type code on Lenovo systems
     # (e.g. "21SR0038PH"), not a usable product name -- SystemFamily is the
     # field that actually holds the human-readable family name (e.g. "ThinkPad
@@ -306,6 +389,7 @@ function Get-WindowsConfigurationReport {
     OSVersion         = $Identity.OSVersion
     OSBuildNumber     = $Identity.OSBuildNumber
     OSArchitecture    = $Identity.OSArchitecture
+    LastUpdateInstalled = $Identity.LastUpdateInstalled
     LoggedUser        = $CurrentUser
     IsAdministrator   = $Identity.IsAdministrator
     ActivePowerPlan   = [string]$PowerConfiguration.ActivePlan
@@ -316,6 +400,8 @@ function Get-WindowsConfigurationReport {
     Storage           = Get-WindowsConfigurationStorage -MediaType $Identity.DiskMediaType
     TpmReady          = $Identity.TpmReady
     TpmStatus         = $Identity.TpmStatus
+    SecureBootStatus  = $Identity.SecureBootStatus
+    BatteryHealth     = $Identity.BatteryHealth
     IsThinkPad        = $Identity.IsThinkPad
   }
 }
@@ -346,6 +432,7 @@ function Show-WindowsConfigurationReport {
   Write-Info -Name "Build Number" -Value $Report.OSBuildNumber
   Write-Info -Name "Architecture" -Value $Report.OSArchitecture
   Write-Info -Name "Activation" -Value $Report.ActivationStatus
+  Write-Info -Name "Last Update" -Value $Report.LastUpdateInstalled
   Write-Section -Title "Account Information"
   Write-Info -Name "Logged User" -Value $Report.LoggedUser
   Write-Status -Name "Administrator" -Status $Report.IsAdministrator
@@ -358,4 +445,6 @@ function Show-WindowsConfigurationReport {
   Write-Info -Name "Memory" -Value $Report.MemoryGB
   Write-Info -Name "Storage" -Value $Report.Storage
   Write-Info -Name "TPM" -Value $Report.TpmStatus
+  Write-Info -Name "Secure Boot" -Value $Report.SecureBootStatus
+  Write-Info -Name "Battery Health" -Value $Report.BatteryHealth
 }

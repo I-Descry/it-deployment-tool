@@ -111,6 +111,14 @@ function Update-GuiWindowsConfigDeviceInfo {
     "Not Activated" { "#1AF2555A" }
     default         { "#23262E" }
   }
+
+  $Fields.LastUpdateInstalled.Text = $Report.LastUpdateInstalled
+
+  $Fields.SecureBootStatus.Text = $Report.SecureBootStatus
+  $Fields.SecureBootStatus.Foreground = if ($Report.SecureBootStatus -eq "On") { "#34D399" } else { "#6B6F79" }
+  $Fields.SecureBootStatusPill.Background = if ($Report.SecureBootStatus -eq "On") { "#1934D399" } else { "#23262E" }
+
+  $Fields.BatteryHealth.Text = $Report.BatteryHealth
 }
 
 function Update-GuiWindowsConfigCurrentName {
@@ -441,6 +449,11 @@ function Start-GuiWindowsConfigLoad {
         "Not Activated" { "#1AF2555A" }
         default         { "#23262E" }
       }
+      $Fields.LastUpdateInstalled.Text = $Report.LastUpdateInstalled
+      $Fields.SecureBootStatus.Text = $Report.SecureBootStatus
+      $Fields.SecureBootStatus.Foreground = if ($Report.SecureBootStatus -eq "On") { "#34D399" } else { "#6B6F79" }
+      $Fields.SecureBootStatusPill.Background = if ($Report.SecureBootStatus -eq "On") { "#1934D399" } else { "#23262E" }
+      $Fields.BatteryHealth.Text = $Report.BatteryHealth
 
       $script:GuiWindowsConfigLoadCurrentNameText.Text = $Result.CurrentName
 
@@ -508,6 +521,7 @@ function Get-GuiDeviceDetailsSummary {
     "Build Number      : {0}" -f $DeviceFields.OSBuildNumber.Text
     "Architecture      : {0}" -f $DeviceFields.OSArchitecture.Text
     "Activation        : {0}" -f $DeviceFields.ActivationStatus.Text
+    "Last Update       : {0}" -f $DeviceFields.LastUpdateInstalled.Text
     "Logged User       : {0}" -f $DeviceFields.LoggedUser.Text
     "Administrator     : {0}" -f $DeviceFields.AdminStatus.Text
     "Active Power Plan : {0}" -f $DeviceFields.PowerPlan.Text
@@ -516,6 +530,8 @@ function Get-GuiDeviceDetailsSummary {
     "Memory            : {0}" -f $DeviceFields.Memory.Text
     "Storage           : {0}" -f $DeviceFields.Storage.Text
     "TPM               : {0}" -f $DeviceFields.TpmStatus.Text
+    "Secure Boot       : {0}" -f $DeviceFields.SecureBootStatus.Text
+    "Battery Health    : {0}" -f $DeviceFields.BatteryHealth.Text
   )
 
   return ($Lines -join [Environment]::NewLine)

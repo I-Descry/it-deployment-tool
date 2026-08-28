@@ -863,7 +863,7 @@
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="OS Edition" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
                 <TextBlock x:Name="DeviceOSEditionText" Grid.Row="0" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" FontWeight="SemiBold" Margin="0,0,0,5" TextWrapping="Wrap"/>
@@ -875,10 +875,12 @@
                 <TextBlock x:Name="DeviceOSArchitectureText" Grid.Row="3" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
                 <TextBlock Grid.Row="4" Grid.Column="0" Text="Domain/Workgroup" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
                 <TextBlock x:Name="DeviceDomainWorkgroupText" Grid.Row="4" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
-                <TextBlock Grid.Row="5" Grid.Column="0" Text="Activation" Foreground="#9A9EA8" FontSize="12" VerticalAlignment="Center"/>
-                <Border x:Name="DeviceActivationStatusPill" Grid.Row="5" Grid.Column="1" CornerRadius="9" Padding="8,1" HorizontalAlignment="Left" Background="#23262E">
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Activation" Foreground="#9A9EA8" FontSize="12" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                <Border x:Name="DeviceActivationStatusPill" Grid.Row="5" Grid.Column="1" CornerRadius="9" Padding="8,1" HorizontalAlignment="Left" Background="#23262E" Margin="0,0,0,5">
                   <TextBlock x:Name="DeviceActivationStatusText" Text="-" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
                 </Border>
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="Last Update" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceLastUpdateText" Grid.Row="6" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" TextWrapping="Wrap"/>
               </Grid>
             </StackPanel>
           </Border>
@@ -939,7 +941,7 @@
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Processor" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
                 <TextBlock x:Name="DeviceProcessorText" Grid.Row="0" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
@@ -947,10 +949,16 @@
                 <TextBlock x:Name="DeviceMemoryText" Grid.Row="1" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Storage" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
                 <TextBlock x:Name="DeviceStorageText" Grid.Row="2" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="TPM" Foreground="#9A9EA8" FontSize="12" VerticalAlignment="Center"/>
-                <Border x:Name="DeviceTpmStatusPill" Grid.Row="3" Grid.Column="1" CornerRadius="9" Padding="8,1" HorizontalAlignment="Left" Background="#23262E">
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="TPM" Foreground="#9A9EA8" FontSize="12" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                <Border x:Name="DeviceTpmStatusPill" Grid.Row="3" Grid.Column="1" CornerRadius="9" Padding="8,1" HorizontalAlignment="Left" Background="#23262E" Margin="0,0,0,5">
                   <TextBlock x:Name="DeviceTpmStatusText" Text="-" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
                 </Border>
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Secure Boot" Foreground="#9A9EA8" FontSize="12" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                <Border x:Name="DeviceSecureBootStatusPill" Grid.Row="4" Grid.Column="1" CornerRadius="9" Padding="8,1" HorizontalAlignment="Left" Background="#23262E" Margin="0,0,0,5">
+                  <TextBlock x:Name="DeviceSecureBootStatusText" Text="-" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
+                </Border>
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Battery Health" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceBatteryHealthText" Grid.Row="5" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" TextWrapping="Wrap"/>
               </Grid>
             </StackPanel>
           </Border>
