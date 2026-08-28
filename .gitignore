@@ -27,6 +27,10 @@ Installers/ISO/Office2024/*
 *.msixbundle
 *.zip
 
+# Cloud installer source links (Google Drive file URLs for automatic fetch --
+# this repo is public, so these must never be committed; see CloudInstallerFetch.ps1)
+Config/CloudInstallerSources.json
+
 # Temporary files
 *.log
 *.tmp

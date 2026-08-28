@@ -143,6 +143,21 @@ When adding an installation type:
 
 Never make an availability check install, download, modify, or configure anything.
 
+### Cloud installer fetch
+
+Some offline installer packages (CrowdStrike, Office LTSC 2024, Office 2021 LOP, SAP GUI) are too large to keep in this repository's git history. For applications with a configured cloud source, `Install-ApplicationByType` fetches the package automatically before installing, via `Modules\Installation\CloudInstallerFetch.ps1`:
+
+* `Test-CloudInstallerConfigured` / `Get-CloudInstallerUrl` read `Config\CloudInstallerSources.json`.
+* `Invoke-CloudInstallerFetch` downloads and extracts the package, then installation proceeds through the normal, unmodified per-type switch.
+
+`Config\CloudInstallerSources.json` maps application `Name` to a Google Drive share URL. It is **not** `Config\Applications.json` and is **not tracked in git** (`.gitignore`) — this repository's GitHub remote is public, and a Drive share link grants download access to anyone who has it, so it must never live in a file this project already commits. A missing `CloudInstallerSources.json` is not an error; it just means no application has a configured cloud source, the same as a device with no CrowdStrike `Readme.txt`.
+
+The fetch hook only runs when `Test-ApplicationInstallerAvailable` (unchanged, still read-only) reports the package is not already present locally — this does not weaken that function's read-only contract, since the download itself still only ever happens inside `Install-ApplicationByType`.
+
+Downloaded ZIPs are expected to wrap the application's own folder (e.g. `SAP.zip` contains a top-level `SAP\` folder), so extraction targets the *parent* of the resolved destination folder, letting that wrapper folder recreate the destination exactly.
+
+`Import-CloudInstallers.ps1` (repo root, for the manual download path when no cloud source is configured) shares `Get-CloudInstallerDestinationDirectory` with this module rather than duplicating the folder-resolution logic.
+
 ### Installation results
 
 Result normalization is handled by:

@@ -70,6 +70,7 @@ $ModulePaths = @(
   "Installation\CrowdStrikeInstaller.ps1"
   "Installation\OfficeIsoInstaller.ps1"
   "Installation\Office2021ImgInstaller.ps1"
+  "Installation\CloudInstallerFetch.ps1"
   "Installation\InstallationRouter.ps1"
   "Installation\UninstallationRouter.ps1"
   "Installation\InstallationQueue.ps1"
@@ -121,6 +122,8 @@ if ($ValidateOnly) {
     "Start-Application"
     "Install-SelectedApplications"
     "Install-ApplicationByType"
+    "Test-CloudInstallerConfigured"
+    "Invoke-CloudInstallerFetch"
     "New-ApplicationInstallationResult"
     "ConvertTo-ApplicationInstallationResult"
     "Uninstall-ApplicationByType"
@@ -155,8 +158,8 @@ if ($ValidateOnly) {
 
   $ValidationProblems = @()
 
-  if ($ModulePaths.Count -ne 47) {
-    $ValidationProblems += ("Expected 45 modules but the loader contains {0}." -f $ModulePaths.Count)
+  if ($ModulePaths.Count -ne 48) {
+    $ValidationProblems += ("Expected 48 modules but the loader contains {0}." -f $ModulePaths.Count)
   }
 
   if ($MissingFunctions.Count -gt 0) {

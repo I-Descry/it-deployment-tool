@@ -50,4 +50,8 @@ Remove-Item -LiteralPath $TempExtractPath -Recurse -Force -ErrorAction SilentlyC
 Write-Host "Ready at $DestinationRoot" -ForegroundColor Green
 Write-Host "Launching..." -ForegroundColor Cyan
 
-& (Join-Path $DestinationRoot "Start.ps1") -Gui
+# -ExecutionPolicy Bypass applies only to this one launched process, not to
+# the device's actual policy setting -- without it, a fresh Windows machine
+# whose execution policy defaults to Restricted would fail at this exact
+# line after everything else downloaded and extracted successfully.
+powershell.exe -ExecutionPolicy Bypass -File (Join-Path $DestinationRoot "Start.ps1") -Gui

@@ -83,6 +83,14 @@ function Install-ApplicationByType {
     [PSCustomObject]$Application
   )
 
+  if ((Test-CloudInstallerConfigured -Application $Application) -and -not (Test-ApplicationInstallerAvailable -Application $Application)) {
+    $FetchResult = Invoke-CloudInstallerFetch -Application $Application
+
+    if ($FetchResult.Status -ne "Success") {
+      return New-ApplicationInstallationResult -Status "Failed" -ApplicationName $Application.Name -Message $FetchResult.Message
+    }
+  }
+
   $InstallType = ([string]$Application.InstallType).Trim().ToUpperInvariant()
 
   switch ($InstallType) {
