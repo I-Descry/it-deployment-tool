@@ -72,7 +72,11 @@ function Update-GuiWindowsConfigDeviceInfo {
   $Fields.Manufacturer.Text = $Report.Manufacturer
   $Fields.Model.Text = $Report.Model
   $Fields.SerialNumber.Text = $Report.SerialNumber
+  $Fields.BiosVersion.Text = $Report.BiosVersion
+  $Fields.AssetTag.Text = $Report.AssetTag
   $Fields.NetworkType.Text = $Report.NetworkType
+  $Fields.IPAddress.Text = $Report.IPAddress
+  $Fields.MacAddress.Text = $Report.MacAddress
   $Fields.DomainWorkgroup.Text = $Report.DomainWorkgroup
   $Fields.OSEdition.Text = $Report.OSEdition
   $Fields.OSVersion.Text = $Report.OSVersion
@@ -92,6 +96,21 @@ function Update-GuiWindowsConfigDeviceInfo {
   $Fields.TpmStatus.Text = $Report.TpmStatus
   $Fields.TpmStatus.Foreground = if ($Report.TpmReady) { "#34D399" } else { "#6B6F79" }
   $Fields.TpmStatusPill.Background = if ($Report.TpmReady) { "#1934D399" } else { "#23262E" }
+
+  # Not Activated is a real, worth-flagging problem on a deployment device
+  # (matching how Administrator uses red for "no"), while Unknown just means
+  # the licensing query itself failed and is not itself a bad state.
+  $Fields.ActivationStatus.Text = $Report.ActivationStatus
+  $Fields.ActivationStatus.Foreground = switch ($Report.ActivationStatus) {
+    "Licensed"      { "#34D399" }
+    "Not Activated" { "#F2555A" }
+    default         { "#6B6F79" }
+  }
+  $Fields.ActivationStatusPill.Background = switch ($Report.ActivationStatus) {
+    "Licensed"      { "#1934D399" }
+    "Not Activated" { "#1AF2555A" }
+    default         { "#23262E" }
+  }
 }
 
 function Update-GuiWindowsConfigCurrentName {
@@ -389,7 +408,11 @@ function Start-GuiWindowsConfigLoad {
       $Fields.Manufacturer.Text = $Report.Manufacturer
       $Fields.Model.Text = $Report.Model
       $Fields.SerialNumber.Text = $Report.SerialNumber
+      $Fields.BiosVersion.Text = $Report.BiosVersion
+      $Fields.AssetTag.Text = $Report.AssetTag
       $Fields.NetworkType.Text = $Report.NetworkType
+      $Fields.IPAddress.Text = $Report.IPAddress
+      $Fields.MacAddress.Text = $Report.MacAddress
       $Fields.DomainWorkgroup.Text = $Report.DomainWorkgroup
       $Fields.OSEdition.Text = $Report.OSEdition
       $Fields.OSVersion.Text = $Report.OSVersion
@@ -407,6 +430,17 @@ function Start-GuiWindowsConfigLoad {
       $Fields.TpmStatus.Text = $Report.TpmStatus
       $Fields.TpmStatus.Foreground = if ($Report.TpmReady) { "#34D399" } else { "#6B6F79" }
       $Fields.TpmStatusPill.Background = if ($Report.TpmReady) { "#1934D399" } else { "#23262E" }
+      $Fields.ActivationStatus.Text = $Report.ActivationStatus
+      $Fields.ActivationStatus.Foreground = switch ($Report.ActivationStatus) {
+        "Licensed"      { "#34D399" }
+        "Not Activated" { "#F2555A" }
+        default         { "#6B6F79" }
+      }
+      $Fields.ActivationStatusPill.Background = switch ($Report.ActivationStatus) {
+        "Licensed"      { "#1934D399" }
+        "Not Activated" { "#1AF2555A" }
+        default         { "#23262E" }
+      }
 
       $script:GuiWindowsConfigLoadCurrentNameText.Text = $Result.CurrentName
 
@@ -463,12 +497,17 @@ function Get-GuiDeviceDetailsSummary {
     "Manufacturer      : {0}" -f $DeviceFields.Manufacturer.Text
     "Model             : {0}" -f $DeviceFields.Model.Text
     "Serial Number     : {0}" -f $DeviceFields.SerialNumber.Text
+    "BIOS Version      : {0}" -f $DeviceFields.BiosVersion.Text
+    "Asset Tag         : {0}" -f $DeviceFields.AssetTag.Text
     "Network Type      : {0}" -f $DeviceFields.NetworkType.Text
+    "IP Address        : {0}" -f $DeviceFields.IPAddress.Text
+    "MAC Address       : {0}" -f $DeviceFields.MacAddress.Text
     "Domain/Workgroup  : {0}" -f $DeviceFields.DomainWorkgroup.Text
     "OS Edition        : {0}" -f $DeviceFields.OSEdition.Text
     "OS Version        : {0}" -f $DeviceFields.OSVersion.Text
     "Build Number      : {0}" -f $DeviceFields.OSBuildNumber.Text
     "Architecture      : {0}" -f $DeviceFields.OSArchitecture.Text
+    "Activation        : {0}" -f $DeviceFields.ActivationStatus.Text
     "Logged User       : {0}" -f $DeviceFields.LoggedUser.Text
     "Administrator     : {0}" -f $DeviceFields.AdminStatus.Text
     "Active Power Plan : {0}" -f $DeviceFields.PowerPlan.Text
