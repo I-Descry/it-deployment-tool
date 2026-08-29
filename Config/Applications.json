@@ -205,5 +205,13 @@
     "Category": "Company Applications",
     "Description": "Microsoft's business analytics and data visualization desktop tool",
     "Recommended": false
+  },
+  {
+    "Name": "Outlook",
+    "InstallType": "Winget",
+    "Winget": "Microsoft.Outlook",
+    "Category": "Communication",
+    "Description": "Outlook for Windows email and calendar client",
+    "Recommended": false
   }
 ]
