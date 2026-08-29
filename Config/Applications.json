@@ -221,5 +221,13 @@
     "Category": "Development Tools",
     "Description": "Google's agentic development environment",
     "Recommended": false
+  },
+  {
+    "Name": "Claude",
+    "InstallType": "Winget",
+    "Winget": "Anthropic.Claude",
+    "Category": "Development Tools",
+    "Description": "Anthropic's Claude desktop application",
+    "Recommended": false
   }
 ]
