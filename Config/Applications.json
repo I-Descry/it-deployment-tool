@@ -196,5 +196,14 @@
     "Description": "File archiver and compression utility supporting RAR, ZIP, and other formats",
     "Recommended": false,
     "RequiredForIssuance": false
+  },
+  {
+    "Name": "Power BI Desktop",
+    "InstallType": "Winget",
+    "Winget": "9NTXR16HNW1T",
+    "WingetSource": "msstore",
+    "Category": "Company Applications",
+    "Description": "Microsoft's business analytics and data visualization desktop tool",
+    "Recommended": false
   }
 ]
