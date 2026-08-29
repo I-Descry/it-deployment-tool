@@ -237,5 +237,13 @@
     "Category": "Development Tools",
     "Description": "Portable local development environment (Apache/Nginx, MySQL, PHP, Node.js)",
     "Recommended": false
+  },
+  {
+    "Name": "XAMPP",
+    "InstallType": "Winget",
+    "Winget": "ApacheFriends.Xampp.8.2",
+    "Category": "Development Tools",
+    "Description": "Apache, MySQL/MariaDB, PHP, and Perl local development stack",
+    "Recommended": false
   }
 ]
