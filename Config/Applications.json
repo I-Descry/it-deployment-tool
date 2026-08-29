@@ -245,5 +245,15 @@
     "Category": "Development Tools",
     "Description": "Apache, MySQL/MariaDB, PHP, and Perl local development stack",
     "Recommended": false
+  },
+  {
+    "Name": "FreeFileSync",
+    "InstallType": "Exe",
+    "InstallerPath": "EXE\\FreeFileSync\\<INSTALLER_FILENAME>.exe",
+    "SilentArguments": "",
+    "DetectionName": "FreeFileSync",
+    "Category": "Utilities",
+    "Description": "File synchronization and backup tool, bundles RealTimeSync",
+    "Recommended": false
   }
 ]
