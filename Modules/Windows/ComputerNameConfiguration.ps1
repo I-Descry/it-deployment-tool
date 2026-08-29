@@ -35,10 +35,7 @@ function Get-CurrentComputerName {
 
 function Test-DeploymentComputerName {
   param(
-    # AllowEmptyString so a genuinely empty name field falls through to the
-    # friendly "cannot be empty" message below, rather than PowerShell's own
-    # mandatory-parameter binder rejecting the empty string outright (which
-    # would throw before this function's body ever runs).
+    # AllowEmptyString so a genuinely empty name field falls through to the friendly "cannot be empty" message below, rather than PowerShell's own mandatory-parameter binder rejecting the empty string outright (which would throw before this function's body ever runs).
     [Parameter(Mandatory)]
     [AllowEmptyString()]
     [string]$ComputerName
@@ -83,12 +80,7 @@ function Set-DeploymentComputerName {
     [Parameter(Mandatory)]
     [string]$NewName,
 
-    # Renaming a computer always requires a restart to take effect. Left
-    # unset (the default), the rename completes immediately and the restart
-    # is left for the technician to do later -- the existing behavior. Set,
-    # it restarts the machine immediately via Rename-Computer's own -Restart
-    # parameter, which is a real, immediate, hard-to-reverse action, so this
-    # must always be an explicit opt-in rather than a default.
+    # Renaming a computer always requires a restart to take effect. Left unset (the default), the rename completes immediately and the restart is left for the technician to do later -- the existing behavior. Set, it restarts the machine immediately via Rename-Computer's own -Restart parameter, which is a real, immediate, hard-to-reverse action, so this must always be an explicit opt-in rather than a default.
     [switch]$Restart
   )
 

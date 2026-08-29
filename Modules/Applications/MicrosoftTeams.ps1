@@ -150,9 +150,7 @@ function Uninstall-MicrosoftTeamsInstallation {
   }
 }
 
-# ============================================================
-# MICROSOFT TEAMS BOOTSTRAPPER
-# ============================================================
+# ============================================================ MICROSOFT TEAMS BOOTSTRAPPER ============================================================
 
 function Get-MicrosoftTeamsBootstrapperUri {
   [CmdletBinding()]
@@ -304,9 +302,7 @@ function Test-MicrosoftTeamsDeploymentPackage {
   }
 }
 
-# ============================================================
-# MICROSOFT TEAMS INSTALLATION
-# ============================================================
+# ============================================================ MICROSOFT TEAMS INSTALLATION ============================================================
 
 function Test-MicrosoftTeamsAdministrator {
   [CmdletBinding()]

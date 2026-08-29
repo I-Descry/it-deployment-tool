@@ -3,12 +3,7 @@
 # ============================================================
 
 function New-GuiLocalUserRow {
-  # Purpose-built for the narrow Local Standard User card. The Deployment
-  # Validation screen's New-GuiValidationStatusRow uses fixed-width columns
-  # sized for that screen's full-width rows; reusing it here squeezed the
-  # detail text into a sliver a few pixels wide and made it wrap letter by
-  # letter. This stacks the detail below the name instead, so it always has
-  # the full card width to wrap into.
+  # Purpose-built for the narrow Local Standard User card. The Deployment Validation screen's New-GuiValidationStatusRow uses fixed-width columns sized for that screen's full-width rows; reusing it here squeezed the detail text into a sliver a few pixels wide and made it wrap letter by letter. This stacks the detail below the name instead, so it always has the full card width to wrap into.
   param(
     [Parameter(Mandatory)]
     [string]$UserName,
@@ -97,9 +92,7 @@ function Update-GuiWindowsConfigDeviceInfo {
   $Fields.TpmStatus.Foreground = if ($Report.TpmReady) { "#34D399" } else { "#6B6F79" }
   $Fields.TpmStatusPill.Background = if ($Report.TpmReady) { "#1934D399" } else { "#23262E" }
 
-  # Not Activated is a real, worth-flagging problem on a deployment device
-  # (matching how Administrator uses red for "no"), while Unknown just means
-  # the licensing query itself failed and is not itself a bad state.
+  # Not Activated is a real, worth-flagging problem on a deployment device (matching how Administrator uses red for "no"), while Unknown just means the licensing query itself failed and is not itself a bad state.
   $Fields.ActivationStatus.Text = $Report.ActivationStatus
   $Fields.ActivationStatus.Foreground = switch ($Report.ActivationStatus) {
     "Licensed"      { "#34D399" }
@@ -172,11 +165,7 @@ function Update-GuiWindowsConfigPowerCurrentValues {
 }
 
 function Update-GuiAssetIdDisplay {
-  # Shared by the synchronous refresh path and the background-load completion
-  # handler below. Asset ID is its own sidebar tab (NavAssetId), hidden
-  # entirely (not just disabled) on any non-ThinkPad device, per explicit
-  # instruction that this should not even appear rather than show up
-  # permanently greyed out for the common case of a non-Lenovo deployment.
+  # Shared by the synchronous refresh path and the background-load completion handler below. Asset ID is its own sidebar tab (NavAssetId), hidden entirely (not just disabled) on any non-ThinkPad device, per explicit instruction that this should not even appear rather than show up permanently greyed out for the common case of a non-Lenovo deployment.
   param(
     [Parameter(Mandatory)]
     [System.Windows.Controls.Border]$NavAssetId,
@@ -243,11 +232,7 @@ function Invoke-GuiWindowsConfigurationRefresh {
 }
 
 function Invoke-GuiAssetIdSave {
-  # Writes the 11 fields to Sample.txt, then launches WinAIA against it.
-  # WinAIA opens its own confirmation dialog before committing anything to
-  # BIOS -- this function cannot and does not try to click through that on
-  # the technician's behalf, only the confirmation before launching it and
-  # the result after it exits are this tool's own.
+  # Writes the 11 fields to Sample.txt, then launches WinAIA against it. WinAIA opens its own confirmation dialog before committing anything to BIOS -- this function cannot and does not try to click through that on the technician's behalf, only the confirmation before launching it and the result after it exits are this tool's own.
   param(
     [Parameter(Mandatory)]
     [hashtable]$FieldTextBoxes
@@ -294,8 +279,7 @@ function Start-GuiWindowsConfigLoad {
     [Parameter(Mandatory)]
     [System.Windows.Controls.TextBlock]$CurrentBatteryText,
 
-    # Windows Setup, Device Details, and Asset ID each have their own Refresh
-    # button over this one shared load, so all three are disabled for its duration.
+    # Windows Setup, Device Details, and Asset ID each have their own Refresh button over this one shared load, so all three are disabled for its duration.
     [Parameter(Mandatory)]
     [System.Windows.Controls.Button[]]$RefreshButtons,
 
@@ -313,24 +297,12 @@ function Start-GuiWindowsConfigLoad {
     $RefreshButton.IsEnabled = $false
   }
 
-  # Hides the screen for the duration of the load instead of leaving it fully
-  # visible with stale "-" placeholders and the ThinkPad-only Asset ID card
-  # missing (indistinguishable from "this isn't a ThinkPad" until the load
-  # finishes). Start-GuiFadeIn below reveals it once, fully populated, rather
-  # than flashing hidden-then-visible at the end on top of already-visible
-  # stale content.
+  # Hides the screen for the duration of the load instead of leaving it fully visible with stale "-" placeholders and the ThinkPad-only Asset ID card missing (indistinguishable from "this isn't a ThinkPad" until the load finishes). Start-GuiFadeIn below reveals it once, fully populated, rather than flashing hidden-then-visible at the end on top of already-visible stale content.
   $ScrollViewer.Opacity = 0
 
   $RootPath = $script:ITDeploymentToolRoot
 
-  # Used only for the screen's first load (see Switch-GuiScreen), where the
-  # CIM/BIOS/powercfg queries are guaranteed to be a real, un-cached cost.
-  # The Refresh button keeps using the synchronous Invoke-GuiWindowsConfigurationRefresh
-  # below, since by then the identity cache in Get-WindowsConfigurationIdentity
-  # (WindowsConfiguration.ps1) is already warm in the main runspace and that
-  # path is already fast (~60ms) -- backgrounding it would add complexity for
-  # no perceptible benefit. A fresh background runspace has its own empty
-  # cache, so this path always pays the full first-query cost.
+  # Used only for the screen's first load (see Switch-GuiScreen), where the CIM/BIOS/powercfg queries are guaranteed to be a real, un-cached cost. The Refresh button keeps using the synchronous Invoke-GuiWindowsConfigurationRefresh below, since by then the identity cache in Get-WindowsConfigurationIdentity (WindowsConfiguration.ps1) is already warm in the main runspace and that path is already fast (~60ms) -- backgrounding it would add complexity for no perceptible benefit. A fresh background runspace has its own empty cache, so this path always pays the full first-query cost.
   $BackgroundScript = {
     param([string]$RootPath)
 
@@ -391,8 +363,7 @@ function Start-GuiWindowsConfigLoad {
   $Timer.Interval = [TimeSpan]::FromMilliseconds(200)
   $script:GuiWindowsConfigLoadTimer = $Timer
 
-  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d, matching every
-  # other background-runspace timer handler in this app.
+  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d, matching every other background-runspace timer handler in this app.
   $Timer.Add_Tick({
     if (-not $script:GuiWindowsConfigLoadAsyncResult.IsCompleted) {
       return
@@ -566,8 +537,7 @@ function Invoke-GuiCopyDeviceDetails {
   $Timer.Interval = [TimeSpan]::FromMilliseconds(1400)
   $script:GuiCopyDeviceDetailsResetTimer = $Timer
 
-  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d, matching every
-  # other background-runspace/UI timer handler in this app.
+  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d, matching every other background-runspace/UI timer handler in this app.
   $Timer.Add_Tick({
     $script:GuiCopyDeviceDetailsResetTimer.Stop()
     $script:GuiCopyDeviceDetailsButton.Content = $script:GuiCopyDeviceDetailsOriginalContent
@@ -578,10 +548,7 @@ function Invoke-GuiCopyDeviceDetails {
 }
 
 function Show-GuiResultDialog {
-  # Shared by every action on this screen that returns the common
-  # {Status, Message} shape (Set-DeploymentComputerName, New-DeploymentLocalStandardUser,
-  # Set-DeploymentSleepTimeouts): maps the result's Status to the matching
-  # dialog icon and title, rather than repeating that mapping at each call site.
+  # Shared by every action on this screen that returns the common {Status, Message} shape (Set-DeploymentComputerName, New-DeploymentLocalStandardUser, Set-DeploymentSleepTimeouts): maps the result's Status to the matching dialog icon and title, rather than repeating that mapping at each call site.
   param(
     [Parameter(Mandatory)]
     [PSCustomObject]$Result,

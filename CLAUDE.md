@@ -76,6 +76,10 @@ Do not create a new abstraction for logic used in only one place unless doing so
 
 Comments should explain non-obvious reasons, Windows behavior, compatibility requirements, or workarounds. Do not add comments that simply narrate the code.
 
+Every comment, existing or new, must be a single line summarizing the function or purpose of the code it precedes. Do not write multi-line comment blocks. If a comment needs more than one line to express, keep it detailed and merge it onto one line rather than shortening it to a vague gist — a long single line is fine, dropping the detail is not.
+
+Exception: the file-level header comment at the very top of a `.ps1` file, stating that file's overall purpose, may keep its multi-line boxed form (a `# ====...` divider line, the file's title, another divider, and an optional short explanation of what the file is for). This is a deliberate exception to the one-line rule above, since it documents the file itself rather than a specific piece of code, and it exists for future reference when navigating the codebase. Every new module file should get one of these headers.
+
 Use only PowerShell commands, .NET APIs, functions, registry paths, exit codes, and application behavior that are known from the repository or can be verified. Do not invent commands, parameters, identifiers, or package behavior.
 
 ## Architecture

@@ -36,10 +36,7 @@ function Show-GuiScreenLoadingState {
   $LoadingText.Margin = "0,20,0,0"
   $Panel.Children.Add($LoadingText) | Out-Null
 
-  # The checks that follow this call run synchronously on the UI thread and
-  # can take the better part of a second (CIM/BIOS queries, powercfg.exe).
-  # Forcing a Render-priority dispatch here flushes the "Loading..." text to
-  # screen first, so the tab switch itself feels instant instead of frozen.
+  # The checks that follow this call run synchronously on the UI thread and can take the better part of a second (CIM/BIOS queries, powercfg.exe). Forcing a Render-priority dispatch here flushes the "Loading..." text to screen first, so the tab switch itself feels instant instead of frozen.
   $Panel.Dispatcher.Invoke([action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
 }
 
@@ -76,9 +73,7 @@ function Switch-GuiScreen {
   $ActiveText.FontWeight = "SemiBold"
   Set-GuiIconColor -IconCanvas $ActiveIcon -Color "#38BDF8"
 
-  # Every screen is hidden first, then only the requested one is shown. Doing it
-  # this way keeps each branch to the two lines that actually differ, instead of
-  # repeating the full visibility list once per screen.
+  # Every screen is hidden first, then only the requested one is shown. Doing it this way keeps each branch to the two lines that actually differ, instead of repeating the full visibility list once per screen.
   $script:GuiApplicationsToolbar.Visibility = "Collapsed"
   $script:GuiApplicationsScrollViewer.Visibility = "Collapsed"
   $script:GuiDeploymentValidationToolbar.Visibility = "Collapsed"
@@ -122,11 +117,7 @@ function Switch-GuiScreen {
     Start-GuiFadeIn -Element $script:GuiDeploymentLogsContent
   }
   elseif ($ScreenName -eq "Windows Setup" -or $ScreenName -eq "Device Details" -or $ScreenName -eq "Asset ID") {
-    # All three screens are fed by one shared device report, so whichever is
-    # opened first performs the load and the others reuse it. Asset ID can
-    # only ever be opened via NavAssetId, which stays Collapsed until that
-    # shared load confirms this device is a ThinkPad, so there is no path
-    # here where this screen shows without real data behind it.
+    # All three screens are fed by one shared device report, so whichever is opened first performs the load and the others reuse it. Asset ID can only ever be opened via NavAssetId, which stays Collapsed until that shared load confirms this device is a ThinkPad, so there is no path here where this screen shows without real data behind it.
     if ($ScreenName -eq "Windows Setup") {
       $script:GuiWindowsSetupToolbar.Visibility = "Visible"
       $script:GuiWindowsSetupScrollViewer.Visibility = "Visible"
@@ -146,11 +137,7 @@ function Switch-GuiScreen {
     if (-not $script:GuiWindowsConfigLoaded) {
       $script:GuiWindowsConfigLoaded = $true
 
-      # Runs the CIM/BIOS/powercfg queries on a background runspace (the same
-      # pattern used for install/uninstall queues) so this first load never
-      # blocks the UI thread. Start-GuiFadeIn runs once the data actually
-      # arrives, inside Start-GuiWindowsConfigLoad's own completion handler,
-      # rather than immediately below like the other screens.
+      # Runs the CIM/BIOS/powercfg queries on a background runspace (the same pattern used for install/uninstall queues) so this first load never blocks the UI thread. Start-GuiFadeIn runs once the data actually arrives, inside Start-GuiWindowsConfigLoad's own completion handler, rather than immediately below like the other screens.
       Start-GuiWindowsConfigLoad -DeviceFields $script:GuiWindowsConfigDeviceFields -CurrentNameText $script:GuiCurrentComputerNameText -LocalUsersListPanel $script:GuiLocalUsersListPanel -CurrentPluggedInText $script:GuiCurrentPluggedInText -CurrentBatteryText $script:GuiCurrentBatteryText -RefreshButtons $script:GuiRefreshWindowsConfigButtons -ScrollViewer $ActiveScrollViewer -NavAssetId $script:GuiNavAssetId -AssetIdFieldTextBoxes $script:GuiAssetIdFieldTextBoxes
     }
     else {
@@ -212,19 +199,10 @@ function Show-MainWindow {
   $Reader = New-Object System.Xml.XmlNodeReader $WindowXaml
   $Window = [Windows.Markup.XamlReader]::Load($Reader)
 
-  # Show-GuiDialog (GuiDialog.ps1) needs a reference to this window to size and
-  # center itself as an owned dialog, without threading an -Owner parameter
-  # through every one of its call sites across the Gui modules.
+  # Show-GuiDialog (GuiDialog.ps1) needs a reference to this window to size and center itself as an owned dialog, without threading an -Owner parameter through every one of its call sites across the Gui modules.
   $script:GuiMainWindow = $Window
 
-  # Nunito is bundled as a variable font rather than installed system-wide,
-  # since this tool is copied directly to technician machines rather than
-  # installed. Loaded via an absolute folder URI (not a relative XAML path)
-  # because XamlReader.Load has no base URI to resolve a relative FontFamily
-  # reference against here -- every other path in this app already uses
-  # $script:ITDeploymentToolRoot for the same reason. Falls back to the
-  # XAML's own Segoe UI default if the font file is ever missing (e.g. not
-  # yet copied to this machine), rather than failing to start.
+  # Nunito is bundled as a variable font rather than installed system-wide, since this tool is copied directly to technician machines rather than installed. Loaded via an absolute folder URI (not a relative XAML path) because XamlReader.Load has no base URI to resolve a relative FontFamily reference against here -- every other path in this app already uses $script:ITDeploymentToolRoot for the same reason. Falls back to the XAML's own Segoe UI default if the font file is ever missing (e.g. not yet copied to this machine), rather than failing to start.
   try {
     $FontsDirectory = Join-Path $script:ITDeploymentToolRoot "Modules\Gui\Fonts"
     $FontsUri = New-Object System.Uri(($FontsDirectory.TrimEnd('\') + '\'), [System.UriKind]::Absolute)
@@ -308,9 +286,7 @@ function Show-MainWindow {
   $AssetNumberTextBox = $Window.FindName("AssetNumberTextBox")
   $SaveAssetIdButton = $Window.FindName("SaveAssetIdButton")
 
-  # Keyed the same way Get-DeploymentAssetIdFieldNames orders them, so
-  # Update-GuiAssetIdFields/Invoke-GuiAssetIdSave can loop instead of
-  # repeating each field name by hand.
+  # Keyed the same way Get-DeploymentAssetIdFieldNames orders them, so Update-GuiAssetIdFields/Invoke-GuiAssetIdSave can loop instead of repeating each field name by hand.
   $AssetIdFieldTextBoxes = @{
     "OWNERDATA.OWNERNAME"              = $AssetOwnerNameTextBox
     "OWNERDATA.DEPARTMENT"             = $AssetDepartmentTextBox
@@ -474,8 +450,7 @@ function Show-MainWindow {
     }
   })
 
-  # Windows Setup, Device Details, and Asset ID are three screens over one
-  # shared data load, so all three Refresh buttons run the same full refresh.
+  # Windows Setup, Device Details, and Asset ID are three screens over one shared data load, so all three Refresh buttons run the same full refresh.
   $RefreshWindowsSetupButton.Add_Click({
     try {
       Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText -NavAssetId $NavAssetId -AssetIdFieldTextBoxes $AssetIdFieldTextBoxes
@@ -512,9 +487,7 @@ function Show-MainWindow {
     }
   })
 
-  # Defaults to Later (today's existing rename behavior) -- Restart Now is
-  # always an explicit choice, never the default, since it restarts the
-  # machine immediately.
+  # Defaults to Later (today's existing rename behavior) -- Restart Now is always an explicit choice, never the default, since it restarts the machine immediately.
   $script:GuiRenameRestartNow = $false
 
   $RestartLaterOption.Add_MouseLeftButtonUp({
@@ -544,9 +517,7 @@ function Show-MainWindow {
     }
   })
 
-  # Defaults to Set Password (today's existing behavior) -- No Password is
-  # always an explicit choice, never the default, since a blank-password
-  # local account is an unusual security posture.
+  # Defaults to Set Password (today's existing behavior) -- No Password is always an explicit choice, never the default, since a blank-password local account is an unusual security posture.
   $script:GuiCreateUserNoPassword = $false
 
   $SetPasswordOption.Add_MouseLeftButtonUp({
@@ -732,10 +703,7 @@ function Show-MainWindow {
     }
   })
 
-  # WindowChrome's known maximize-clipping bug: without this, the maximized
-  # window renders a few pixels past the monitor's working area on every
-  # edge. Doubling the resize-border thickness as the maximized-state margin
-  # was empirically verified to correct it in this environment.
+  # WindowChrome's known maximize-clipping bug: without this, the maximized window renders a few pixels past the monitor's working area on every edge. Doubling the resize-border thickness as the maximized-state margin was empirically verified to correct it in this environment.
   $Window.Add_StateChanged({
     if ($Window.WindowState -eq [System.Windows.WindowState]::Maximized) {
       $ResizeBorder = [System.Windows.SystemParameters]::WindowResizeBorderThickness

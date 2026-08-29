@@ -4,9 +4,7 @@
 # Author : IT04 - John Paul Villacorta
 # ============================================================
 
-# ============================================================
-# Application Information
-# ============================================================
+# ============================================================ Application Information ============================================================
 
 [CmdletBinding()]
 param(
@@ -19,9 +17,7 @@ $AppVersion = "1.1.0-dev"
 $AppAuthor = "IT04 - John Paul Villacorta"
 $script:ITDeploymentToolRoot = $PSScriptRoot
 
-# ============================================================
-# System Information
-# ============================================================
+# ============================================================ System Information ============================================================
 
 $SystemInfo = [PSCustomObject]@{
 
@@ -40,9 +36,7 @@ $SystemInfo = [PSCustomObject]@{
 
 }
 
-# ============================================================
-# Load Modules
-# ============================================================
+# ============================================================ Load Modules ============================================================
 
 $ModulePaths = @(
   "Core\Elevation.ps1"
@@ -197,10 +191,7 @@ if (-not $AdministratorGranted) {
 }
 
 if ($Gui) {
-  # GUI mode is meant to look and feel like a normal Windows application, not
-  # a script running in a console. The console window still exists (WPF has
-  # no windowless PowerShell host), so it is hidden rather than left visible
-  # behind/alongside the GUI window.
+  # GUI mode is meant to look and feel like a normal Windows application, not a script running in a console. The console window still exists (WPF has no windowless PowerShell host), so it is hidden rather than left visible behind/alongside the GUI window.
   Add-Type -Name Win32ConsoleWindow -Namespace ITDeploymentTool -MemberDefinition '
     [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow();
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
@@ -216,9 +207,7 @@ if ($Gui) {
   exit
 }
 
-# ============================================================
-# Initialize Installer Directories
-# ============================================================
+# ============================================================ Initialize Installer Directories ============================================================
 
 try {
   [void](Initialize-InstallerDirectories)
@@ -231,8 +220,6 @@ catch {
   exit 1
 }
 
-# ============================================================
-# Application Starts Here
-# ============================================================
+# ============================================================ Application Starts Here ============================================================
 
 Start-Application

@@ -39,9 +39,7 @@ if (-not (Test-Path -LiteralPath $SourceFolder -PathType Container)) {
   throw "Source folder not found: $SourceFolder"
 }
 
-# Reuses Get-CloudInstallerDestinationDirectory from the app's own
-# automatic cloud-fetch module, so the "which folder does this
-# application's package belong in" logic exists in exactly one place.
+# Reuses Get-CloudInstallerDestinationDirectory from the app's own automatic cloud-fetch module, so the "which folder does this application's package belong in" logic exists in exactly one place.
 . (Join-Path $RepoRoot "Modules\Installation\CloudInstallerFetch.ps1")
 
 $Applications = Get-Content -LiteralPath $AppsJsonPath -Raw | ConvertFrom-Json
@@ -84,10 +82,7 @@ foreach ($Zip in $Zips) {
 
   $DestinationDir = $DestinationsByKey[$Key]
 
-  # Each ZIP wraps the app's own folder (e.g. "SAP.zip" contains a
-  # top-level "SAP\" folder), so extracting into the parent of the
-  # destination lets that wrapper folder recreate the destination
-  # exactly, rather than nesting it one level too deep.
+  # Each ZIP wraps the app's own folder (e.g. "SAP.zip" contains a top-level "SAP\" folder), so extracting into the parent of the destination lets that wrapper folder recreate the destination exactly, rather than nesting it one level too deep.
   $ParentDir = Split-Path -Path $DestinationDir -Parent
 
   if (-not (Test-Path -LiteralPath $ParentDir)) {

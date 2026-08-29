@@ -44,12 +44,7 @@ function New-GuiDialogIconCanvas {
       $Canvas.Children.Add($Check) | Out-Null
     }
     "Warning" {
-      # Same triangle+exclamation glyph and color as CompletionModalIconWarning.
-      # This app's real semantic palette only has two non-neutral colors
-      # (green = good, red = needs attention/failed, e.g. the Deployment
-      # Validation "Attention" pill), not a separate amber warning tone, so
-      # this same red icon covers both a confirm-before-you-proceed prompt
-      # and an outright error/failure message.
+      # Same triangle+exclamation glyph and color as CompletionModalIconWarning. This app's real semantic palette only has two non-neutral colors (green = good, red = needs attention/failed, e.g. the Deployment Validation "Attention" pill), not a separate amber warning tone, so this same red icon covers both a confirm-before-you-proceed prompt and an outright error/failure message.
       $Color = "#F2555A"
 
       $Triangle = New-Object System.Windows.Shapes.Path
@@ -74,8 +69,7 @@ function New-GuiDialogIconCanvas {
       $Canvas.Children.Add($Dot) | Out-Null
     }
     default {
-      # Same circle-i glyph already used for every card-header icon on the
-      # Windows Setup / Device Details screens (Identity, System, etc.).
+      # Same circle-i glyph already used for every card-header icon on the Windows Setup / Device Details screens (Identity, System, etc.).
       $Color = "#38BDF8"
 
       $Circle = New-Object System.Windows.Shapes.Ellipse
@@ -128,14 +122,7 @@ function Show-GuiDialog {
     $Owner = $script:GuiMainWindow
   }
 
-  # A single script-scope result variable, not a variable local to this
-  # function, because a button's Click handler runs in its own nested scope
-  # where a plain assignment (`$Result = "Yes"`) would only ever create a
-  # new local shadow copy instead of writing back to this function's
-  # variable -- the same read-vs-write asymmetry documented elsewhere in
-  # this app's click handlers, just hitting the write side here instead of
-  # the read side. Routing the write through $script: is how the rest of
-  # this codebase already works around exactly that.
+  # A single script-scope result variable, not a variable local to this function, because a button's Click handler runs in its own nested scope where a plain assignment (`$Result = "Yes"`) would only ever create a new local shadow copy instead of writing back to this function's variable -- the same read-vs-write asymmetry documented elsewhere in this app's click handlers, just hitting the write side here instead of the read side. Routing the write through $script: is how the rest of this codebase already works around exactly that.
   $script:GuiDialogResult = if ($Buttons -eq "YesNo") { "No" } else { "OK" }
 
   $Dialog = New-Object System.Windows.Window

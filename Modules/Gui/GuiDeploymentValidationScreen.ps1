@@ -199,11 +199,7 @@ function Start-GuiDeploymentValidationLoad {
   $LogPath = $script:LogFilePath
   $ClonedApplications = @($script:Applications | ForEach-Object { $_.PSObject.Copy() })
 
-  # The device readiness checks (admin, internet, restart, CrowdStrike, Office,
-  # etc.) and installer package checks are all read-only, so they are safe to
-  # run off the UI thread. Re-dot-sourcing the modules they depend on inside a
-  # fresh runspace mirrors the same background-execution pattern already
-  # proven for install/uninstall queues in GuiApplicationsScreen.ps1.
+  # The device readiness checks (admin, internet, restart, CrowdStrike, Office, etc.) and installer package checks are all read-only, so they are safe to run off the UI thread. Re-dot-sourcing the modules they depend on inside a fresh runspace mirrors the same background-execution pattern already proven for install/uninstall queues in GuiApplicationsScreen.ps1.
   $BackgroundScript = {
     param(
       [string]$RootPath,
@@ -228,13 +224,7 @@ function Start-GuiDeploymentValidationLoad {
       "Validation\InstallerPackageReadiness.ps1"
     )
 
-    # ApplicationCatalog.ps1's own top-level code resets $script:Applications
-    # to an empty array when dot-sourced. Dot-sourcing does not create a new
-    # scope, so a parameter literally named $Applications here would be the
-    # same variable as $script:Applications and would get silently clobbered
-    # mid-loop -- that's why this parameter is named $ApplicationsParam
-    # instead, and $script:Applications is only (re)assigned after every
-    # module has finished loading.
+    # ApplicationCatalog.ps1's own top-level code resets $script:Applications to an empty array when dot-sourced. Dot-sourcing does not create a new scope, so a parameter literally named $Applications here would be the same variable as $script:Applications and would get silently clobbered mid-loop -- that's why this parameter is named $ApplicationsParam instead, and $script:Applications is only (re)assigned after every module has finished loading.
     foreach ($ModulePath in $ModulePaths) {
       . (Join-Path $RootPath "Modules\$ModulePath")
     }
@@ -282,9 +272,7 @@ function Start-GuiDeploymentValidationLoad {
   $Timer.Interval = [TimeSpan]::FromMilliseconds(200)
   $script:GuiValidationTimer = $Timer
 
-  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d, matching
-  # Start-GuiApplicationQueue's own timer handler (see the comment there for
-  # why GetNewClosure breaks dot-sourced function resolution in this app).
+  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d, matching Start-GuiApplicationQueue's own timer handler (see the comment there for why GetNewClosure breaks dot-sourced function resolution in this app).
   $Timer.Add_Tick({
     if (-not $script:GuiValidationAsyncResult.IsCompleted) {
       return

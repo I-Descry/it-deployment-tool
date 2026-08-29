@@ -87,13 +87,7 @@ function Get-GoogleDriveFileIdFromUrl {
 $script:GoogleDriveTypeFolderNames = @("EXE", "MSI", "ISO", "IMG", "ZIP", "Scripts")
 
 function Get-CloudInstallerDestinationDirectory {
-  # Shared by Invoke-CloudInstallerFetch (below) and the standalone
-  # Import-CloudInstallers.ps1 script, so the "which folder does this
-  # application's package belong in" logic exists in exactly one place.
-  # Resolves to the top-level app-specific subfolder directly under the
-  # type folder (e.g. "SAP" in "EXE\SAP\..."), not the installer file's
-  # own immediate parent -- some vendor-extracted installers (SAP GUI)
-  # nest the real .exe several folders deeper than that.
+  # Shared by Invoke-CloudInstallerFetch (below) and the standalone Import-CloudInstallers.ps1 script, so the "which folder does this application's package belong in" logic exists in exactly one place. Resolves to the top-level app-specific subfolder directly under the type folder (e.g. "SAP" in "EXE\SAP\..."), not the installer file's own immediate parent -- some vendor-extracted installers (SAP GUI) nest the real .exe several folders deeper than that.
   param(
     [Parameter(Mandatory)]
     [PSCustomObject]$Application,
@@ -135,13 +129,7 @@ function Get-CloudInstallerDestinationDirectory {
 }
 
 function Invoke-GoogleDriveFileDownload {
-  # Google's own "file too large to scan for viruses" interstitial has to be
-  # walked through in two requests: the first captures a session cookie plus
-  # a per-request confirm token and uuid from a hidden form, and the second
-  # (against drive.usercontent.google.com, not drive.google.com -- this
-  # changed from the older documented endpoint) uses them to get the real
-  # file. Verified against a real file from the user's actual Drive folder
-  # before this was relied on anywhere.
+  # Google's own "file too large to scan for viruses" interstitial has to be walked through in two requests: the first captures a session cookie plus a per-request confirm token and uuid from a hidden form, and the second (against drive.usercontent.google.com, not drive.google.com -- this changed from the older documented endpoint) uses them to get the real file. Verified against a real file from the user's actual Drive folder before this was relied on anywhere.
   param(
     [Parameter(Mandatory)]
     [string]$FileId,
@@ -218,10 +206,7 @@ function Invoke-CloudInstallerFetch {
       }
     }
 
-    # The ZIPs this project's technicians create wrap the app's own folder
-    # (e.g. "SAP.zip" contains a top-level "SAP\" folder), so extracting
-    # into the parent of the destination lets that wrapper folder recreate
-    # the destination exactly, rather than nesting it one level too deep.
+    # The ZIPs this project's technicians create wrap the app's own folder (e.g. "SAP.zip" contains a top-level "SAP\" folder), so extracting into the parent of the destination lets that wrapper folder recreate the destination exactly, rather than nesting it one level too deep.
     $ParentDir = Split-Path -Path $DestinationDir -Parent
 
     if (-not (Test-Path -LiteralPath $ParentDir)) {

@@ -4,10 +4,7 @@
 
 function Test-DeploymentLocalUserName {
   param(
-    # AllowEmptyString so a genuinely empty username field falls through to
-    # the friendly "cannot be empty" message below, rather than PowerShell's
-    # own mandatory-parameter binder rejecting the empty string outright
-    # (which would throw before this function's body ever runs).
+    # AllowEmptyString so a genuinely empty username field falls through to the friendly "cannot be empty" message below, rather than PowerShell's own mandatory-parameter binder rejecting the empty string outright (which would throw before this function's body ever runs).
     [Parameter(Mandatory)]
     [AllowEmptyString()]
     [string]$UserName
@@ -149,10 +146,7 @@ function New-DeploymentLocalStandardUser {
 
     [Security.SecureString]$Password,
 
-    # An explicit opt-in for creating the account with a blank password via
-    # New-LocalUser's own -NoPassword parameter. Never implied by simply
-    # leaving $Password unset, so a caller can't create a passwordless
-    # account by accident.
+    # An explicit opt-in for creating the account with a blank password via New-LocalUser's own -NoPassword parameter. Never implied by simply leaving $Password unset, so a caller can't create a passwordless account by accident.
     [switch]$NoPassword,
 
     [string]$FullName

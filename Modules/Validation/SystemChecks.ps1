@@ -31,11 +31,7 @@ function Test-Internet {
     [switch]$PassThru
   )
 
-  # Test-Connection's underlying WMI ping has no configurable timeout in
-  # Windows PowerShell 5.1 and can block for several seconds on a network
-  # that silently drops outbound ICMP (common behind corporate firewalls).
-  # System.Net.NetworkInformation.Ping exposes an explicit timeout so this
-  # check can never stall the GUI's startup beyond it.
+  # Test-Connection's underlying WMI ping has no configurable timeout in Windows PowerShell 5.1 and can block for several seconds on a network that silently drops outbound ICMP (common behind corporate firewalls). System.Net.NetworkInformation.Ping exposes an explicit timeout so this check can never stall the GUI's startup beyond it.
   try {
     $Ping = New-Object System.Net.NetworkInformation.Ping
     $Reply = $Ping.Send("8.8.8.8", 1000)

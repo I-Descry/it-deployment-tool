@@ -121,10 +121,7 @@ function New-GuiApplicationRow {
   $RowPanel = New-Object System.Windows.Controls.StackPanel
   $RowPanel.Orientation = "Horizontal"
   $RowPanel.Cursor = "Hand"
-  # A Panel with no Background is only hit-testable where its children
-  # actually paint pixels -- clicks in the gaps between the checkbox and
-  # the name text would otherwise fall through and never reach this row's
-  # click handler.
+  # A Panel with no Background is only hit-testable where its children actually paint pixels -- clicks in the gaps between the checkbox and the name text would otherwise fall through and never reach this row's click handler.
   $RowPanel.Background = "Transparent"
 
   $CheckboxMark = New-Object System.Windows.Shapes.Path
@@ -153,11 +150,7 @@ function New-GuiApplicationRow {
     $Checkbox.Background = "#38BDF8"
   }
   else {
-    # A Border with only BorderBrush/BorderThickness set (no Background) is
-    # only hit-testable on the painted stroke itself, not its interior --
-    # the same gotcha already worked around on the title bar buttons. Without
-    # an explicit transparent Background here, clicking inside an unchecked
-    # box does nothing.
+    # A Border with only BorderBrush/BorderThickness set (no Background) is only hit-testable on the painted stroke itself, not its interior -- the same gotcha already worked around on the title bar buttons. Without an explicit transparent Background here, clicking inside an unchecked box does nothing.
     $Checkbox.Background = "Transparent"
     $Checkbox.BorderBrush = "#565A64"
     $Checkbox.BorderThickness = "1.5"
@@ -372,11 +365,7 @@ function Start-GuiApplicationQueue {
   $ProgressQueue = [System.Collections.Concurrent.ConcurrentQueue[object]]::new()
   $CancelQueue = [System.Collections.Concurrent.ConcurrentQueue[bool]]::new()
 
-  # Deliberately duplicated from Start.ps1's $ModulePaths rather than reused --
-  # this is the minimal subset the install/uninstall call graph actually
-  # touches, re-loaded fresh inside a background runspace that starts with no
-  # session state of its own. Keep in sync if a new install type module is
-  # ever added to the router.
+  # Deliberately duplicated from Start.ps1's $ModulePaths rather than reused -- this is the minimal subset the install/uninstall call graph actually touches, re-loaded fresh inside a background runspace that starts with no session state of its own. Keep in sync if a new install type module is ever added to the router.
   $BackgroundScript = {
     param(
       [string]$RootPath,
@@ -411,9 +400,7 @@ function Start-GuiApplicationQueue {
       . (Join-Path $RootPath "Modules\$ModulePath")
     }
 
-    # Must happen AFTER dot-sourcing: Core\Logging.ps1's own top-level code
-    # resets $script:LogFilePath to $null when it loads, which would silently
-    # undo this assignment if it ran first.
+    # Must happen AFTER dot-sourcing: Core\Logging.ps1's own top-level code resets $script:LogFilePath to $null when it loads, which would silently undo this assignment if it ran first.
     $script:ITDeploymentToolRoot = $RootPath
     $script:LogFilePath = $LogPath
     $ConfirmPreference = "None"
@@ -541,14 +528,7 @@ function Start-GuiApplicationQueue {
   $Timer.Interval = [TimeSpan]::FromMilliseconds(300)
   $script:GuiQueueTimer = $Timer
 
-  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d. This function
-  # returns before the timer ever ticks, so a closure would need to capture
-  # every variable below by value; GetNewClosure() was already found earlier
-  # in this file to break dot-sourced function resolution inside WPF event
-  # handlers (that's why the toolbar buttons broke and had to be fixed by
-  # removing it). Reading everything back from $script:GuiQueue* instead
-  # mirrors the same proven-safe pattern New-GuiLogListRow's per-row click
-  # handler already uses.
+  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d. This function returns before the timer ever ticks, so a closure would need to capture every variable below by value; GetNewClosure() was already found earlier in this file to break dot-sourced function resolution inside WPF event handlers (that's why the toolbar buttons broke and had to be fixed by removing it). Reading everything back from $script:GuiQueue* instead mirrors the same proven-safe pattern New-GuiLogListRow's per-row click handler already uses.
   $Timer.Add_Tick({
     $LatestProgress = $null
     $DequeuedProgress = $null

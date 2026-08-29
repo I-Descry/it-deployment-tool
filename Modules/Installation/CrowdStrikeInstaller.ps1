@@ -115,9 +115,7 @@ function Test-CrowdStrikeDeploymentPackage {
   }
 }
 
-# ============================================================
-# CROWDSTRIKE INTERACTIVE SETUP
-# ============================================================
+# ============================================================ CROWDSTRIKE INTERACTIVE SETUP ============================================================
 
 function Test-CrowdStrikeSensorInstalled {
   $FalconService = Get-Service -Name "CSFalconService" -ErrorAction SilentlyContinue

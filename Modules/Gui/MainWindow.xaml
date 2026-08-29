@@ -9,13 +9,7 @@
                   CornerRadius="0" UseAeroCaptionButtons="False"/>
   </WindowChrome.WindowChrome>
   <Window.Resources>
-    <!--
-      The default Button chrome swaps in its own system hover/pressed visuals,
-      which can override a custom Background/Foreground and make the label
-      unreadable on hover. This template keeps each button's own colors
-      (via TemplateBinding) and adds only a subtle brightness overlay on
-      hover/press, with the text always painted on top so it never disappears.
-    -->
+    <!-- The default Button chrome swaps in its own system hover/pressed visuals, which can override a custom Background/Foreground and make the label unreadable on hover. This template keeps each button's own colors (via TemplateBinding) and adds only a subtle brightness overlay on hover/press, with the text always painted on top so it never disappears. -->
     <Style TargetType="Button">
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
@@ -45,13 +39,7 @@
       </Setter>
     </Style>
 
-    <!--
-      The default ScrollBar is the native Windows gray gripper/track chrome,
-      which clashes badly against this dark flat design. This reduces it to a
-      thin, borderless thumb (matching the mockup's custom-scrollbar spec),
-      faded to low opacity until the pointer is over it so it stays out of
-      the way until it's actually needed.
-    -->
+    <!-- The default ScrollBar is the native Windows gray gripper/track chrome, which clashes badly against this dark flat design. This reduces it to a thin, borderless thumb (matching the mockup's custom-scrollbar spec), faded to low opacity until the pointer is over it so it stays out of the way until it's actually needed. -->
     <Style x:Key="GuiScrollBarThumb" TargetType="Thumb">
       <Setter Property="Template">
         <Setter.Value>
@@ -92,11 +80,7 @@
       </Style.Triggers>
     </Style>
 
-    <!--
-      The default ProgressBar is a light Aero-gradient bar that also clashes
-      with the dark theme. This is a flat track + fill matching the accent
-      color used everywhere else (checkboxes, primary buttons).
-    -->
+    <!-- The default ProgressBar is a light Aero-gradient bar that also clashes with the dark theme. This is a flat track + fill matching the accent color used everywhere else (checkboxes, primary buttons). -->
     <Style TargetType="ProgressBar">
       <Setter Property="Background" Value="#23262E"/>
       <Setter Property="Foreground" Value="#38BDF8"/>
@@ -115,15 +99,7 @@
       </Setter>
     </Style>
 
-    <!--
-      Plain TextBox/PasswordBox chrome is a flat, hard-cornered rectangle that
-      looks out of place next to the rest of the app's rounded cards and
-      buttons. This softens both to rounded corners matching the existing
-      read-only "current name" display box, and highlights the border with
-      the accent color on focus so a field clearly shows it's active.
-      PART_ContentHost is a required name WPF looks for on both templates to
-      host the actual editable text/password content.
-    -->
+    <!-- Plain TextBox/PasswordBox chrome is a flat, hard-cornered rectangle that looks out of place next to the rest of the app's rounded cards and buttons. This softens both to rounded corners matching the existing read-only "current name" display box, and highlights the border with the accent color on focus so a field clearly shows it's active. PART_ContentHost is a required name WPF looks for on both templates to host the actual editable text/password content. -->
     <Style TargetType="TextBox">
       <Setter Property="CaretBrush" Value="#E8E9EC"/>
       <Setter Property="SelectionBrush" Value="#38BDF8"/>
@@ -258,9 +234,7 @@
             <TextBlock x:Name="NavDeviceDetailsText" Text="Device Details" Foreground="#9A9EA8" FontSize="13" VerticalAlignment="Center"/>
           </StackPanel>
         </Border>
-        <!-- ThinkPad-only, hidden entirely (not just disabled) on any other device:
-             starts Collapsed since IsThinkPad isn't known until the shared
-             Windows Setup/Device Details background load completes. -->
+        <!-- ThinkPad-only, hidden entirely (not just disabled) on any other device: starts Collapsed since IsThinkPad isn't known until the shared Windows Setup/Device Details background load completes. -->
         <Border x:Name="NavAssetId" Background="Transparent" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand" Visibility="Collapsed">
           <StackPanel Orientation="Horizontal">
             <Canvas x:Name="NavAssetIdIcon" Width="20" Height="20" Margin="0,0,10,0">
@@ -514,10 +488,7 @@
         </Border>
       </Grid>
 
-      <!-- Windows Setup content: three action cards side by side. The
-           Lenovo Asset ID card used to live below them; it's now its own
-           ThinkPad-only tab (AssetIdScrollViewer, further down) instead of
-           being buried inside this screen. -->
+      <!-- Windows Setup content: three action cards side by side. The Lenovo Asset ID card used to live below them; it's now its own ThinkPad-only tab (AssetIdScrollViewer, further down) instead of being buried inside this screen. -->
       <ScrollViewer x:Name="WindowsSetupScrollViewer" Grid.Row="2" Padding="24,0,24,6" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
         <Grid x:Name="WindowsSetupPanel">
           <Grid.ColumnDefinitions>
@@ -560,10 +531,7 @@
                     <ColumnDefinition Width="6"/>
                     <ColumnDefinition Width="*"/>
                   </Grid.ColumnDefinitions>
-                  <!-- Restarting a computer is an immediate, hard-to-reverse action, so
-                       "Restart Later" (today's existing behavior: rename now, restart
-                       whenever the technician chooses) is the default selection; "Restart
-                       Now" is an explicit opt-in, never the default. -->
+                  <!-- Restarting a computer is an immediate, hard-to-reverse action, so "Restart Later" (today's existing behavior: rename now, restart whenever the technician chooses) is the default selection; "Restart Now" is an explicit opt-in, never the default. -->
                   <Border x:Name="RestartLaterOption" Grid.Column="0" Background="#2438BDF8" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
                     <TextBlock x:Name="RestartLaterOptionText" Text="Restart Later" Foreground="#38BDF8" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                   </Border>
@@ -595,12 +563,7 @@
                 <StackPanel x:Name="LocalUsersListPanel" Margin="0,0,0,10"/>
 
                 <TextBlock Text="ADD NEW USER" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,4"/>
-                <!-- Username and Full Name side by side instead of stacked: this
-                     card has the most going on of the three (existing users list,
-                     password toggle, both password fields), so it needs to be
-                     genuinely more compact, not just bottom-anchored, to avoid
-                     dwarfing Computer Rename and Power & Sleep when all three
-                     stretch to an equal height. -->
+                <!-- Username and Full Name side by side instead of stacked: this card has the most going on of the three (existing users list, password toggle, both password fields), so it needs to be genuinely more compact, not just bottom-anchored, to avoid dwarfing Computer Rename and Power & Sleep when all three stretch to an equal height. -->
                 <Grid Margin="0,0,0,5">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -623,10 +586,7 @@
                     <ColumnDefinition Width="6"/>
                     <ColumnDefinition Width="*"/>
                   </Grid.ColumnDefinitions>
-                  <!-- Blank-password local accounts are unusual enough to require an
-                       explicit opt-in, so "Set Password" (today's existing behavior)
-                       is the default selection, matching the Restart Later/Restart
-                       Now pattern on the Computer Rename card. -->
+                  <!-- Blank-password local accounts are unusual enough to require an explicit opt-in, so "Set Password" (today's existing behavior) is the default selection, matching the Restart Later/Restart Now pattern on the Computer Rename card. -->
                   <Border x:Name="SetPasswordOption" Grid.Column="0" Background="#2438BDF8" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="0,7" Cursor="Hand">
                     <TextBlock x:Name="SetPasswordOptionText" Text="Set Password" Foreground="#38BDF8" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                   </Border>
@@ -652,10 +612,7 @@
                       <Line X1="6" Y1="4.6" X2="6" Y2="7.2" Stroke="#F2555A" StrokeThickness="1.3" StrokeStartLineCap="Round"/>
                       <Line X1="6" Y1="8.6" X2="6" Y2="8.75" Stroke="#F2555A" StrokeThickness="1.6" StrokeStartLineCap="Round"/>
                     </Canvas>
-                    <!-- A horizontal StackPanel gives its children unconstrained width, so
-                         TextWrapping="Wrap" never actually wrapped: the text just ran on
-                         and got clipped at the card's edge. A Grid column constrains the
-                         text to the remaining width, so it wraps as intended. -->
+                    <!-- A horizontal StackPanel gives its children unconstrained width, so TextWrapping="Wrap" never actually wrapped: the text just ran on and got clipped at the card's edge. A Grid column constrains the text to the remaining width, so it wraps as intended. -->
                     <TextBlock Grid.Column="1" Text="This account will sign in with no password. By default, Windows only allows this at the console, not over the network." Foreground="#D9A5A7" FontSize="10.5" TextWrapping="Wrap"/>
                   </Grid>
                 </Border>
@@ -701,31 +658,14 @@
         </Grid>
       </ScrollViewer>
 
-      <!-- Lenovo Asset ID content: its own ThinkPad-only tab now, matching
-           NavAssetId/AssetIdToolbar's Collapsed default. The card no longer
-           needs its own accent border/icon-chip/"THINKPAD" pill: those
-           existed to make it stand out while buried inside Windows Setup;
-           the toolbar above already establishes "Lenovo Asset ID" now that
-           it has its own tab, so the card matches Device Details' plain
-           card style instead. Fields are pre-filled from the current
-           Sample.txt (if WinAIA is installed and already has values) and
-           every field is optional. -->
+      <!-- Lenovo Asset ID content: its own ThinkPad-only tab now, matching NavAssetId/AssetIdToolbar's Collapsed default. The card no longer needs its own accent border/icon-chip/"THINKPAD" pill: those existed to make it stand out while buried inside Windows Setup; the toolbar above already establishes "Lenovo Asset ID" now that it has its own tab, so the card matches Device Details' plain card style instead. Fields are pre-filled from the current Sample.txt (if WinAIA is installed and already has values) and every field is optional. -->
       <ScrollViewer x:Name="AssetIdScrollViewer" Grid.Row="2" Padding="24,4,24,24" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
         <Border Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="20" VerticalAlignment="Top">
           <DockPanel LastChildFill="True">
             <Button x:Name="SaveAssetIdButton" Content="Save Asset ID" HorizontalAlignment="Left" DockPanel.Dock="Bottom" Margin="0,20,0,0"
                     Padding="18,8" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="12.5" FontWeight="Bold"/>
             <StackPanel>
-              <!-- No repeated "Lenovo Asset ID" title here: the toolbar right
-                   above this card already says that, and this is the only
-                   card on the page, so a second identical heading was just
-                   noise, confirmed by a real screenshot. Went from 11 fields
-                   crammed into a single narrow row (which clipped real values
-                   like "VILLACORTA, JOHN PAUL..." and "IT ASSISTANT") back to
-                   3 columns / up to 2 rows per group: this screen has its
-                   own full page now (no longer squeezed alongside three other
-                   cards on Windows Setup), so there's no reason to keep
-                   fields this narrow. -->
+              <!-- No repeated "Lenovo Asset ID" title here: the toolbar right above this card already says that, and this is the only card on the page, so a second identical heading was just noise, confirmed by a real screenshot. Went from 11 fields crammed into a single narrow row (which clipped real values like "VILLACORTA, JOHN PAUL..." and "IT ASSISTANT") back to 3 columns / up to 2 rows per group: this screen has its own full page now (no longer squeezed alongside three other cards on Windows Setup), so there's no reason to keep fields this narrow. -->
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*"/>

@@ -101,10 +101,7 @@ function Test-CurrentProcessAdministrator {
 $script:WindowsConfigurationIdentityCache = $null
 
 function Get-WindowsConfigurationIdentity {
-  # Manufacturer, model, serial number, OS edition/version/build/architecture,
-  # computer name, network type, and domain/workgroup cannot change while this
-  # tool is running, so the underlying CIM/BIOS queries only need to run once
-  # per session rather than on every Windows Configuration screen refresh.
+  # Manufacturer, model, serial number, OS edition/version/build/architecture, computer name, network type, and domain/workgroup cannot change while this tool is running, so the underlying CIM/BIOS queries only need to run once per session rather than on every Windows Configuration screen refresh.
   if ($null -ne $script:WindowsConfigurationIdentityCache) {
     return $script:WindowsConfigurationIdentityCache
   }
@@ -139,10 +136,7 @@ function Get-WindowsConfigurationIdentity {
   $MemoryModules = @(Get-CimInstance -ClassName Win32_PhysicalMemory -ErrorAction SilentlyContinue)
   $TotalMemoryBytes = ($MemoryModules | Measure-Object -Property Capacity -Sum).Sum
 
-  # TPM lives in its own WMI namespace, separate from the general CIM classes
-  # above. It legitimately returns nothing on a VM without a virtual TPM, on a
-  # device with no TPM chip, or when access is denied by policy, so this must
-  # degrade to "not available" rather than treat a null result as an error.
+  # TPM lives in its own WMI namespace, separate from the general CIM classes above. It legitimately returns nothing on a VM without a virtual TPM, on a device with no TPM chip, or when access is denied by policy, so this must degrade to "not available" rather than treat a null result as an error.
   $Tpm = Get-CimInstance -Namespace "root\cimv2\Security\MicrosoftTpm" -ClassName Win32_Tpm -ErrorAction SilentlyContinue
   $TpmReady = $false
   $TpmStatus = "Not Available"
@@ -153,14 +147,7 @@ function Get-WindowsConfigurationIdentity {
     $TpmStatus = if ($TpmReady) { "Ready $TpmSpecVersion" } else { "Not Ready" }
   }
 
-  # Queried once and cached here rather than fresh on every refresh (the
-  # mistake this had originally, measured directly against this real
-  # machine: Get-PhysicalDisk took ~4.1s *per call*, so re-running it on
-  # every Windows Setup/Device Details refresh added real seconds of extra
-  # wait every time). Disk media type is exactly as static as
-  # Manufacturer/Model/TPM above for the lifetime of this tool's session,
-  # so it belongs in this cached block with everything else that "cannot
-  # change while this tool is running", not in the per-refresh functions.
+  # Queried once and cached here rather than fresh on every refresh (the mistake this had originally, measured directly against this real machine: Get-PhysicalDisk took ~4.1s *per call*, so re-running it on every Windows Setup/Device Details refresh added real seconds of extra wait every time). Disk media type is exactly as static as Manufacturer/Model/TPM above for the lifetime of this tool's session, so it belongs in this cached block with everything else that "cannot change while this tool is running", not in the per-refresh functions.
   $DiskMediaType = $null
 
   try {
@@ -170,12 +157,7 @@ function Get-WindowsConfigurationIdentity {
     # Leave $DiskMediaType unset if Get-PhysicalDisk is unavailable.
   }
 
-  # Confirm-SecureBootUEFI hit the same "Access denied" elevation-token issue
-  # BitLocker did when that was tried and dropped -- unlike BitLocker, though,
-  # it fails fast (~180ms measured), so keeping it here costs nothing
-  # meaningful even when it can't answer. Degrades to "Unknown" on any
-  # failure (including a non-UEFI/legacy BIOS system, which also throws
-  # here) rather than treating it as On/Off.
+  # Confirm-SecureBootUEFI hit the same "Access denied" elevation-token issue BitLocker did when that was tried and dropped -- unlike BitLocker, though, it fails fast (~180ms measured), so keeping it here costs nothing meaningful even when it can't answer. Degrades to "Unknown" on any failure (including a non-UEFI/legacy BIOS system, which also throws here) rather than treating it as On/Off.
   $SecureBootStatus = "Unknown"
 
   try {
@@ -185,9 +167,7 @@ function Get-WindowsConfigurationIdentity {
     # Keep "Unknown" on any failure (access denied, legacy BIOS, etc.)
   }
 
-  # Get-HotFix (Win32_QuickFixEngineering) measured ~3s per call -- real,
-  # but cached here once per session rather than queried fresh, the same
-  # fix already applied to disk media type above.
+  # Get-HotFix (Win32_QuickFixEngineering) measured ~3s per call -- real, but cached here once per session rather than queried fresh, the same fix already applied to disk media type above.
   $LastUpdateInstalled = "Unknown"
 
   try {
@@ -201,16 +181,7 @@ function Get-WindowsConfigurationIdentity {
     # Keep "Unknown" if the hotfix query itself is unavailable.
   }
 
-  # Battery health (design vs. full-charge capacity) is not exposed by any
-  # single fast WMI class on this real hardware -- the natural-looking
-  # root\wmi BatteryStaticData/BatteryFullChargedCapacity classes returned
-  # "Generic failure" here, and Win32_Battery alone has no capacity fields.
-  # powercfg's own battery report (the same one Windows' own battery
-  # troubleshooting docs point to) does have both figures and measured
-  # ~1.3s end to end, so that's the real source used here. Win32_Battery is
-  # checked first and is fast (~600ms) specifically to skip the report
-  # entirely on a desktop with no battery, rather than spend 1.3s to learn
-  # the same "no battery" answer a cheaper check already gives.
+  # Battery health (design vs. full-charge capacity) is not exposed by any single fast WMI class on this real hardware -- the natural-looking root\wmi BatteryStaticData/BatteryFullChargedCapacity classes returned "Generic failure" here, and Win32_Battery alone has no capacity fields. powercfg's own battery report (the same one Windows' own battery troubleshooting docs point to) does have both figures and measured ~1.3s end to end, so that's the real source used here. Win32_Battery is checked first and is fast (~600ms) specifically to skip the report entirely on a desktop with no battery, rather than spend 1.3s to learn the same "no battery" answer a cheaper check already gives.
   $BatteryHealth = "No Battery"
 
   $HasBattery = $false
@@ -250,12 +221,7 @@ function Get-WindowsConfigurationIdentity {
     }
   }
 
-  # The Windows-only Software Licensing entry is isolated via its real,
-  # documented Application ID (55c92734-d682-4d71-983e-d6ec3f16059f) --
-  # without this filter, a device with Office also installed returns a
-  # separate Office licensing entry alongside it. LicenseStatus 1 means
-  # Licensed; anything else (0 Unlicensed, grace/notification states, etc.)
-  # is reported as-is rather than assumed to mean any one specific problem.
+  # The Windows-only Software Licensing entry is isolated via its real, documented Application ID (55c92734-d682-4d71-983e-d6ec3f16059f) -- without this filter, a device with Office also installed returns a separate Office licensing entry alongside it. LicenseStatus 1 means Licensed; anything else (0 Unlicensed, grace/notification states, etc.) is reported as-is rather than assumed to mean any one specific problem.
   $ActivationStatus = "Unknown"
 
   try {
@@ -275,9 +241,7 @@ function Get-WindowsConfigurationIdentity {
     Model           = [string]$ComputerSystem.Model
     SerialNumber    = [string]$BiosInformation.SerialNumber
     BiosVersion     = if ([string]::IsNullOrWhiteSpace([string]$BiosInformation.SMBIOSBIOSVersion)) { "Unknown" } else { [string]$BiosInformation.SMBIOSBIOSVersion }
-    # SMBIOSAssetTag is commonly blank until something (like this tool's own
-    # Lenovo Asset ID feature) has actually set it -- "Not Set" distinguishes
-    # that real, normal state from a query failure ("Unknown" elsewhere here).
+    # SMBIOSAssetTag is commonly blank until something (like this tool's own Lenovo Asset ID feature) has actually set it -- "Not Set" distinguishes that real, normal state from a query failure ("Unknown" elsewhere here).
     AssetTag        = if ([string]::IsNullOrWhiteSpace([string]$SystemEnclosure.SMBIOSAssetTag)) { "Not Set" } else { [string]$SystemEnclosure.SMBIOSAssetTag }
     ActivationStatus = $ActivationStatus
     NetworkType     = $NetworkType
@@ -296,11 +260,7 @@ function Get-WindowsConfigurationIdentity {
     SecureBootStatus = $SecureBootStatus
     LastUpdateInstalled = $LastUpdateInstalled
     BatteryHealth   = $BatteryHealth
-    # Win32_ComputerSystem.Model is a raw machine-type code on Lenovo systems
-    # (e.g. "21SR0038PH"), not a usable product name -- SystemFamily is the
-    # field that actually holds the human-readable family name (e.g. "ThinkPad
-    # E16 Gen 3"), confirmed against this exact CIM query on real Lenovo
-    # hardware before relying on it.
+    # Win32_ComputerSystem.Model is a raw machine-type code on Lenovo systems (e.g. "21SR0038PH"), not a usable product name -- SystemFamily is the field that actually holds the human-readable family name (e.g. "ThinkPad E16 Gen 3"), confirmed against this exact CIM query on real Lenovo hardware before relying on it.
     IsThinkPad      = ([string]$ComputerSystem.Manufacturer).Trim() -eq "LENOVO" -and ([string]$ComputerSystem.SystemFamily) -match "ThinkPad"
   }
 
@@ -308,13 +268,7 @@ function Get-WindowsConfigurationIdentity {
 }
 
 function Get-WindowsConfigurationStorage {
-  # Free/total space is queried fresh on every report rather than cached
-  # with the rest of the hardware identity, since it changes as this tool
-  # installs applications during the same session. Disk media type
-  # (SSD/HDD) is passed in from the cached identity instead of being
-  # queried here every time -- Get-PhysicalDisk alone measured ~4.1s per
-  # call against this real machine, and unlike free space, media type
-  # cannot change during a session.
+  # Free/total space is queried fresh on every report rather than cached with the rest of the hardware identity, since it changes as this tool installs applications during the same session. Disk media type (SSD/HDD) is passed in from the cached identity instead of being queried here every time -- Get-PhysicalDisk alone measured ~4.1s per call against this real machine, and unlike free space, media type cannot change during a session.
   param(
     [AllowNull()]
     [string]$MediaType
@@ -337,11 +291,7 @@ function Get-WindowsConfigurationStorage {
 }
 
 function Get-WindowsConfigurationNetwork {
-  # Queried fresh on every report, not cached: unlike the static hardware
-  # identity above, an IP address can genuinely change during a session
-  # (DHCP renewal, switching networks). Only the first IP-enabled adapter is
-  # shown, matching how the rest of this screen already shows one summary
-  # value per fact rather than enumerating every adapter.
+  # Queried fresh on every report, not cached: unlike the static hardware identity above, an IP address can genuinely change during a session (DHCP renewal, switching networks). Only the first IP-enabled adapter is shown, matching how the rest of this screen already shows one summary value per fact rather than enumerating every adapter.
   $Adapter = Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration -Filter "IPEnabled=TRUE" -ErrorAction SilentlyContinue | Select-Object -First 1
 
   if ($null -eq $Adapter) {

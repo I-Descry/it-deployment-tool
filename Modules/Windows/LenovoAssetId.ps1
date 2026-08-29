@@ -15,10 +15,7 @@
 $script:DeploymentAssetIdDirectory = "C:\DRIVERS\WINAIA"
 $script:DeploymentAssetIdSampleFile = "Sample.txt"
 
-# Two groups, matching Sample.txt's own layout (a blank line separates
-# them) -- every other field WinAIA's template ships with is deliberately
-# left out, matching the exact trimmed-down Sample.txt already confirmed
-# to work with `-set-from-file`.
+# Two groups, matching Sample.txt's own layout (a blank line separates them) -- every other field WinAIA's template ships with is deliberately left out, matching the exact trimmed-down Sample.txt already confirmed to work with `-set-from-file`.
 $script:DeploymentAssetIdOwnerKeys = @(
   "OWNERDATA.OWNERNAME"
   "OWNERDATA.DEPARTMENT"
@@ -36,17 +33,12 @@ $script:DeploymentAssetIdAssetKeys = @(
 )
 
 function Get-DeploymentAssetIdFieldNames {
-  # Returns every supported field name, in file order, for callers that need
-  # the full set without caring about the owner/asset grouping.
+  # Returns every supported field name, in file order, for callers that need the full set without caring about the owner/asset grouping.
   return @($script:DeploymentAssetIdOwnerKeys) + @($script:DeploymentAssetIdAssetKeys)
 }
 
 function Get-WinAiaExecutablePath {
-  # Prefers the 64-bit binary when both exist, matching this app's existing
-  # convention elsewhere of preferring the 64-bit path on modern systems.
-  # Selecting by which file actually exists (rather than assuming based on
-  # OS architecture) is deliberate: the installer is described as always
-  # extracting both binaries regardless of host architecture.
+  # Prefers the 64-bit binary when both exist, matching this app's existing convention elsewhere of preferring the 64-bit path on modern systems. Selecting by which file actually exists (rather than assuming based on OS architecture) is deliberate: the installer is described as always extracting both binaries regardless of host architecture.
   $Candidates = @(
     (Join-Path $script:DeploymentAssetIdDirectory "WinAIA64.exe")
     (Join-Path $script:DeploymentAssetIdDirectory "WinAIA.exe")
@@ -62,10 +54,7 @@ function Get-WinAiaExecutablePath {
 }
 
 function Get-DeploymentAssetIdFields {
-  # Reads the current values out of Sample.txt (if it already exists from a
-  # previous save) so the GUI can show what is already set, matching how
-  # every other card on this screen shows current state before letting a
-  # technician change it. Read-only; never creates or modifies the file.
+  # Reads the current values out of Sample.txt (if it already exists from a previous save) so the GUI can show what is already set, matching how every other card on this screen shows current state before letting a technician change it. Read-only; never creates or modifies the file.
   $Fields = @{}
 
   foreach ($Key in (Get-DeploymentAssetIdFieldNames)) {
@@ -97,16 +86,7 @@ function Get-DeploymentAssetIdFields {
 }
 
 function Set-DeploymentAssetIdFields {
-  # Writes Sample.txt with ONLY the 11 supported fields (every other field
-  # WinAIA's own template ships with is left out entirely), in the exact
-  # key order and owner/blank-line/asset grouping already confirmed to work
-  # with `-set-from-file`. Every field is optional; a blank value writes as
-  # "KEY=" with nothing after it, same as WinAIA's own template does for an
-  # unset field. Plain ASCII, no BOM: this is an old-style Windows config
-  # text format, and a stray UTF-8 BOM on the first line is a common way to
-  # break a simple line-by-line KEY=VALUE parser -- not independently
-  # verified against WinAIA itself, since that requires the real tool, but
-  # the safer default of the two.
+  # Writes Sample.txt with ONLY the 11 supported fields (every other field WinAIA's own template ships with is left out entirely), in the exact key order and owner/blank-line/asset grouping already confirmed to work with `-set-from-file`. Every field is optional; a blank value writes as "KEY=" with nothing after it, same as WinAIA's own template does for an unset field. Plain ASCII, no BOM: this is an old-style Windows config text format, and a stray UTF-8 BOM on the first line is a common way to break a simple line-by-line KEY=VALUE parser -- not independently verified against WinAIA itself, since that requires the real tool, but the safer default of the two.
   param(
     [Parameter(Mandatory)]
     [hashtable]$Fields
@@ -135,17 +115,7 @@ function Set-DeploymentAssetIdFields {
 }
 
 function Invoke-DeploymentAssetIdWrite {
-  # Launches WinAIA against the Sample.txt just written. WinAIA opens its
-  # own confirmation dialog before actually committing anything to BIOS --
-  # this is a real, separate, un-scriptable UI step the technician must
-  # complete themselves; -Wait only waits for WinAIA's process to exit,
-  # it does not (and cannot safely) click through that dialog on its own
-  # behalf. Exit code semantics were not confirmed by hand-testing, so this
-  # reports the raw exit code rather than asserting success/failure beyond
-  # what is actually known: 0 is treated as success (the conventional
-  # default for a Windows console/GUI tool), anything else is reported back
-  # verbatim for the technician to judge against what WinAIA's own dialog
-  # showed.
+  # Launches WinAIA against the Sample.txt just written. WinAIA opens its own confirmation dialog before actually committing anything to BIOS -- this is a real, separate, un-scriptable UI step the technician must complete themselves; -Wait only waits for WinAIA's process to exit, it does not (and cannot safely) click through that dialog on its own behalf. Exit code semantics were not confirmed by hand-testing, so this reports the raw exit code rather than asserting success/failure beyond what is actually known: 0 is treated as success (the conventional default for a Windows console/GUI tool), anything else is reported back verbatim for the technician to judge against what WinAIA's own dialog showed.
   $WinAiaPath = Get-WinAiaExecutablePath
 
   if ($null -eq $WinAiaPath) {

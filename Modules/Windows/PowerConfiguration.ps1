@@ -42,10 +42,7 @@ function Get-CurrentSleepTimeoutMinutes {
 
 function Test-SleepTimeoutMinutes {
   param(
-    # AllowEmptyString so a genuinely empty field falls through to
-    # [int]::TryParse below (which correctly reports it as not a whole
-    # number) rather than PowerShell's own mandatory-parameter binder
-    # rejecting the empty string outright before this function's body runs.
+    # AllowEmptyString so a genuinely empty field falls through to [int]::TryParse below (which correctly reports it as not a whole number) rather than PowerShell's own mandatory-parameter binder rejecting the empty string outright before this function's body runs.
     [Parameter(Mandatory)]
     [AllowEmptyString()]
     [string]$Value,
