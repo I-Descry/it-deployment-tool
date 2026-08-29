@@ -213,5 +213,13 @@
     "Category": "Communication",
     "Description": "Outlook for Windows email and calendar client",
     "Recommended": false
+  },
+  {
+    "Name": "Antigravity",
+    "InstallType": "Winget",
+    "Winget": "Google.Antigravity",
+    "Category": "Development Tools",
+    "Description": "Google's agentic development environment",
+    "Recommended": false
   }
 ]
