@@ -782,6 +782,12 @@ The fix: the availability check (`Test-WingetPackage`, `Modules\Installation\Win
 
 If a WinGet install still fails for some other reason, the deployment log will show the real winget exit code/message from the actual install attempt rather than a generic "Not Found."
 
+### Self-Healing: WinGet Source-Data-Missing Errors Recover Automatically
+
+On one real device, even the actual `winget install`/`winget uninstall` calls (not just the availability check above) started failing with exit code `-1978335217` (`0x8A15000F`, "Data required by the source is missing"), tied to the same elevation-related WinGet behavior. The real, confirmed fix was re-registering a specific AppX package, `Microsoft.Winget.Source` (the piece that holds WinGet's actual source index data, separate from the main App Installer package), from its existing files -- no reinstall or removal needed.
+
+This tool now does that automatically: if a WinGet install or uninstall fails with exactly that exit code, it re-registers `Microsoft.Winget.Source` and retries the same command once before reporting a real failure. This only ever triggers on that exact, specific exit code, so it never masks a genuinely different WinGet problem -- and it only re-registers files already present on the device, it never removes or reinstalls anything. No technician action is needed if a future device hits this same issue.
+
 ---
 
 ## Deployment Logs

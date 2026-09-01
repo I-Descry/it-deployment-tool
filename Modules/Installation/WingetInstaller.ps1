@@ -78,6 +78,60 @@ function Get-WingetUninstallArguments {
   return $WingetArguments
 }
 
+# WinGet exit code -1978335217 (0x8A15000F, "Data required by the source is missing") is a known, confirmed-real WinGet/AppX bug where an elevated process cannot read the Microsoft.Winget.Source package's data even though the same command works fine unelevated; re-registering that package from its existing files is the confirmed real-device fix.
+$script:WingetSourceDataMissingExitCode = -1978335217
+
+function Repair-WingetSourceDataPackage {
+  # Re-registers the Microsoft.Winget.Source AppX package from its existing files, without reinstalling or removing anything, to recover from the known source-data-missing exit code.
+  try {
+    $SourcePackage = Get-AppxPackage -AllUsers "Microsoft.Winget.Source" -ErrorAction Stop | Select-Object -First 1
+
+    if ($null -eq $SourcePackage) {
+      return $false
+    }
+
+    $ManifestPath = Join-Path $SourcePackage.InstallLocation "AppXManifest.xml"
+
+    Add-AppxPackage -DisableDevelopmentMode -Register $ManifestPath -ErrorAction Stop
+
+    return $true
+  }
+
+  catch {
+    return $false
+  }
+}
+
+function Invoke-WingetCommandWithSourceRepair {
+  # Runs a winget command and, if it fails with the known source-data-missing exit code, attempts the confirmed repair once and retries the same command once before giving up.
+  param(
+    [Parameter(Mandatory)]
+    [string[]]$WingetArguments,
+
+    [Parameter(Mandatory)]
+    [string]$ApplicationName
+  )
+
+  & winget @WingetArguments | Out-Host
+
+  $ExitCode = $LASTEXITCODE
+
+  if ($ExitCode -eq $script:WingetSourceDataMissingExitCode) {
+    Write-Host
+    Write-Host "Detected a known WinGet source issue -- attempting an automatic repair and retry..." -ForegroundColor Yellow
+
+    Write-DeploymentLog -Message ("WinGet returned the known source-data-missing exit code ({0}) for {1}; attempting automatic repair and one retry." -f $ExitCode, $ApplicationName) -Level "WARNING"
+
+    if (Repair-WingetSourceDataPackage) {
+      & winget @WingetArguments | Out-Host
+
+      $ExitCode = $LASTEXITCODE
+    }
+  }
+
+  return $ExitCode
+}
+
 function Test-WingetPackage {
   # Only confirms winget itself is present, not that this specific package ID exists -- "winget show" was found to give false negatives on a real device where winget's source data was unreadable from this tool's elevated process even though "winget install" for that same package succeeded fine. Install-ApplicationWithWinget's own exit-code handling is the real, reliable source of truth for whether a specific package installs.
   param([PSCustomObject]$Application)
@@ -108,9 +162,7 @@ function Install-ApplicationWithWinget {
 
   Write-DeploymentLog -Message ("Installation started: {0} ({1})" -f $Application.Name, $Application.Winget)
 
-  & winget @WingetArguments | Out-Host
-
-  $ExitCode = $LASTEXITCODE
+  $ExitCode = Invoke-WingetCommandWithSourceRepair -WingetArguments $WingetArguments -ApplicationName $Application.Name
 
   if ($ExitCode -eq 0) {
     Write-Host
@@ -150,9 +202,7 @@ function Uninstall-ApplicationWithWinget {
 
   Write-DeploymentLog -Message ("Uninstallation started: {0} ({1})" -f $Application.Name, $Application.Winget)
 
-  & winget @WingetArguments | Out-Host
-
-  $ExitCode = $LASTEXITCODE
+  $ExitCode = Invoke-WingetCommandWithSourceRepair -WingetArguments $WingetArguments -ApplicationName $Application.Name
 
   if ($ExitCode -eq 0) {
     Write-Host
