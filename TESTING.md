@@ -806,6 +806,16 @@ Follow-up to "is there data we need to show in device details" (Antivirus, uptim
 
 ---
 
+## Fixed: Deployment Validation's Installer Package Status Showed Every Package as MISSING
+
+Found by the user on both this dev machine and the other test device -- every offline package (SAP GUI x2, CrowdStrike, Office LTSC, Office 2021 LOP, Lenovo Asset ID, FreeFileSync, Epson/Canon/HP drivers) showed `MISSING` in Deployment Validation's "Installer Package Status" section, even though the real files were confirmed present and `Get-InstallerPackageReadiness` called directly (outside the GUI) correctly reported every one of them `READY`.
+
+- [x] **Root cause confirmed by direct reproduction, not assumed**: `GuiDeploymentValidationScreen.ps1` runs its checks in a background PowerShell runspace with its own separate `$ModulePaths` list (re-dot-sourcing everything the checks need, since a fresh runspace starts with no session state) -- that list never included `Installation\InstallationRouter.ps1` (which defines `Test-ApplicationInstallerAvailable`, the function `Get-InstallerPackageReadiness` calls for every application) or any of the individual per-type installer modules it dispatches to (`WingetInstaller.ps1`, `OfflineInstaller.ps1`, `MsiInstaller.ps1`, `AppxInstaller.ps1`, `ScriptInstaller.ps1`, `ZipInstaller.ps1`). Reproduced exactly by loading only this screen's actual module list in isolation and calling `Get-InstallerPackageReadiness` against the real catalog: every single application came back `MISSING`, each with the identical message `"The term 'Test-ApplicationInstallerAvailable' is not recognized..."` -- `Get-InstallerPackageReadiness`'s own per-application `try`/`catch` caught this real error and converted it into a normal-looking `MISSING` status rather than surfacing it as a visible crash, which is exactly why it looked like a device/file problem instead of a missing-module bug, and why it affected every device identically regardless of what files were actually present.
+- [x] Fixed by adding the missing modules to `GuiDeploymentValidationScreen.ps1`'s background-runspace `$ModulePaths`, in the same dependency order `Start.ps1`'s own real module list already uses (individual installer type modules, then `InstallationRouter.ps1`, before the validation/readiness modules that call it).
+- [x] Verified the fix directly: re-ran the exact same isolated reproduction with the corrected module list and got `READY` for all 10 real offline packages, matching what `Get-InstallerPackageReadiness` already reported when called with the tool's full, correct module set.
+
+---
+
 ## Release Decision
 
 - [ ] All critical tests passed
