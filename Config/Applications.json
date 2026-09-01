@@ -226,6 +226,7 @@
     "Name": "Claude",
     "InstallType": "Winget",
     "Winget": "Anthropic.Claude",
+    "DetectionMethod": "Winget",
     "Category": "AI Tools",
     "Description": "Anthropic's Claude desktop application",
     "Recommended": false
