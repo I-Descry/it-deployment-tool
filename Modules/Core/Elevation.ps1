@@ -7,7 +7,9 @@ function Request-Administrator {
     [Parameter(Mandatory)]
     [string]$ScriptPath,
 
-    [switch]$Gui
+    [switch]$Gui,
+
+    [switch]$DeleteOnClose
   )
 
   Test-Administrator
@@ -33,6 +35,10 @@ function Request-Administrator {
 
   if ($Gui) {
     $PowerShellArguments += "-Gui"
+  }
+
+  if ($DeleteOnClose) {
+    $PowerShellArguments += "-DeleteOnClose"
   }
 
   try {

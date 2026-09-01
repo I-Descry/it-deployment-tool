@@ -182,8 +182,35 @@ function Update-GuiSystemInfoBar {
   $Window.FindName("SidebarFooterText").Text = "Session started $($script:GuiSessionStartTime.ToString('hh:mm tt'))`n$ElevationLabel"
 }
 
+function Start-GuiSelfDeleteOnExit {
+  # Writes the deleter to TEMP rather than inside the tool's own folder, since a script can't reliably delete the file it's currently running from; Wait-Process blocks it until this process has actually exited, so it never races a file this process still has open.
+  $ToolRoot = $script:ITDeploymentToolRoot
+  $CurrentProcessId = $PID
+  $DeleterScriptPath = Join-Path $env:TEMP "it-deployment-tool-self-delete-$CurrentProcessId.ps1"
+
+  $DeleterScript = @"
+Wait-Process -Id $CurrentProcessId -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 2
+Remove-Item -LiteralPath '$ToolRoot' -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath '$DeleterScriptPath' -Force -ErrorAction SilentlyContinue
+"@
+
+  Set-Content -LiteralPath $DeleterScriptPath -Value $DeleterScript -Encoding UTF8
+
+  Start-Process -FilePath "powershell.exe" `
+    -ArgumentList @("-NoProfile", "-WindowStyle", "Hidden", "-ExecutionPolicy", "Bypass", "-File", $DeleterScriptPath) `
+    -WindowStyle Hidden
+}
+
 function Show-MainWindow {
+  param(
+    [switch]$DeleteOnClose
+  )
+
   Add-Type -AssemblyName PresentationFramework
+
+  # Only ever set by Deploy.ps1's own bootstrap launch, never by a manually run .\Start.ps1 -Gui -- read by the Closing handler below to confirm and permanently delete this tool's own folder from a device it was deployed to.
+  $script:GuiDeleteOnClose = [bool]$DeleteOnClose
 
   $script:GuiSessionStartTime = Get-Date
 
@@ -723,6 +750,19 @@ function Show-MainWindow {
     if ($script:GuiQueueRunning) {
       $_.Cancel = $true
       Show-GuiDialog -Title "Please Wait" -Icon Warning -Message "An install or uninstall is still running. Please wait for it to finish before closing."
+      return
+    }
+
+    if ($script:GuiDeleteOnClose) {
+      $Confirmation = Show-GuiDialog -Title "Remove IT Deployment Tool" -Icon Warning -Buttons YesNo `
+        -Message "This will permanently delete the IT Deployment Tool from this device (scripts, config, downloaded installer packages, and logs). Continue?"
+
+      if ($Confirmation -ne "Yes") {
+        $_.Cancel = $true
+        return
+      }
+
+      Start-GuiSelfDeleteOnExit
     }
   })
 

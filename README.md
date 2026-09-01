@@ -774,6 +774,12 @@ The tool is copied to each machine rather than installed through a package manag
 4. **Check installer package readiness.** From the console menu or the GUI's Deployment Validation screen, review which offline packages report `READY` vs. `MISSING` — this shows exactly which `Installers\` subfolders didn't make the transfer, before attempting an install that would otherwise fail partway through.
 5. **Run the tool for real**, either `.\Start.ps1` (console) or `.\Start.ps1 -Gui` (graphical). WinGet-based applications install directly from the internet and need no local files; only EXE/MSI/ISO/IMG/ZIP/Script-type applications depend on `Installers\` being populated.
 
+### Self-Removal on Devices Set Up via the Remote Bootstrap
+
+A device set up via the one-line remote bootstrap (`irm https://raw.githubusercontent.com/I-Descry/it-deployment-tool/main/Deploy.ps1 | iex`, which downloads the tool to `Desktop\IT Deployment Tool` and launches it — see `Deploy.ps1` at the repo root) behaves differently when its window closes: closing it asks **"This will permanently delete the IT Deployment Tool from this device... Continue?"**, and confirming permanently deletes the entire tool folder from that device — scripts, config, downloaded `Installers\` packages, and `Logs\`. **The applications it installed are never touched, only the tool itself.**
+
+This only ever happens on a device set up through that exact bootstrap flow. A manually cloned or copied repository (including this dev repository) never asks this and never self-deletes, since only `Deploy.ps1`'s own launch line enables it. Declining the confirmation just closes the window normally, with nothing deleted.
+
 ### Fixed Issue: WinGet Apps No Longer Falsely Report "Not Found"
 
 Earlier versions of this tool could report **Not Found** for a WinGet-based application (e.g. Google Chrome) even though the package genuinely existed and `winget install` for it worked fine. Root cause: the availability check ran `winget show --id ...` to confirm a package existed before ever attempting the install, and that specific command can fail on a device running an elevated process (this tool always runs elevated) even though `winget install` for the same package succeeds on the same device -- most likely related to [CVE-2026-68821](https://www.sentinelone.com/vulnerability-database/cve-2026-68821/), a WinGet privilege-escalation flaw Microsoft patched in App Installer 1.29.280, which appears to have tightened what an elevated process can read from WinGet's local source data.

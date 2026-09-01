@@ -9,7 +9,8 @@
 [CmdletBinding()]
 param(
   [switch]$ValidateOnly,
-  [switch]$Gui
+  [switch]$Gui,
+  [switch]$DeleteOnClose
 )
 
 $AppName = "IT DEPLOYMENT TOOL"
@@ -184,7 +185,7 @@ if ($ValidateOnly) {
   exit 0
 }
 
-$AdministratorGranted = Request-Administrator -ScriptPath $PSCommandPath -Gui:$Gui
+$AdministratorGranted = Request-Administrator -ScriptPath $PSCommandPath -Gui:$Gui -DeleteOnClose:$DeleteOnClose
 
 if (-not $AdministratorGranted) {
   exit
@@ -203,7 +204,7 @@ if ($Gui) {
     [ITDeploymentTool.Win32ConsoleWindow]::ShowWindow($ConsoleWindowHandle, 0) | Out-Null
   }
 
-  Show-MainWindow
+  Show-MainWindow -DeleteOnClose:$DeleteOnClose
   exit
 }
 

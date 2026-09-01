@@ -15,6 +15,13 @@
 # the folder structure on first run; heavy offline installers (Office, SAP,
 # CrowdStrike, etc.) still need to be copied in separately for the applications
 # that require them, exactly as before.
+#
+# The launch below passes -DeleteOnClose, which is only ever set here: closing
+# the GUI window on a device set up this way asks for confirmation, then
+# permanently deletes this entire folder from that device (not the applications
+# it installed, just the tool itself). A manually run .\Start.ps1 -Gui never
+# gets this flag, so this dev repo (or anyone's manually cloned copy) never
+# self-deletes.
 
 $RepoZipUrl = "https://github.com/I-Descry/it-deployment-tool/archive/refs/heads/main.zip"
 $DestinationRoot = Join-Path $env:USERPROFILE "Desktop\IT Deployment Tool"
@@ -51,4 +58,4 @@ Write-Host "Ready at $DestinationRoot" -ForegroundColor Green
 Write-Host "Launching..." -ForegroundColor Cyan
 
 # -ExecutionPolicy Bypass applies only to this one launched process, not to the device's actual policy setting -- without it, a fresh Windows machine whose execution policy defaults to Restricted would fail at this exact line after everything else downloaded and extracted successfully.
-powershell.exe -ExecutionPolicy Bypass -File (Join-Path $DestinationRoot "Start.ps1") -Gui
+powershell.exe -ExecutionPolicy Bypass -File (Join-Path $DestinationRoot "Start.ps1") -Gui -DeleteOnClose

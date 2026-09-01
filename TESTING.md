@@ -761,6 +761,18 @@ Found by the user via Deployment Validation showing the newly added offline pack
 
 ---
 
+## Added: Self-Delete on Close for Bootstrapped Devices
+
+Per the user's request: the tool should leave no trace on a device it was deployed to (via the `irm .../Deploy.ps1 | iex` bootstrap) once its window closes, but must never do this on a manually run copy (this dev repo included).
+
+- [x] `Deploy.ps1`'s own launch line now passes a new `-DeleteOnClose` switch to `Start.ps1 -Gui` -- the only place in the repo that ever does. A plain `.\Start.ps1 -Gui` (this dev repo, or any manually cloned/copied instance) never receives it and never self-deletes.
+- [x] The switch is threaded through `Start.ps1`'s own elevation relaunch (`Request-Administrator`, `Modules\Core\Elevation.ps1`), since `Start.ps1` re-launches itself elevated via `Start-Process -Verb RunAs` before ever reaching the GUI, and would otherwise silently lose the flag the moment UAC fires. Confirmed directly: `Request-Administrator`'s parameter list includes `DeleteOnClose`, and `Show-MainWindow`'s does too.
+- [x] `Show-MainWindow` (`GuiWindow.ps1`) stores the flag in `$script:GuiDeleteOnClose`, read by the existing `$Window.Add_Closing` handler -- the pre-existing guard that blocks closing during an active install/uninstall queue still runs first and unchanged (confirmed by reading the handler back: the queue-running branch `return`s before the delete-confirmation branch is ever reached, so a running queue always wins regardless of `-DeleteOnClose`). When set, closing the window shows a Yes/No warning naming exactly what will be deleted (scripts, config, downloaded installer packages, logs) before anything happens; declining just closes normally.
+- [x] `Start-GuiSelfDeleteOnExit` (`GuiWindow.ps1`) writes a small deleter script to `$env:TEMP` (deliberately outside the tool's own folder, since a script can't reliably delete the file it's currently running from) that `Wait-Process`-blocks on this process's PID, then recursively removes the tool's root folder and finally itself, launched detached and hidden so it survives after this process exits. Verified end-to-end against a completely isolated fake folder (never the real repo): built the exact same deleter-script logic targeting a disposable stand-in process instead of this session's own PID, confirmed the fake folder still existed before, launched the deleter, and confirmed both the fake folder and the deleter script itself were gone within a few seconds of the stand-in process exiting.
+- [ ] Not yet exercised through the real, full flow on an actual device: the real UAC-elevated relaunch carrying the flag through, the real Yes/No dialog appearing when a real window closes, and the real deletion of a real deployed copy. Deliberately not triggered against this dev repo or the real `Deploy.ps1` flow from here, since a real trigger is inherently destructive and irreversible -- needs a real, deliberate, disposable test (a VM or a throwaway folder) before being trusted against an actual device.
+
+---
+
 ## Release Decision
 
 - [ ] All critical tests passed
