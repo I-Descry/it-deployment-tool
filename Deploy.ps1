@@ -22,9 +22,48 @@
 # it installed, just the tool itself). A manually run .\Start.ps1 -Gui never
 # gets this flag, so this dev repo (or anyone's manually cloned copy) never
 # self-deletes.
+#
+# $env:USERPROFILE reflects whichever account this script's own process is
+# running as, which is NOT the real target user when elevating a genuine
+# standard local user required switching to a separate admin account (e.g. the
+# Built-in Administrator) to get here -- in that case $env:USERPROFILE would
+# be the Administrator's own profile, not the person this device is actually
+# for. Get-InteractiveUserProfilePath resolves the real interactively
+# logged-on user's own profile folder instead, so the tool lands on their
+# Desktop, matching where a technician (and, if they never delete it, that
+# user) would actually expect to find it.
+
+function Get-InteractiveUserProfilePath {
+  # Falls back to $env:USERPROFILE (this process's own account) if the real interactive user's profile can't be resolved for any reason, so bootstrapping still works either way.
+  try {
+    $InteractiveUserName = [string](Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop).UserName
+
+    if ([string]::IsNullOrWhiteSpace($InteractiveUserName)) {
+      return $env:USERPROFILE
+    }
+
+    $ShortUserName = $InteractiveUserName.Split('\')[-1]
+    $UserAccount = Get-CimInstance -ClassName Win32_UserAccount -Filter "Name='$ShortUserName'" -ErrorAction Stop | Select-Object -First 1
+
+    if ($null -eq $UserAccount) {
+      return $env:USERPROFILE
+    }
+
+    $UserProfile = Get-CimInstance -ClassName Win32_UserProfile -Filter "SID='$($UserAccount.SID)'" -ErrorAction Stop | Select-Object -First 1
+
+    if (($null -eq $UserProfile) -or [string]::IsNullOrWhiteSpace($UserProfile.LocalPath)) {
+      return $env:USERPROFILE
+    }
+
+    return $UserProfile.LocalPath
+  }
+  catch {
+    return $env:USERPROFILE
+  }
+}
 
 $RepoZipUrl = "https://github.com/I-Descry/it-deployment-tool/archive/refs/heads/main.zip"
-$DestinationRoot = Join-Path $env:USERPROFILE "Desktop\IT Deployment Tool"
+$DestinationRoot = Join-Path (Get-InteractiveUserProfilePath) "Desktop\IT Deployment Tool"
 $TempZipPath = Join-Path $env:TEMP "it-deployment-tool-download.zip"
 $TempExtractPath = Join-Path $env:TEMP "it-deployment-tool-extract"
 
