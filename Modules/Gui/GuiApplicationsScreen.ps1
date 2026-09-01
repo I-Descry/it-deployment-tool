@@ -409,11 +409,12 @@ function Start-GuiApplicationQueue {
   )
 
   if ($Applications.Count -eq 0) {
-    if (($PreSkippedCount -eq 0) -and ($PreFailureMessages.Count -eq 0)) {
+    if ($PreFailureMessages.Count -eq 0) {
+      # Nothing real happened and nothing failed (every selected application was declined or already not installed) -- no progress UI and no completion popup either, since there's nothing worth reporting for an action the user themselves cancelled out of.
       return
     }
 
-    # Nothing real to run (e.g. every selected application was declined or already not installed), so report the outcome directly instead of showing "Installing.../Uninstalling..." for a queue that never actually starts.
+    # A real failure still happened even though no application was actually queued (e.g. a pre-check failure before confirmation), so this case alone is still worth surfacing.
     $Counts = if ($Mode -eq "Install") {
       [ordered]@{ Installed = 0; Skipped = $PreSkippedCount; Blocked = 0; Failed = $PreFailureMessages.Count; "Not Found" = 0 }
     }
