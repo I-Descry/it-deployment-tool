@@ -275,5 +275,15 @@
     "Category": "Printers",
     "Description": "Printer driver for the Canon MF421dw",
     "Recommended": false
+  },
+  {
+    "Name": "HP Smart Tank 500 Driver",
+    "InstallType": "Exe",
+    "InstallerPath": "EXE\\HPSmartTank500\\<INSTALLER_FILENAME>.exe",
+    "SilentArguments": "",
+    "DetectionName": "HP Smart Tank 500 series",
+    "Category": "Printers",
+    "Description": "Printer driver for the HP Smart Tank 500",
+    "Recommended": false
   }
 ]
