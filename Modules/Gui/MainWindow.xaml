@@ -730,16 +730,18 @@
         </Border>
       </ScrollViewer>
 
-      <!-- Device Details content: two cards, grouped sections inside each -->
+      <!-- Device Details content: three cards, grouped sections inside each -->
       <ScrollViewer x:Name="DeviceDetailsScrollViewer" Grid.Row="2" Padding="24,2,24,12" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
         <Grid x:Name="DeviceDetailsPanel">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="14"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="14"/>
+            <ColumnDefinition Width="*"/>
           </Grid.ColumnDefinitions>
 
-          <!-- Identity & System -->
+          <!-- Identity & Network -->
           <Border Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
             <StackPanel>
               <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
@@ -748,14 +750,14 @@
                   <Line X1="4.5" Y1="6" X2="9" Y2="6" Stroke="#38BDF8" StrokeThickness="1.3"/>
                   <Line X1="4.5" Y1="8.5" X2="11.5" Y2="8.5" Stroke="#38BDF8" StrokeThickness="1.3"/>
                 </Canvas>
-                <TextBlock Text="Identity &amp; System" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Text="Identity &amp; Network" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
               </StackPanel>
               <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,12"/>
 
               <TextBlock Text="IDENTITY" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,7"/>
               <Grid>
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="132"/>
+                  <ColumnDefinition Width="118"/>
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
@@ -780,7 +782,7 @@
               <TextBlock Text="NETWORK" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,7"/>
               <Grid>
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="132"/>
+                  <ColumnDefinition Width="118"/>
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
@@ -793,17 +795,30 @@
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="MAC Address" Foreground="#9A9EA8" FontSize="12"/>
                 <TextBlock x:Name="DeviceMacAddressText" Grid.Row="2" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" TextWrapping="Wrap"/>
               </Grid>
+            </StackPanel>
+          </Border>
 
-              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,14,0,14"/>
+          <!-- System & Session -->
+          <Border Grid.Column="2" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Canvas Width="16" Height="16" Margin="0,0,9,0">
+                  <Rectangle Canvas.Left="2" Canvas.Top="2" Width="12" Height="9" RadiusX="1" RadiusY="1" Stroke="#38BDF8" StrokeThickness="1.4"/>
+                  <Line X1="6" Y1="14" X2="10" Y2="14" Stroke="#38BDF8" StrokeThickness="1.3" StrokeStartLineCap="Round"/>
+                  <Line X1="8" Y1="11" X2="8" Y2="14" Stroke="#38BDF8" StrokeThickness="1.3" StrokeStartLineCap="Round"/>
+                </Canvas>
+                <TextBlock Text="System &amp; Session" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+              </StackPanel>
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,12"/>
 
               <TextBlock Text="SYSTEM" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,7"/>
               <Grid>
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="132"/>
+                  <ColumnDefinition Width="118"/>
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="OS Edition" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
                 <TextBlock x:Name="DeviceOSEditionText" Grid.Row="0" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" FontWeight="SemiBold" Margin="0,0,0,5" TextWrapping="Wrap"/>
@@ -819,29 +834,18 @@
                 <Border x:Name="DeviceActivationStatusPill" Grid.Row="5" Grid.Column="1" CornerRadius="9" Padding="8,1" HorizontalAlignment="Left" Background="#23262E" Margin="0,0,0,5">
                   <TextBlock x:Name="DeviceActivationStatusText" Text="-" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
                 </Border>
-                <TextBlock Grid.Row="6" Grid.Column="0" Text="Last Update" Foreground="#9A9EA8" FontSize="12"/>
-                <TextBlock x:Name="DeviceLastUpdateText" Grid.Row="6" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="Last Update" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceLastUpdateText" Grid.Row="6" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="Uptime" Foreground="#9A9EA8" FontSize="12"/>
+                <TextBlock x:Name="DeviceUptimeText" Grid.Row="7" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" TextWrapping="Wrap"/>
               </Grid>
-            </StackPanel>
-          </Border>
 
-          <!-- Session & Power -->
-          <Border Grid.Column="2" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <Canvas Width="16" Height="16" Margin="0,0,9,0">
-                  <Ellipse Canvas.Left="5" Canvas.Top="2" Width="6" Height="6" Stroke="#38BDF8" StrokeThickness="1.3"/>
-                  <Path Stroke="#38BDF8" StrokeThickness="1.3" StrokeStartLineCap="Round" Data="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
-                  <Line X1="13" Y1="2" X2="13" Y2="5.5" Stroke="#38BDF8" StrokeThickness="1.3" StrokeStartLineCap="Round"/>
-                </Canvas>
-                <TextBlock Text="Session &amp; Hardware" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
-              </StackPanel>
-              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,12"/>
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,14,0,14"/>
 
               <TextBlock Text="SESSION" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,7"/>
               <Grid>
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="132"/>
+                  <ColumnDefinition Width="118"/>
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
@@ -854,13 +858,26 @@
                   <TextBlock x:Name="DeviceAdminStatusText" Text="-" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
                 </Border>
               </Grid>
+            </StackPanel>
+          </Border>
 
-              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,14,0,14"/>
+          <!-- Power & Hardware -->
+          <Border Grid.Column="4" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Canvas Width="16" Height="16" Margin="0,0,9,0">
+                  <Ellipse Canvas.Left="5" Canvas.Top="2" Width="6" Height="6" Stroke="#38BDF8" StrokeThickness="1.3"/>
+                  <Path Stroke="#38BDF8" StrokeThickness="1.3" StrokeStartLineCap="Round" Data="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
+                  <Line X1="13" Y1="2" X2="13" Y2="5.5" Stroke="#38BDF8" StrokeThickness="1.3" StrokeStartLineCap="Round"/>
+                </Canvas>
+                <TextBlock Text="Power &amp; Hardware" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+              </StackPanel>
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,12"/>
 
               <TextBlock Text="POWER" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,7"/>
               <Grid>
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="132"/>
+                  <ColumnDefinition Width="118"/>
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
@@ -877,11 +894,11 @@
               <TextBlock Text="HARDWARE" FontSize="10.5" FontWeight="Bold" Foreground="#6B6F79" Margin="0,0,0,7"/>
               <Grid>
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="132"/>
+                  <ColumnDefinition Width="118"/>
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Processor" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
                 <TextBlock x:Name="DeviceProcessorText" Grid.Row="0" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
@@ -897,8 +914,14 @@
                 <Border x:Name="DeviceSecureBootStatusPill" Grid.Row="4" Grid.Column="1" CornerRadius="9" Padding="8,1" HorizontalAlignment="Left" Background="#23262E" Margin="0,0,0,5">
                   <TextBlock x:Name="DeviceSecureBootStatusText" Text="-" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
                 </Border>
-                <TextBlock Grid.Row="5" Grid.Column="0" Text="Battery Health" Foreground="#9A9EA8" FontSize="12"/>
-                <TextBlock x:Name="DeviceBatteryHealthText" Grid.Row="5" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Battery Health" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceBatteryHealthText" Grid.Row="5" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="Antivirus" Foreground="#9A9EA8" FontSize="12" Margin="0,0,0,5"/>
+                <TextBlock x:Name="DeviceAntivirusStatusText" Grid.Row="6" Grid.Column="1" Text="-" Foreground="#E8E9EC" FontSize="12.5" Margin="0,0,0,5" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="Firewall" Foreground="#9A9EA8" FontSize="12" VerticalAlignment="Center"/>
+                <Border x:Name="DeviceFirewallStatusPill" Grid.Row="7" Grid.Column="1" CornerRadius="9" Padding="8,1" HorizontalAlignment="Left" Background="#23262E">
+                  <TextBlock x:Name="DeviceFirewallStatusText" Text="-" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
+                </Border>
               </Grid>
             </StackPanel>
           </Border>

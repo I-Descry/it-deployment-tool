@@ -106,12 +106,18 @@ function Update-GuiWindowsConfigDeviceInfo {
   }
 
   $Fields.LastUpdateInstalled.Text = $Report.LastUpdateInstalled
+  $Fields.Uptime.Text = $Report.Uptime
 
   $Fields.SecureBootStatus.Text = $Report.SecureBootStatus
   $Fields.SecureBootStatus.Foreground = if ($Report.SecureBootStatus -eq "On") { "#34D399" } else { "#6B6F79" }
   $Fields.SecureBootStatusPill.Background = if ($Report.SecureBootStatus -eq "On") { "#1934D399" } else { "#23262E" }
 
   $Fields.BatteryHealth.Text = $Report.BatteryHealth
+  $Fields.AntivirusStatus.Text = $Report.AntivirusStatus
+
+  $Fields.FirewallStatus.Text = $Report.FirewallStatus
+  $Fields.FirewallStatus.Foreground = if ($Report.FirewallStatus -eq "On") { "#34D399" } else { "#6B6F79" }
+  $Fields.FirewallStatusPill.Background = if ($Report.FirewallStatus -eq "On") { "#1934D399" } else { "#23262E" }
 }
 
 function Update-GuiWindowsConfigCurrentName {
@@ -421,10 +427,15 @@ function Start-GuiWindowsConfigLoad {
         default         { "#23262E" }
       }
       $Fields.LastUpdateInstalled.Text = $Report.LastUpdateInstalled
+      $Fields.Uptime.Text = $Report.Uptime
       $Fields.SecureBootStatus.Text = $Report.SecureBootStatus
       $Fields.SecureBootStatus.Foreground = if ($Report.SecureBootStatus -eq "On") { "#34D399" } else { "#6B6F79" }
       $Fields.SecureBootStatusPill.Background = if ($Report.SecureBootStatus -eq "On") { "#1934D399" } else { "#23262E" }
       $Fields.BatteryHealth.Text = $Report.BatteryHealth
+      $Fields.AntivirusStatus.Text = $Report.AntivirusStatus
+      $Fields.FirewallStatus.Text = $Report.FirewallStatus
+      $Fields.FirewallStatus.Foreground = if ($Report.FirewallStatus -eq "On") { "#34D399" } else { "#6B6F79" }
+      $Fields.FirewallStatusPill.Background = if ($Report.FirewallStatus -eq "On") { "#1934D399" } else { "#23262E" }
 
       $script:GuiWindowsConfigLoadCurrentNameText.Text = $Result.CurrentName
 
@@ -493,6 +504,7 @@ function Get-GuiDeviceDetailsSummary {
     "Architecture      : {0}" -f $DeviceFields.OSArchitecture.Text
     "Activation        : {0}" -f $DeviceFields.ActivationStatus.Text
     "Last Update       : {0}" -f $DeviceFields.LastUpdateInstalled.Text
+    "Uptime            : {0}" -f $DeviceFields.Uptime.Text
     "Logged User       : {0}" -f $DeviceFields.LoggedUser.Text
     "Administrator     : {0}" -f $DeviceFields.AdminStatus.Text
     "Active Power Plan : {0}" -f $DeviceFields.PowerPlan.Text
@@ -503,6 +515,8 @@ function Get-GuiDeviceDetailsSummary {
     "TPM               : {0}" -f $DeviceFields.TpmStatus.Text
     "Secure Boot       : {0}" -f $DeviceFields.SecureBootStatus.Text
     "Battery Health    : {0}" -f $DeviceFields.BatteryHealth.Text
+    "Antivirus         : {0}" -f $DeviceFields.AntivirusStatus.Text
+    "Firewall          : {0}" -f $DeviceFields.FirewallStatus.Text
   )
 
   return ($Lines -join [Environment]::NewLine)

@@ -346,6 +346,7 @@ function Show-MainWindow {
     ActivationStatus     = $Window.FindName("DeviceActivationStatusText")
     ActivationStatusPill = $Window.FindName("DeviceActivationStatusPill")
     LastUpdateInstalled  = $Window.FindName("DeviceLastUpdateText")
+    Uptime               = $Window.FindName("DeviceUptimeText")
     LoggedUser           = $Window.FindName("DeviceLoggedUserText")
     AdminStatus          = $Window.FindName("DeviceAdminStatusText")
     PowerPlan            = $Window.FindName("DevicePowerPlanText")
@@ -359,6 +360,9 @@ function Show-MainWindow {
     SecureBootStatus     = $Window.FindName("DeviceSecureBootStatusText")
     SecureBootStatusPill = $Window.FindName("DeviceSecureBootStatusPill")
     BatteryHealth        = $Window.FindName("DeviceBatteryHealthText")
+    AntivirusStatus      = $Window.FindName("DeviceAntivirusStatusText")
+    FirewallStatus       = $Window.FindName("DeviceFirewallStatusText")
+    FirewallStatusPill   = $Window.FindName("DeviceFirewallStatusPill")
   }
 
   $CompletionModalControls = @{

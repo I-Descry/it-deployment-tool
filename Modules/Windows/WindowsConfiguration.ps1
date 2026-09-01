@@ -221,6 +221,47 @@ function Get-WindowsConfigurationIdentity {
     }
   }
 
+  # root\SecurityCenter2 is a client-SKU-only namespace (not present on Server), so this degrades to "Unknown" on any failure rather than assuming no antivirus is installed; joins every registered product's display name since more than one can legitimately be registered at once (confirmed on this real machine: both Windows Defender and CrowdStrike Falcon Sensor show up here together).
+  $AntivirusStatus = "Unknown"
+
+  try {
+    $AntivirusProducts = @(Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName AntiVirusProduct -ErrorAction Stop)
+
+    if ($AntivirusProducts.Count -eq 0) {
+      $AntivirusStatus = "None Detected"
+    }
+    else {
+      $AntivirusStatus = ($AntivirusProducts | ForEach-Object { [string]$_.displayName } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join ", "
+    }
+  }
+  catch {
+    # Keep "Unknown" if the SecurityCenter2 namespace is unavailable (e.g. a Server SKU).
+  }
+
+  # Get-NetFirewallProfile measured ~5.2s per call on this real machine -- cached here for the same reason as disk media type and Secure Boot above, not queried fresh per refresh.
+  $FirewallStatus = "Unknown"
+
+  try {
+    $FirewallProfiles = @(Get-NetFirewallProfile -ErrorAction Stop)
+
+    if ($FirewallProfiles.Count -gt 0) {
+      $EnabledCount = @($FirewallProfiles | Where-Object { [bool]$_.Enabled }).Count
+
+      $FirewallStatus = if ($EnabledCount -eq $FirewallProfiles.Count) { "On" } elseif ($EnabledCount -eq 0) { "Off" } else { "Partial" }
+    }
+  }
+  catch {
+    # Keep "Unknown" if Get-NetFirewallProfile is unavailable.
+  }
+
+  # LastBootUpTime comes from the $OperatingSystem CIM object already fetched above for OSVersion/OSBuildNumber, so this costs no extra query.
+  $Uptime = "Unknown"
+
+  if ($null -ne $OperatingSystem.LastBootUpTime) {
+    $UptimeSpan = (Get-Date) - $OperatingSystem.LastBootUpTime
+    $Uptime = if ($UptimeSpan.Days -gt 0) { "{0}d {1}h" -f $UptimeSpan.Days, $UptimeSpan.Hours } else { "{0}h {1}m" -f $UptimeSpan.Hours, $UptimeSpan.Minutes }
+  }
+
   # The Windows-only Software Licensing entry is isolated via its real, documented Application ID (55c92734-d682-4d71-983e-d6ec3f16059f) -- without this filter, a device with Office also installed returns a separate Office licensing entry alongside it. LicenseStatus 1 means Licensed; anything else (0 Unlicensed, grace/notification states, etc.) is reported as-is rather than assumed to mean any one specific problem.
   $ActivationStatus = "Unknown"
 
@@ -260,6 +301,9 @@ function Get-WindowsConfigurationIdentity {
     SecureBootStatus = $SecureBootStatus
     LastUpdateInstalled = $LastUpdateInstalled
     BatteryHealth   = $BatteryHealth
+    AntivirusStatus = $AntivirusStatus
+    FirewallStatus  = $FirewallStatus
+    Uptime          = $Uptime
     # Win32_ComputerSystem.Model is a raw machine-type code on Lenovo systems (e.g. "21SR0038PH"), not a usable product name -- SystemFamily is the field that actually holds the human-readable family name (e.g. "ThinkPad E16 Gen 3"), confirmed against this exact CIM query on real Lenovo hardware before relying on it.
     IsThinkPad      = ([string]$ComputerSystem.Manufacturer).Trim() -eq "LENOVO" -and ([string]$ComputerSystem.SystemFamily) -match "ThinkPad"
   }
@@ -340,6 +384,7 @@ function Get-WindowsConfigurationReport {
     OSBuildNumber     = $Identity.OSBuildNumber
     OSArchitecture    = $Identity.OSArchitecture
     LastUpdateInstalled = $Identity.LastUpdateInstalled
+    Uptime            = $Identity.Uptime
     LoggedUser        = $CurrentUser
     IsAdministrator   = $Identity.IsAdministrator
     ActivePowerPlan   = [string]$PowerConfiguration.ActivePlan
@@ -352,6 +397,8 @@ function Get-WindowsConfigurationReport {
     TpmStatus         = $Identity.TpmStatus
     SecureBootStatus  = $Identity.SecureBootStatus
     BatteryHealth     = $Identity.BatteryHealth
+    AntivirusStatus   = $Identity.AntivirusStatus
+    FirewallStatus    = $Identity.FirewallStatus
     IsThinkPad        = $Identity.IsThinkPad
   }
 }
@@ -383,6 +430,7 @@ function Show-WindowsConfigurationReport {
   Write-Info -Name "Architecture" -Value $Report.OSArchitecture
   Write-Info -Name "Activation" -Value $Report.ActivationStatus
   Write-Info -Name "Last Update" -Value $Report.LastUpdateInstalled
+  Write-Info -Name "Uptime" -Value $Report.Uptime
   Write-Section -Title "Account Information"
   Write-Info -Name "Logged User" -Value $Report.LoggedUser
   Write-Status -Name "Administrator" -Status $Report.IsAdministrator
@@ -397,4 +445,6 @@ function Show-WindowsConfigurationReport {
   Write-Info -Name "TPM" -Value $Report.TpmStatus
   Write-Info -Name "Secure Boot" -Value $Report.SecureBootStatus
   Write-Info -Name "Battery Health" -Value $Report.BatteryHealth
+  Write-Info -Name "Antivirus" -Value $Report.AntivirusStatus
+  Write-Info -Name "Firewall" -Value $Report.FirewallStatus
 }
