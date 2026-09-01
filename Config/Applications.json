@@ -255,5 +255,15 @@
     "Category": "Utilities",
     "Description": "File synchronization and backup tool, bundles RealTimeSync",
     "Recommended": false
+  },
+  {
+    "Name": "Epson L5290 Driver",
+    "InstallType": "Exe",
+    "InstallerPath": "EXE\\EpsonL5290\\<INSTALLER_FILENAME>.exe",
+    "SilentArguments": "",
+    "DetectionName": "EPSON L5290 Series",
+    "Category": "Printers",
+    "Description": "Printer driver for the Epson L5290",
+    "Recommended": false
   }
 ]
