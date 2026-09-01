@@ -250,7 +250,7 @@
   {
     "Name": "FreeFileSync",
     "InstallType": "Exe",
-    "InstallerPath": "EXE\\FreeFileSync\\<INSTALLER_FILENAME>.exe",
+    "InstallerPath": "EXE\\FreeFileSync\\FreeFileSync_14.10_Windows_Setup.exe",
     "SilentArguments": "",
     "DetectionName": "FreeFileSync",
     "Category": "Utilities",

@@ -745,6 +745,22 @@ Built the confirmed fix above directly into the tool, so a future device hitting
 
 ---
 
+## Added: Copy Results Button and Fixed a Misleading Progress UI on Declined Uninstalls
+
+- [x] Added a "Copy Results" button to the install/uninstall completion modal (`MainWindow.xaml`, next to OK), so the exact status shown (counts plus every failure message with its real exit code) can be copied to the clipboard instead of retyped by hand. `Get-GuiCompletionSummary`/`Invoke-GuiCopyCompletionSummary` (`GuiApplicationsScreen.ps1`) mirror the existing "Copy Device Details" pattern exactly (same clipboard call, same "Copied!" button-feedback timer). Verified directly: the button resolves via `FindName`, and the summary text formats correctly with a real example (counts plus a real exit-code failure message).
+- [x] **Fixed a real bug found by the user**: declining the per-application confirmation when uninstalling still visibly ran the "Uninstalling..." progress UI (buttons disabled, progress bar shown) even though nothing was actually being uninstalled, before landing on a `Skipped` result. Root cause: `Start-GuiApplicationQueue` only skipped the whole background-runspace/progress-UI sequence when there was *nothing at all* to report (`Applications.Count -eq 0 AND PreSkippedCount -eq 0`) -- declining a confirmation increments `PreSkippedCount`, so the progress UI still ran for zero real work. Fixed by reporting the result (the completion modal, with correct `Skipped` counts) directly whenever there are no real applications to process, without ever touching the progress panel or disabling the queue buttons. Verified directly: simulating a fully-declined uninstall (`Applications = @()`, `PreSkippedCount = 1`) now leaves `QueueProgressPanel.Visibility` at `Collapsed` throughout, shows the completion modal immediately with the correct `0 Uninstalled / 1 Skipped / 0 Failed`, and leaves the Install/Uninstall buttons enabled the whole time since no real queue ever started.
+
+---
+
+## Fixed: FreeFileSync's Installer Path Was Still a Placeholder
+
+Found by the user via Deployment Validation showing the newly added offline packages as missing/failed. Root cause: when the user placed the real installer files earlier, only the Epson/Canon/HP driver entries' `InstallerPath` placeholders were updated to the real filenames -- FreeFileSync's was missed, left as the literal `EXE\FreeFileSync\<INSTALLER_FILENAME>.exe` placeholder even though the real file (`FreeFileSync_14.10_Windows_Setup.exe`) was already sitting in that folder and had already been confirmed present by an earlier `Test-Path` check on the file directly. The `<`/`>` characters are illegal in a Windows path, so `Test-Path` (inside `Test-OfflineInstallerFile`) threw an exception instead of just returning false, which `Get-InstallerPackageReadiness`'s per-application `try`/`catch` did correctly catch and report as `MISSING`, but with the raw exception text as the message rather than the normal clean "Installer package is missing or invalid."
+
+- [x] Fixed by updating `Config\Applications.json`'s FreeFileSync entry to the real filename, matching the pattern already used for the other three drivers.
+- [x] Re-ran `Get-InstallerPackageReadiness` against the real catalog and real `Installers\` directory on this dev machine: all 10 offline packages (SAP GUI x2, CrowdStrike, Office LTSC, Office 2021 LOP, Lenovo Asset ID, FreeFileSync, Epson, Canon, HP) now report `READY` with no exception, where FreeFileSync previously threw.
+
+---
+
 ## Release Decision
 
 - [ ] All critical tests passed
