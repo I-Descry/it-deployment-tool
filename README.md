@@ -774,18 +774,13 @@ The tool is copied to each machine rather than installed through a package manag
 4. **Check installer package readiness.** From the console menu or the GUI's Deployment Validation screen, review which offline packages report `READY` vs. `MISSING` — this shows exactly which `Installers\` subfolders didn't make the transfer, before attempting an install that would otherwise fail partway through.
 5. **Run the tool for real**, either `.\Start.ps1` (console) or `.\Start.ps1 -Gui` (graphical). WinGet-based applications install directly from the internet and need no local files; only EXE/MSI/ISO/IMG/ZIP/Script-type applications depend on `Installers\` being populated.
 
-### Known Issue: WinGet Apps May Show "Not Found" on a Truly Fresh Device
+### Fixed Issue: WinGet Apps No Longer Falsely Report "Not Found"
 
-If a WinGet-based application (e.g. Google Chrome) reports **Not Found** even though `winget --version` works fine, this is a real Windows/WinGet limitation, not a bug in this tool: WinGet's source data can be scoped in a way that an **elevated** process (this tool always runs elevated) cannot see, even though the exact same user account can see it perfectly fine when *not* elevated. This tends to show up specifically on a device that has never run WinGet before.
+Earlier versions of this tool could report **Not Found** for a WinGet-based application (e.g. Google Chrome) even though the package genuinely existed and `winget install` for it worked fine. Root cause: the availability check ran `winget show --id ...` to confirm a package existed before ever attempting the install, and that specific command can fail on a device running an elevated process (this tool always runs elevated) even though `winget install` for the same package succeeds on the same device -- most likely related to [CVE-2026-68821](https://www.sentinelone.com/vulnerability-database/cve-2026-68821/), a WinGet privilege-escalation flaw Microsoft patched in App Installer 1.29.280, which appears to have tightened what an elevated process can read from WinGet's local source data.
 
-Before assuming an application's catalog entry or installer is broken:
+The fix: the availability check (`Test-WingetPackage`, `Modules\Installation\WingetInstaller.ps1`) no longer calls `winget show` to verify a specific package exists -- it only confirms the `winget` command itself is present. The actual `winget install` call (which already has robust exit-code handling) is now the real source of truth for whether a given package installs; a genuinely nonexistent Winget ID surfaces as a `Failed` result with winget's real error message at install time, instead of a `Not Found` before ever trying.
 
-1. Open a normal (non-elevated) PowerShell window and run `winget --version` and `winget show --id <the app's Winget ID> --exact` for the failing app. If that works non-elevated but the tool (elevated) still reports Not Found, this is the known issue.
-2. **Workaround**: on that same normal, non-elevated window, run `winget source update` (or any winget command) once, before running this tool's elevated install flow. This gives WinGet a chance to initialize its source data for that account first.
-3. If the above doesn't help, try `winget source reset --force`, then re-adding the source manually: `winget source remove winget` followed by `winget source add --name winget --arg "https://cdn.winget.microsoft.com/cache" --type "Microsoft.PreIndexed.Package"`.
-4. As a last resort, re-register the App Installer package from its existing files: `Get-AppxPackage -AllUsers Microsoft.DesktopAppInstaller | Foreach-Object { Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -Verbose }`.
-
-This is not something the tool's own code can reliably fix from inside an already-elevated script, so treat it as a one-time device-prep step rather than a catalog or installer problem.
+If a WinGet install still fails for some other reason, the deployment log will show the real winget exit code/message from the actual install attempt rather than a generic "Not Found."
 
 ---
 

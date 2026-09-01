@@ -79,30 +79,12 @@ function Get-WingetUninstallArguments {
 }
 
 function Test-WingetPackage {
+  # Only confirms winget itself is present, not that this specific package ID exists -- "winget show" was found to give false negatives on a real device where winget's source data was unreadable from this tool's elevated process even though "winget install" for that same package succeeded fine. Install-ApplicationWithWinget's own exit-code handling is the real, reliable source of truth for whether a specific package installs.
   param([PSCustomObject]$Application)
 
-  try {
-    $WingetArguments = @(
-      "show"
-      "--id"
-      $Application.winget
-      "--exact"
-      "--source"
-      (Get-WingetSource -Application $Application)
-      "--accept-source-agreements"
-      "--disable-interactivity"
-    )
+  $WingetCommand = Get-Command -Name "winget" -ErrorAction SilentlyContinue
 
-    $WingetArguments += @(Get-WingetScopeArguments -Application $Application)
-  }
-
-  catch {
-    return $false
-  }
-
-  & winget @WingetArguments *> $null
-
-  return ($LASTEXITCODE -eq 0)
+  return ($null -ne $WingetCommand)
 }
 
 function Install-ApplicationWithWinget {
