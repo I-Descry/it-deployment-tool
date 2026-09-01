@@ -244,8 +244,8 @@ function New-GuiCategoryCard {
   $Card.BorderThickness = "1"
   $Card.CornerRadius = "10"
   $Card.Padding = "14"
-  $Card.Width = 360
-  $Card.Margin = "0,0,14,14"
+  $Card.Width = 340
+  $Card.Margin = "0,0,10,10"
 
   $Stack = New-Object System.Windows.Controls.StackPanel
   $Card.Child = $Stack

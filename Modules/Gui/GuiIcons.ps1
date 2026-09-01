@@ -107,6 +107,9 @@ function New-GuiCategoryIcon {
     "Development Tools" {
       @(New-GuiIconShape -Type Path -Color $Color -Cap Round -Join Round -Data "M5.5 3.5L2 8l3.5 4.5M10.5 3.5L14 8l-3.5 4.5")
     }
+    "AI Tools" {
+      @(New-GuiIconShape -Type Path -Color $Color -Join Round -Data "M8 1.5L9.3 6.2 14 8 9.3 9.8 8 14.5 6.7 9.8 2 8 6.7 6.2Z")
+    }
     "Company Applications" {
       @(
         New-GuiIconShape -Type Rectangle -Color $Color -X 1.5 -Y 5 -Width 13 -Height 8.5 -RadiusX 1
@@ -114,11 +117,25 @@ function New-GuiCategoryIcon {
         New-GuiIconShape -Type Line -Color $Color -X1 1.5 -Y1 9 -X2 14.5 -Y2 9
       )
     }
+    "Productivity" {
+      @(
+        New-GuiIconShape -Type Rectangle -Color $Color -X 2 -Y 9 -Width 2.8 -Height 4.5 -RadiusX 0.4
+        New-GuiIconShape -Type Rectangle -Color $Color -X 6.6 -Y 5.5 -Width 2.8 -Height 8 -RadiusX 0.4
+        New-GuiIconShape -Type Rectangle -Color $Color -X 11.2 -Y 2.5 -Width 2.8 -Height 11 -RadiusX 0.4
+      )
+    }
     "Security" {
       @(New-GuiIconShape -Type Path -Color $Color -Data "M8 1.5l5.5 2v4c0 4-2.4 6.3-5.5 7-3.1-.7-5.5-3-5.5-7v-4L8 1.5z")
     }
     "Utilities" {
       @(New-GuiIconShape -Type Path -Color $Color -Join Round -Data "M11 2a3 3 0 00-3.9 3.9L2 11l2 2 5.1-5.1A3 3 0 0013 4l-2 2-1.5-.5L9 4l2-2z")
+    }
+    "Printers" {
+      @(
+        New-GuiIconShape -Type Rectangle -Color $Color -X 2.5 -Y 6.5 -Width 11 -Height 5 -RadiusX 1
+        New-GuiIconShape -Type Rectangle -Color $Color -X 5 -Y 2 -Width 6 -Height 5 -RadiusX 0.5
+        New-GuiIconShape -Type Line -Color $Color -X1 6 -Y1 13.5 -X2 10 -Y2 13.5
+      )
     }
     default {
       # Generic folder outline for any category not in the mockup's original set.

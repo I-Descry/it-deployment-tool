@@ -202,7 +202,7 @@
     "InstallType": "Winget",
     "Winget": "9NTXR16HNW1T",
     "WingetSource": "msstore",
-    "Category": "Company Applications",
+    "Category": "Productivity",
     "Description": "Microsoft's business analytics and data visualization desktop tool",
     "Recommended": false
   },
@@ -218,7 +218,7 @@
     "Name": "Antigravity",
     "InstallType": "Winget",
     "Winget": "Google.Antigravity",
-    "Category": "Development Tools",
+    "Category": "AI Tools",
     "Description": "Google's agentic development environment",
     "Recommended": false
   },
@@ -226,7 +226,7 @@
     "Name": "Claude",
     "InstallType": "Winget",
     "Winget": "Anthropic.Claude",
-    "Category": "Development Tools",
+    "Category": "AI Tools",
     "Description": "Anthropic's Claude desktop application",
     "Recommended": false
   },
