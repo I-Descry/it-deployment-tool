@@ -102,6 +102,66 @@ function New-GuiDialogIconCanvas {
   return $Canvas
 }
 
+# Same rounded-corner + hover-overlay look as every other button in the app (Window.Resources' Button style, MainWindow.xaml) -- duplicated here rather than shared, since this dialog is its own separate Window and never sees MainWindow.xaml's resources, which is exactly why its buttons rendered as plain default WPF chrome before this was added.
+$script:GuiDialogButtonTemplateXaml = @"
+<ControlTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" TargetType="Button">
+  <Grid>
+    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6"/>
+    <Border x:Name="HoverOverlay" Background="#26FFFFFF" CornerRadius="6" Opacity="0"/>
+    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+  </Grid>
+  <ControlTemplate.Triggers>
+    <Trigger Property="IsMouseOver" Value="True">
+      <Setter TargetName="HoverOverlay" Property="Opacity" Value="1"/>
+    </Trigger>
+    <Trigger Property="IsPressed" Value="True">
+      <Setter TargetName="HoverOverlay" Property="Opacity" Value="0.4"/>
+    </Trigger>
+    <Trigger Property="IsEnabled" Value="False">
+      <Setter Property="Opacity" Value="0.5"/>
+    </Trigger>
+  </ControlTemplate.Triggers>
+</ControlTemplate>
+"@
+
+function New-GuiDialogButton {
+  param(
+    [Parameter(Mandatory)]
+    [string]$Content,
+
+    [Parameter(Mandatory)]
+    [string]$Background,
+
+    [Parameter(Mandatory)]
+    [string]$Foreground,
+
+    [string]$BorderBrush = "Transparent",
+
+    [double]$BorderThickness = 0,
+
+    [switch]$Bold
+  )
+
+  $Button = New-Object System.Windows.Controls.Button
+  $Button.Content = $Content
+  $Button.Padding = New-Object System.Windows.Thickness(20, 8, 20, 8)
+  $Button.Background = $Background
+  $Button.Foreground = $Foreground
+  $Button.BorderBrush = $BorderBrush
+  $Button.BorderThickness = New-Object System.Windows.Thickness($BorderThickness)
+  $Button.FontSize = 13
+  $Button.Cursor = "Hand"
+
+  if ($Bold) {
+    $Button.FontWeight = "Bold"
+  }
+
+  $TemplateReader = New-Object System.Xml.XmlNodeReader ([xml]$script:GuiDialogButtonTemplateXaml)
+  $Button.Template = [System.Windows.Markup.XamlReader]::Load($TemplateReader)
+
+  return $Button
+}
+
 function Show-GuiDialog {
   param(
     [Parameter(Mandatory)]
@@ -192,15 +252,8 @@ function Show-GuiDialog {
   $ButtonRow.HorizontalAlignment = "Right"
 
   if ($Buttons -eq "YesNo") {
-    $NoButton = New-Object System.Windows.Controls.Button
-    $NoButton.Content = "No"
-    $NoButton.Padding = New-Object System.Windows.Thickness(20, 8, 20, 8)
+    $NoButton = New-GuiDialogButton -Content "No" -Background "#23262E" -Foreground "#E8E9EC" -BorderBrush "#2C2F38" -BorderThickness 1
     $NoButton.Margin = New-Object System.Windows.Thickness(0, 0, 10, 0)
-    $NoButton.Background = "#23262E"
-    $NoButton.Foreground = "#E8E9EC"
-    $NoButton.BorderBrush = "#2C2F38"
-    $NoButton.BorderThickness = New-Object System.Windows.Thickness(1)
-    $NoButton.FontSize = 13
     $NoButton.IsCancel = $true
     $NoButton.Add_Click({
       $script:GuiDialogResult = "No"
@@ -208,14 +261,7 @@ function Show-GuiDialog {
     })
     $ButtonRow.Children.Add($NoButton) | Out-Null
 
-    $YesButton = New-Object System.Windows.Controls.Button
-    $YesButton.Content = "Yes"
-    $YesButton.Padding = New-Object System.Windows.Thickness(20, 8, 20, 8)
-    $YesButton.Background = "#38BDF8"
-    $YesButton.Foreground = "#08131A"
-    $YesButton.BorderThickness = New-Object System.Windows.Thickness(0)
-    $YesButton.FontSize = 13
-    $YesButton.FontWeight = "Bold"
+    $YesButton = New-GuiDialogButton -Content "Yes" -Background "#38BDF8" -Foreground "#08131A" -Bold
     $YesButton.IsDefault = $true
     $YesButton.Add_Click({
       $script:GuiDialogResult = "Yes"
@@ -224,14 +270,8 @@ function Show-GuiDialog {
     $ButtonRow.Children.Add($YesButton) | Out-Null
   }
   else {
-    $OkButton = New-Object System.Windows.Controls.Button
-    $OkButton.Content = "OK"
+    $OkButton = New-GuiDialogButton -Content "OK" -Background "#38BDF8" -Foreground "#08131A" -Bold
     $OkButton.Padding = New-Object System.Windows.Thickness(24, 8, 24, 8)
-    $OkButton.Background = "#38BDF8"
-    $OkButton.Foreground = "#08131A"
-    $OkButton.BorderThickness = New-Object System.Windows.Thickness(0)
-    $OkButton.FontSize = 13
-    $OkButton.FontWeight = "Bold"
     $OkButton.IsDefault = $true
     $OkButton.IsCancel = $true
     $OkButton.Add_Click({
