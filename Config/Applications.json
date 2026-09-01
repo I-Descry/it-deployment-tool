@@ -265,5 +265,15 @@
     "Category": "Printers",
     "Description": "Printer driver for the Epson L5290",
     "Recommended": false
+  },
+  {
+    "Name": "Canon MF421dw Driver",
+    "InstallType": "Exe",
+    "InstallerPath": "EXE\\CanonMF421dw\\<INSTALLER_FILENAME>.exe",
+    "SilentArguments": "",
+    "DetectionName": "Canon MF421dw",
+    "Category": "Printers",
+    "Description": "Printer driver for the Canon MF421dw",
+    "Recommended": false
   }
 ]
