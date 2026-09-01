@@ -344,6 +344,7 @@ function Show-MainWindow {
     DetailsPanel = $Window.FindName("CompletionModalDetailsPanel")
   }
   $CompletionModalOkButton = $Window.FindName("CompletionModalOkButton")
+  $CompletionModalCopyButton = $Window.FindName("CompletionModalCopyButton")
 
   $InitialTimeouts = Get-CurrentSleepTimeoutMinutes
   $PluggedInMinutesTextBox.Text = [string]$InitialTimeouts.PluggedInMinutes
@@ -421,6 +422,10 @@ function Show-MainWindow {
 
   $CompletionModalOkButton.Add_Click({
     $CompletionModalControls.Overlay.Visibility = "Collapsed"
+  })
+
+  $CompletionModalCopyButton.Add_Click({
+    Invoke-GuiCopyCompletionSummary -CopyButton $CompletionModalCopyButton
   })
 
   $RerunValidationButton.Add_Click({

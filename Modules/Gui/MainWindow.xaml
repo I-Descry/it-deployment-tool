@@ -940,8 +940,12 @@
           </ScrollViewer>
         </Border>
 
-        <Button x:Name="CompletionModalOkButton" Content="OK" HorizontalAlignment="Right" Margin="0,20,0,0"
-                Padding="24,9" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="13" FontWeight="Bold"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+          <Button x:Name="CompletionModalCopyButton" Content="Copy Results" Margin="0,0,10,0"
+                  Padding="18,9" Background="#23262E" Foreground="#E8E9EC" BorderBrush="#2C2F38" BorderThickness="1" FontSize="13"/>
+          <Button x:Name="CompletionModalOkButton" Content="OK"
+                  Padding="24,9" Background="#38BDF8" Foreground="#08131A" BorderThickness="0" FontSize="13" FontWeight="Bold"/>
+        </StackPanel>
       </StackPanel>
     </Border>
   </Border>

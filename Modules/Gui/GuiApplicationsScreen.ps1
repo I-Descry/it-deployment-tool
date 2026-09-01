@@ -94,7 +94,73 @@ function Show-GuiCompletionModal {
     $DetailsCard.Visibility = "Collapsed"
   }
 
+  # Stored so CompletionModalCopyButton's click handler can copy exactly what this modal is currently showing.
+  $script:GuiCompletionModalSummaryText = Get-GuiCompletionSummary -Title $Title -Counts $Counts -FailureMessages $FailureMessages
+
   $Overlay.Visibility = "Visible"
+}
+
+function Get-GuiCompletionSummary {
+  param(
+    [Parameter(Mandatory)]
+    [string]$Title,
+
+    [Parameter(Mandatory)]
+    [System.Collections.Specialized.OrderedDictionary]$Counts,
+
+    [string[]]$FailureMessages = @()
+  )
+
+  $Lines = @($Title, "")
+
+  foreach ($Entry in $Counts.GetEnumerator()) {
+    $Lines += "{0}: {1}" -f $Entry.Key, $Entry.Value
+  }
+
+  if ($FailureMessages.Count -gt 0) {
+    $Lines += ""
+    $Lines += "Details:"
+
+    foreach ($Message in $FailureMessages) {
+      $Lines += "- $Message"
+    }
+  }
+
+  return ($Lines -join [Environment]::NewLine)
+}
+
+function Invoke-GuiCopyCompletionSummary {
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Controls.Button]$CopyButton
+  )
+
+  try {
+    [System.Windows.Clipboard]::SetText($script:GuiCompletionModalSummaryText)
+  }
+  catch {
+    Show-GuiDialog -Title "Error" -Icon Warning -Message "Could not copy the results to the clipboard: $($_.Exception.Message)"
+    return
+  }
+
+  $script:GuiCopyCompletionButton = $CopyButton
+  $script:GuiCopyCompletionOriginalContent = $CopyButton.Content
+
+  $CopyButton.Content = "Copied!"
+  $CopyButton.IsEnabled = $false
+
+  $Timer = New-Object System.Windows.Threading.DispatcherTimer
+  $Timer.Interval = [TimeSpan]::FromMilliseconds(1400)
+  $script:GuiCopyCompletionResetTimer = $Timer
+
+  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d, matching every other background-runspace/UI timer handler in this app.
+  $Timer.Add_Tick({
+    $script:GuiCopyCompletionResetTimer.Stop()
+    $script:GuiCopyCompletionButton.Content = $script:GuiCopyCompletionOriginalContent
+    $script:GuiCopyCompletionButton.IsEnabled = $true
+  })
+
+  $Timer.Start()
 }
 
 function New-GuiApplicationRow {
@@ -342,7 +408,25 @@ function Start-GuiApplicationQueue {
     [hashtable]$ModalControls
   )
 
-  if (($Applications.Count -eq 0) -and ($PreSkippedCount -eq 0)) {
+  if ($Applications.Count -eq 0) {
+    if (($PreSkippedCount -eq 0) -and ($PreFailureMessages.Count -eq 0)) {
+      return
+    }
+
+    # Nothing real to run (e.g. every selected application was declined or already not installed), so report the outcome directly instead of showing "Installing.../Uninstalling..." for a queue that never actually starts.
+    $Counts = if ($Mode -eq "Install") {
+      [ordered]@{ Installed = 0; Skipped = $PreSkippedCount; Blocked = 0; Failed = $PreFailureMessages.Count; "Not Found" = 0 }
+    }
+    else {
+      [ordered]@{ Uninstalled = 0; Skipped = $PreSkippedCount; Failed = $PreFailureMessages.Count }
+    }
+
+    $ModalTitle = if ($Mode -eq "Install") { "Installation Complete" } else { "Uninstallation Complete" }
+
+    Show-GuiCompletionModal -Overlay $ModalControls.Overlay -IconSuccess $ModalControls.IconSuccess -IconWarning $ModalControls.IconWarning `
+      -TitleText $ModalControls.TitleText -CountsPanel $ModalControls.CountsPanel -DetailsCard $ModalControls.DetailsCard `
+      -DetailsPanel $ModalControls.DetailsPanel -Title $ModalTitle -Counts $Counts -FailureMessages $PreFailureMessages
+
     return
   }
 
