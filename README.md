@@ -552,13 +552,17 @@ IT Deployment Tool/
 │   ├── Gui/
 │   │   ├── Fonts/
 │   │   ├── GuiApplicationsScreen.ps1
+│   │   ├── GuiAssetIdScreen.ps1
+│   │   ├── GuiCompletionModal.ps1
 │   │   ├── GuiDeploymentLogsScreen.ps1
 │   │   ├── GuiDeploymentValidationScreen.ps1
+│   │   ├── GuiDeviceDetailsScreen.ps1
 │   │   ├── GuiDialog.ps1
 │   │   ├── GuiIcons.ps1
 │   │   ├── GuiTempCleanupScreen.ps1
 │   │   ├── GuiWindow.ps1
-│   │   ├── GuiWindowsConfigScreen.ps1
+│   │   ├── GuiWindowsConfigShared.ps1
+│   │   ├── GuiWindowsSetupScreen.ps1
 │   │   └── MainWindow.xaml
 │   ├── Installation/
 │   │   ├── AppxInstaller.ps1

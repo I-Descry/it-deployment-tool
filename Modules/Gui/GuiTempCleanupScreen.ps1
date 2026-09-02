@@ -223,3 +223,119 @@ function Invoke-GuiTempCleanup {
 
   Start-GuiTempCleanupScan -CardControls $CardControls -RefreshButton $RefreshButton -CleanButton $CleanButton
 }
+
+function Initialize-GuiTempCleanupScreen {
+  # FindName + click-handler wiring for this screen, called once from Show-MainWindow (GuiWindow.ps1). Returns the Nav Border/Text/Icon triple so the orchestrator can add this screen to the shared nav arrays.
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Window]$Window,
+
+    [Parameter(Mandatory)]
+    [hashtable]$CompletionModalControls
+  )
+
+  $RefreshTempCleanupButton = $Window.FindName("RefreshTempCleanupButton")
+  $CleanSelectedTempButton = $Window.FindName("CleanSelectedTempButton")
+  $TempCleanupUserTempCard = $Window.FindName("TempCleanupUserTempCard")
+  $TempCleanupUserTempCheckbox = $Window.FindName("TempCleanupUserTempCheckbox")
+  $TempCleanupUserTempCheckmark = $Window.FindName("TempCleanupUserTempCheckmark")
+  $TempCleanupUserTempPathText = $Window.FindName("TempCleanupUserTempPathText")
+  $TempCleanupUserTempSummaryText = $Window.FindName("TempCleanupUserTempSummaryText")
+  $TempCleanupWindowsTempCard = $Window.FindName("TempCleanupWindowsTempCard")
+  $TempCleanupWindowsTempCheckbox = $Window.FindName("TempCleanupWindowsTempCheckbox")
+  $TempCleanupWindowsTempCheckmark = $Window.FindName("TempCleanupWindowsTempCheckmark")
+  $TempCleanupWindowsTempPathText = $Window.FindName("TempCleanupWindowsTempPathText")
+  $TempCleanupWindowsTempSummaryText = $Window.FindName("TempCleanupWindowsTempSummaryText")
+  $TempCleanupPrefetchCard = $Window.FindName("TempCleanupPrefetchCard")
+  $TempCleanupPrefetchCheckbox = $Window.FindName("TempCleanupPrefetchCheckbox")
+  $TempCleanupPrefetchCheckmark = $Window.FindName("TempCleanupPrefetchCheckmark")
+  $TempCleanupPrefetchPathText = $Window.FindName("TempCleanupPrefetchPathText")
+  $TempCleanupPrefetchSummaryText = $Window.FindName("TempCleanupPrefetchSummaryText")
+  $NavTempCleanup = $Window.FindName("NavTempCleanup")
+  $NavTempCleanupText = $Window.FindName("NavTempCleanupText")
+  $NavTempCleanupIcon = $Window.FindName("NavTempCleanupIcon")
+
+  # Keyed by the same location Name used throughout TempCleanup.ps1 (Get-TempCleanupTargetPaths/Get-TempCleanupTargets), so scan results and checkbox state can be looked up by name instead of a chain of if/elseif per card.
+  $TempCleanupCardControls = [ordered]@{
+    "User Temp"    = @{ PathText = $TempCleanupUserTempPathText; SummaryText = $TempCleanupUserTempSummaryText }
+    "Windows Temp" = @{ PathText = $TempCleanupWindowsTempPathText; SummaryText = $TempCleanupWindowsTempSummaryText }
+    "Prefetch"     = @{ PathText = $TempCleanupPrefetchPathText; SummaryText = $TempCleanupPrefetchSummaryText }
+  }
+
+  # All three cards default to checked, matching Get-TempCleanupTargets always scanning all three locations regardless of selection.
+  $script:GuiTempCleanupSelected = [ordered]@{
+    "User Temp"    = $true
+    "Windows Temp" = $true
+    "Prefetch"     = $true
+  }
+
+  $script:GuiTempCleanupLoaded = $false
+  $script:GuiTempCleanupToolbar = $Window.FindName("TempCleanupToolbar")
+  $script:GuiTempCleanupScrollViewer = $Window.FindName("TempCleanupScrollViewer")
+  $script:GuiTempCleanupCardControls = $TempCleanupCardControls
+  $script:GuiRefreshTempCleanupButton = $RefreshTempCleanupButton
+  $script:GuiCleanSelectedTempButton = $CleanSelectedTempButton
+
+  $RefreshTempCleanupButton.Add_Click({
+    try {
+      Start-GuiTempCleanupScan -CardControls $TempCleanupCardControls -RefreshButton $RefreshTempCleanupButton -CleanButton $CleanSelectedTempButton
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $CleanSelectedTempButton.Add_Click({
+    try {
+      Invoke-GuiTempCleanup -Selected $script:GuiTempCleanupSelected -CardControls $TempCleanupCardControls -RefreshButton $RefreshTempCleanupButton -CleanButton $CleanSelectedTempButton -ModalControls $CompletionModalControls
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Temp cleanup error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $TempCleanupUserTempCard.Add_MouseLeftButtonUp({
+    try {
+      $script:GuiTempCleanupSelected["User Temp"] = -not $script:GuiTempCleanupSelected["User Temp"]
+      Set-GuiTempCleanupCheckboxState -Checkbox $TempCleanupUserTempCheckbox -Checkmark $TempCleanupUserTempCheckmark -IsChecked $script:GuiTempCleanupSelected["User Temp"]
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Checkbox error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $TempCleanupWindowsTempCard.Add_MouseLeftButtonUp({
+    try {
+      $script:GuiTempCleanupSelected["Windows Temp"] = -not $script:GuiTempCleanupSelected["Windows Temp"]
+      Set-GuiTempCleanupCheckboxState -Checkbox $TempCleanupWindowsTempCheckbox -Checkmark $TempCleanupWindowsTempCheckmark -IsChecked $script:GuiTempCleanupSelected["Windows Temp"]
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Checkbox error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $TempCleanupPrefetchCard.Add_MouseLeftButtonUp({
+    try {
+      $script:GuiTempCleanupSelected["Prefetch"] = -not $script:GuiTempCleanupSelected["Prefetch"]
+      Set-GuiTempCleanupCheckboxState -Checkbox $TempCleanupPrefetchCheckbox -Checkmark $TempCleanupPrefetchCheckmark -IsChecked $script:GuiTempCleanupSelected["Prefetch"]
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Checkbox error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $NavTempCleanup.Add_MouseLeftButtonUp({
+    try {
+      Switch-GuiScreen -ScreenName "Temp Cleanup" -ActiveBorder $NavTempCleanup -ActiveText $NavTempCleanupText -ActiveIcon $NavTempCleanupIcon
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  return @{
+    NavBorder = $NavTempCleanup
+    NavText   = $NavTempCleanupText
+    NavIcon   = $NavTempCleanupIcon
+  }
+}

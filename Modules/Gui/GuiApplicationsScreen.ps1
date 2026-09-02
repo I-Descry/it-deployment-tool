@@ -1,167 +1,7 @@
 # ============================================================
 # GUI APPLICATIONS SCREEN
 # ============================================================
-
-$script:GuiCompletionModalStatusColors = @{
-  Installed   = "#34D399"
-  Uninstalled = "#34D399"
-  Skipped     = "#9A9EA8"
-  Blocked     = "#FBBF24"
-  Failed      = "#F2555A"
-  "Not Found" = "#F2555A"
-  Cancelled   = "#9A9EA8"
-}
-
-function Show-GuiCompletionModal {
-  param(
-    [Parameter(Mandatory)]
-    [System.Windows.Controls.Border]$Overlay,
-
-    [Parameter(Mandatory)]
-    [System.Windows.Controls.Canvas]$IconSuccess,
-
-    [Parameter(Mandatory)]
-    [System.Windows.Controls.Canvas]$IconWarning,
-
-    [Parameter(Mandatory)]
-    [System.Windows.Controls.TextBlock]$TitleText,
-
-    [Parameter(Mandatory)]
-    [System.Windows.Controls.StackPanel]$CountsPanel,
-
-    [Parameter(Mandatory)]
-    [System.Windows.Controls.Border]$DetailsCard,
-
-    [Parameter(Mandatory)]
-    [System.Windows.Controls.StackPanel]$DetailsPanel,
-
-    [Parameter(Mandatory)]
-    [string]$Title,
-
-    [Parameter(Mandatory)]
-    [System.Collections.Specialized.OrderedDictionary]$Counts,
-
-    [string[]]$FailureMessages = @()
-  )
-
-  $TitleText.Text = $Title
-
-  $HasFailures = ($FailureMessages.Count -gt 0)
-  $IconSuccess.Visibility = if ($HasFailures) { "Collapsed" } else { "Visible" }
-  $IconWarning.Visibility = if ($HasFailures) { "Visible" } else { "Collapsed" }
-
-  $CountsPanel.Children.Clear()
-
-  foreach ($Entry in $Counts.GetEnumerator()) {
-    $Color = $script:GuiCompletionModalStatusColors[$Entry.Key]
-
-    if ([string]::IsNullOrWhiteSpace($Color)) {
-      $Color = "#9A9EA8"
-    }
-
-    $Badge = New-Object System.Windows.Controls.Border
-    $Badge.CornerRadius = "8"
-    $Badge.Padding = "10,5"
-    $Badge.Margin = "0,0,8,8"
-    $Badge.Background = "#1A" + $Color.TrimStart("#")
-
-    $BadgeText = New-Object System.Windows.Controls.TextBlock
-    $BadgeText.Text = "$($Entry.Value) $($Entry.Key)"
-    $BadgeText.FontSize = 11.5
-    $BadgeText.FontWeight = "SemiBold"
-    $BadgeText.Foreground = $Color
-    $Badge.Child = $BadgeText
-
-    $CountsPanel.Children.Add($Badge) | Out-Null
-  }
-
-  $DetailsPanel.Children.Clear()
-
-  if ($HasFailures) {
-    $DetailsCard.Visibility = "Visible"
-
-    foreach ($Message in $FailureMessages) {
-      $DetailText = New-Object System.Windows.Controls.TextBlock
-      $DetailText.Text = "- $Message"
-      $DetailText.Foreground = "#E8E9EC"
-      $DetailText.FontSize = 11.5
-      $DetailText.TextWrapping = "Wrap"
-      $DetailText.Margin = "0,0,0,6"
-      $DetailsPanel.Children.Add($DetailText) | Out-Null
-    }
-  }
-  else {
-    $DetailsCard.Visibility = "Collapsed"
-  }
-
-  # Stored so CompletionModalCopyButton's click handler can copy exactly what this modal is currently showing.
-  $script:GuiCompletionModalSummaryText = Get-GuiCompletionSummary -Title $Title -Counts $Counts -FailureMessages $FailureMessages
-
-  $Overlay.Visibility = "Visible"
-}
-
-function Get-GuiCompletionSummary {
-  param(
-    [Parameter(Mandatory)]
-    [string]$Title,
-
-    [Parameter(Mandatory)]
-    [System.Collections.Specialized.OrderedDictionary]$Counts,
-
-    [string[]]$FailureMessages = @()
-  )
-
-  $Lines = @($Title, "")
-
-  foreach ($Entry in $Counts.GetEnumerator()) {
-    $Lines += "{0}: {1}" -f $Entry.Key, $Entry.Value
-  }
-
-  if ($FailureMessages.Count -gt 0) {
-    $Lines += ""
-    $Lines += "Details:"
-
-    foreach ($Message in $FailureMessages) {
-      $Lines += "- $Message"
-    }
-  }
-
-  return ($Lines -join [Environment]::NewLine)
-}
-
-function Invoke-GuiCopyCompletionSummary {
-  param(
-    [Parameter(Mandatory)]
-    [System.Windows.Controls.Button]$CopyButton
-  )
-
-  try {
-    [System.Windows.Clipboard]::SetText($script:GuiCompletionModalSummaryText)
-  }
-  catch {
-    Show-GuiDialog -Title "Error" -Icon Warning -Message "Could not copy the results to the clipboard: $($_.Exception.Message)"
-    return
-  }
-
-  $script:GuiCopyCompletionButton = $CopyButton
-  $script:GuiCopyCompletionOriginalContent = $CopyButton.Content
-
-  $CopyButton.Content = "Copied!"
-  $CopyButton.IsEnabled = $false
-
-  $Timer = New-Object System.Windows.Threading.DispatcherTimer
-  $Timer.Interval = [TimeSpan]::FromMilliseconds(1400)
-  $script:GuiCopyCompletionResetTimer = $Timer
-
-  # Plain scriptblock -- deliberately NOT .GetNewClosure()'d, matching every other background-runspace/UI timer handler in this app.
-  $Timer.Add_Tick({
-    $script:GuiCopyCompletionResetTimer.Stop()
-    $script:GuiCopyCompletionButton.Content = $script:GuiCopyCompletionOriginalContent
-    $script:GuiCopyCompletionButton.IsEnabled = $true
-  })
-
-  $Timer.Start()
-}
+# Completion-modal reporting (Show-GuiCompletionModal/Get-GuiCompletionSummary/Invoke-GuiCopyCompletionSummary) moved to GuiCompletionModal.ps1, since it is shared with Temp Cleanup and is no longer Applications-specific.
 
 function New-GuiApplicationRow {
   param(
@@ -827,4 +667,119 @@ function Invoke-GuiUninstallQueue {
   Start-GuiApplicationQueue -Mode "Uninstall" -Applications $ApplicationsToUninstall -PreSkippedCount $PreSkippedCount -GridPanel $GridPanel -CountText $CountText `
     -ButtonsToDisable @($InstallButton, $UninstallButton) -CancelButton $CancelButton -QueueProgressPanel $QueueProgressPanel `
     -QueueProgressText $QueueProgressText -QueueProgressBar $QueueProgressBar -ModalControls $ModalControls
+}
+
+function Initialize-GuiApplicationsScreen {
+  # FindName + click-handler wiring for this screen, called once from Show-MainWindow (GuiWindow.ps1). Returns the Nav Border/Text/Icon triple so the orchestrator can add this screen to the shared nav arrays.
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Window]$Window,
+
+    [Parameter(Mandatory)]
+    [hashtable]$CompletionModalControls
+  )
+
+  $AppGridPanel = $Window.FindName("AppGridPanel")
+  $SelectedCountText = $Window.FindName("SelectedCountText")
+  $SelectAllButton = $Window.FindName("SelectAllButton")
+  $SelectRecommendedButton = $Window.FindName("SelectRecommendedButton")
+  $ClearAllButton = $Window.FindName("ClearAllButton")
+  $InstallSelectedButton = $Window.FindName("InstallSelectedButton")
+  $UninstallSelectedButton = $Window.FindName("UninstallSelectedButton")
+  $CancelQueueButton = $Window.FindName("CancelQueueButton")
+  $QueueProgressPanel = $Window.FindName("QueueProgressPanel")
+  $QueueProgressText = $Window.FindName("QueueProgressText")
+  $QueueProgressBar = $Window.FindName("QueueProgressBar")
+  $NavApplications = $Window.FindName("NavApplications")
+  $NavApplicationsText = $Window.FindName("NavApplicationsText")
+  $NavApplicationsIcon = $Window.FindName("NavApplicationsIcon")
+
+  $script:GuiQueueRunning = $false
+  $script:GuiSelectedCountText = $SelectedCountText
+  $script:GuiApplicationsToolbar = $Window.FindName("ApplicationsToolbar")
+  $script:GuiApplicationsScrollViewer = $Window.FindName("ApplicationsScrollViewer")
+
+  Update-GuiApplicationGrid -GridPanel $AppGridPanel
+  Update-GuiSelectedCount -CountText $SelectedCountText
+
+  $SelectAllButton.Add_Click({
+    try {
+      Select-AllApplications
+      Update-GuiApplicationGrid -GridPanel $AppGridPanel
+      Update-GuiSelectedCount -CountText $SelectedCountText
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Select All error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $SelectRecommendedButton.Add_Click({
+    try {
+      Select-RecommendedApplications | Out-Null
+      Update-GuiApplicationGrid -GridPanel $AppGridPanel
+      Update-GuiSelectedCount -CountText $SelectedCountText
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Select Recommended error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $ClearAllButton.Add_Click({
+    try {
+      Clear-AllApplications
+      Update-GuiApplicationGrid -GridPanel $AppGridPanel
+      Update-GuiSelectedCount -CountText $SelectedCountText
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Clear All error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $InstallSelectedButton.Add_Click({
+    try {
+      Invoke-GuiInstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText -InstallButton $InstallSelectedButton -UninstallButton $UninstallSelectedButton `
+        -CancelButton $CancelQueueButton -QueueProgressPanel $QueueProgressPanel -QueueProgressText $QueueProgressText -QueueProgressBar $QueueProgressBar `
+        -ModalControls $CompletionModalControls
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Install error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $UninstallSelectedButton.Add_Click({
+    try {
+      Invoke-GuiUninstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText -InstallButton $InstallSelectedButton -UninstallButton $UninstallSelectedButton `
+        -CancelButton $CancelQueueButton -QueueProgressPanel $QueueProgressPanel -QueueProgressText $QueueProgressText -QueueProgressBar $QueueProgressBar `
+        -ModalControls $CompletionModalControls
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Uninstall error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $CancelQueueButton.Add_Click({
+    try {
+      $CancelQueueButton.IsEnabled = $false
+      $CancelQueueButton.Content = "Cancelling..."
+      $script:GuiQueueCancelQueue.Enqueue($true)
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Cancel error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $NavApplications.Add_MouseLeftButtonUp({
+    try {
+      Switch-GuiScreen -ScreenName "Applications" -ActiveBorder $NavApplications -ActiveText $NavApplicationsText -ActiveIcon $NavApplicationsIcon
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  return @{
+    NavBorder = $NavApplications
+    NavText   = $NavApplicationsText
+    NavIcon   = $NavApplicationsIcon
+  }
 }

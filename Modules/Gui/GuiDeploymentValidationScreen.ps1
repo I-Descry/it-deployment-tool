@@ -1,8 +1,6 @@
 # ============================================================
 # GUI DEPLOYMENT VALIDATION SCREEN
 # ============================================================
-# New-GuiValidationStatusRow is also reused by GuiWindowsConfigScreen.ps1
-# for the local standard users list, so this file must load before it.
 
 function New-GuiValidationStatusRow {
   param(
@@ -332,4 +330,50 @@ function Start-GuiDeploymentValidationLoad {
   })
 
   $Timer.Start()
+}
+
+function Initialize-GuiDeploymentValidationScreen {
+  # FindName + click-handler wiring for this screen, called once from Show-MainWindow (GuiWindow.ps1). Returns the Nav Border/Text/Icon triple so the orchestrator can add this screen to the shared nav arrays.
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Window]$Window
+  )
+
+  $DeploymentValidationPanel = $Window.FindName("DeploymentValidationPanel")
+  $ValidationSummaryText = $Window.FindName("ValidationSummaryText")
+  $RerunValidationButton = $Window.FindName("RerunValidationButton")
+  $NavDeploymentValidation = $Window.FindName("NavDeploymentValidation")
+  $NavDeploymentValidationText = $Window.FindName("NavDeploymentValidationText")
+  $NavDeploymentValidationIcon = $Window.FindName("NavDeploymentValidationIcon")
+
+  $script:GuiDeploymentValidationLoaded = $false
+  $script:GuiDeploymentValidationToolbar = $Window.FindName("DeploymentValidationToolbar")
+  $script:GuiDeploymentValidationScrollViewer = $Window.FindName("DeploymentValidationScrollViewer")
+  $script:GuiDeploymentValidationPanel = $DeploymentValidationPanel
+  $script:GuiValidationSummaryText = $ValidationSummaryText
+  $script:GuiRerunValidationButton = $RerunValidationButton
+
+  $RerunValidationButton.Add_Click({
+    try {
+      Start-GuiDeploymentValidationLoad -ValidationPanel $DeploymentValidationPanel -SummaryText $ValidationSummaryText -RerunButton $RerunValidationButton
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Deployment validation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $NavDeploymentValidation.Add_MouseLeftButtonUp({
+    try {
+      Switch-GuiScreen -ScreenName "Deployment Validation" -ActiveBorder $NavDeploymentValidation -ActiveText $NavDeploymentValidationText -ActiveIcon $NavDeploymentValidationIcon
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  return @{
+    NavBorder = $NavDeploymentValidation
+    NavText   = $NavDeploymentValidationText
+    NavIcon   = $NavDeploymentValidationIcon
+  }
 }

@@ -83,10 +83,14 @@ $ModulePaths = @(
 
   "Gui\GuiDialog.ps1"
   "Gui\GuiIcons.ps1"
+  "Gui\GuiCompletionModal.ps1"
   "Gui\GuiDeploymentValidationScreen.ps1"
   "Gui\GuiApplicationsScreen.ps1"
   "Gui\GuiDeploymentLogsScreen.ps1"
-  "Gui\GuiWindowsConfigScreen.ps1"
+  "Gui\GuiWindowsConfigShared.ps1"
+  "Gui\GuiWindowsSetupScreen.ps1"
+  "Gui\GuiDeviceDetailsScreen.ps1"
+  "Gui\GuiAssetIdScreen.ps1"
   "Gui\GuiTempCleanupScreen.ps1"
   "Gui\GuiWindow.ps1"
 
@@ -157,8 +161,8 @@ if ($ValidateOnly) {
 
   $ValidationProblems = @()
 
-  if ($ModulePaths.Count -ne 50) {
-    $ValidationProblems += ("Expected 48 modules but the loader contains {0}." -f $ModulePaths.Count)
+  if ($ModulePaths.Count -ne 54) {
+    $ValidationProblems += ("Expected 54 modules but the loader contains {0}." -f $ModulePaths.Count)
   }
 
   if ($MissingFunctions.Count -gt 0) {

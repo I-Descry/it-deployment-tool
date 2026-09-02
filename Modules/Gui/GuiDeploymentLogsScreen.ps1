@@ -129,3 +129,60 @@ function Update-GuiLogsList {
   $ListPanel.Children[0].Background = "#2438BDF8"
   Show-GuiLogContent -ContentTextBox $ContentTextBox -NameText $NameText -LogFile $DeploymentLogs[0]
 }
+
+function Initialize-GuiDeploymentLogsScreen {
+  # FindName + click-handler wiring for this screen, called once from Show-MainWindow (GuiWindow.ps1). Returns the Nav Border/Text/Icon triple so the orchestrator can add this screen to the shared nav arrays.
+  param(
+    [Parameter(Mandatory)]
+    [System.Windows.Window]$Window
+  )
+
+  $DeploymentLogsPanel = $Window.FindName("DeploymentLogsPanel")
+  $LogContentTextBox = $Window.FindName("LogContentTextBox")
+  $SelectedLogNameText = $Window.FindName("SelectedLogNameText")
+  $RefreshLogsButton = $Window.FindName("RefreshLogsButton")
+  $OpenLogsFolderButton = $Window.FindName("OpenLogsFolderButton")
+  $NavDeploymentLogs = $Window.FindName("NavDeploymentLogs")
+  $NavDeploymentLogsText = $Window.FindName("NavDeploymentLogsText")
+  $NavDeploymentLogsIcon = $Window.FindName("NavDeploymentLogsIcon")
+
+  $script:GuiDeploymentLogsLoaded = $false
+  $script:GuiDeploymentLogsToolbar = $Window.FindName("DeploymentLogsToolbar")
+  $script:GuiDeploymentLogsContent = $Window.FindName("DeploymentLogsContent")
+  $script:GuiDeploymentLogsPanel = $DeploymentLogsPanel
+  $script:GuiLogContentTextBox = $LogContentTextBox
+  $script:GuiSelectedLogNameText = $SelectedLogNameText
+
+  $RefreshLogsButton.Add_Click({
+    try {
+      Update-GuiLogsList -ListPanel $DeploymentLogsPanel -ContentTextBox $LogContentTextBox -NameText $SelectedLogNameText
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $OpenLogsFolderButton.Add_Click({
+    try {
+      Open-DeploymentLogsFolder
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Unable to open the Logs folder: $($_.Exception.Message)"
+    }
+  })
+
+  $NavDeploymentLogs.Add_MouseLeftButtonUp({
+    try {
+      Switch-GuiScreen -ScreenName "Deployment Logs" -ActiveBorder $NavDeploymentLogs -ActiveText $NavDeploymentLogsText -ActiveIcon $NavDeploymentLogsIcon
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  return @{
+    NavBorder = $NavDeploymentLogs
+    NavText   = $NavDeploymentLogsText
+    NavIcon   = $NavDeploymentLogsIcon
+  }
+}

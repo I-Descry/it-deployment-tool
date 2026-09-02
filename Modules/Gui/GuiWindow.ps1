@@ -1,11 +1,7 @@
 # ============================================================
 # GUI WINDOW (main window shell: navigation, system info bar, entry point)
 # ============================================================
-# Per-screen logic lives in GuiIcons.ps1, GuiApplicationsScreen.ps1,
-# GuiDeploymentValidationScreen.ps1, GuiDeploymentLogsScreen.ps1, and
-# GuiWindowsConfigScreen.ps1 (all loaded before this file). This file ties
-# them together: cross-screen navigation, the system info bar, and the
-# Show-MainWindow entry point that wires every control.
+# Per-screen logic lives in each screen's own Gui*Screen.ps1 file (GuiApplicationsScreen.ps1, GuiWindowsSetupScreen.ps1, GuiDeviceDetailsScreen.ps1, GuiAssetIdScreen.ps1, GuiDeploymentValidationScreen.ps1, GuiDeploymentLogsScreen.ps1, GuiTempCleanupScreen.ps1 -- all loaded before this file), each exposing an Initialize-GuiXScreen function that does that screen's own FindName + click-handler wiring and returns its Nav Border/Text/Icon triple (plus, for Windows Setup/Device Details/Asset ID, the pieces their one shared Refresh mechanism needs). This file ties them together: cross-screen navigation, the system info bar, the completion modal's own Ok/Copy buttons, and the Show-MainWindow entry point that calls each screen's Initialize function once.
 
 function Start-GuiFadeIn {
   param(
@@ -260,157 +256,7 @@ function Show-MainWindow {
 
   $TitleBarVersionText.Text = "v$AppVersion"
 
-  $AppGridPanel = $Window.FindName("AppGridPanel")
-  $SelectedCountText = $Window.FindName("SelectedCountText")
-  $SelectAllButton = $Window.FindName("SelectAllButton")
-  $SelectRecommendedButton = $Window.FindName("SelectRecommendedButton")
-  $ClearAllButton = $Window.FindName("ClearAllButton")
-  $InstallSelectedButton = $Window.FindName("InstallSelectedButton")
-  $UninstallSelectedButton = $Window.FindName("UninstallSelectedButton")
-  $CancelQueueButton = $Window.FindName("CancelQueueButton")
-  $QueueProgressPanel = $Window.FindName("QueueProgressPanel")
-  $QueueProgressText = $Window.FindName("QueueProgressText")
-  $QueueProgressBar = $Window.FindName("QueueProgressBar")
-  $DeploymentValidationPanel = $Window.FindName("DeploymentValidationPanel")
-  $ValidationSummaryText = $Window.FindName("ValidationSummaryText")
-  $RerunValidationButton = $Window.FindName("RerunValidationButton")
-  $DeploymentLogsPanel = $Window.FindName("DeploymentLogsPanel")
-  $LogContentTextBox = $Window.FindName("LogContentTextBox")
-  $SelectedLogNameText = $Window.FindName("SelectedLogNameText")
-  $RefreshLogsButton = $Window.FindName("RefreshLogsButton")
-  $OpenLogsFolderButton = $Window.FindName("OpenLogsFolderButton")
-  $RefreshWindowsSetupButton = $Window.FindName("RefreshWindowsSetupButton")
-  $RefreshDeviceDetailsButton = $Window.FindName("RefreshDeviceDetailsButton")
-  $CopyDeviceDetailsButton = $Window.FindName("CopyDeviceDetailsButton")
-  $CurrentComputerNameText = $Window.FindName("CurrentComputerNameText")
-  $NewComputerNameTextBox = $Window.FindName("NewComputerNameTextBox")
-  $RestartLaterOption = $Window.FindName("RestartLaterOption")
-  $RestartLaterOptionText = $Window.FindName("RestartLaterOptionText")
-  $RestartNowOption = $Window.FindName("RestartNowOption")
-  $RestartNowOptionText = $Window.FindName("RestartNowOptionText")
-  $RenameComputerButton = $Window.FindName("RenameComputerButton")
-  $LocalUsersListPanel = $Window.FindName("LocalUsersListPanel")
-  $NewUserNameTextBox = $Window.FindName("NewUserNameTextBox")
-  $NewUserFullNameTextBox = $Window.FindName("NewUserFullNameTextBox")
-  $SetPasswordOption = $Window.FindName("SetPasswordOption")
-  $SetPasswordOptionText = $Window.FindName("SetPasswordOptionText")
-  $NoPasswordOption = $Window.FindName("NoPasswordOption")
-  $NoPasswordOptionText = $Window.FindName("NoPasswordOptionText")
-  $NewUserPasswordFieldsPanel = $Window.FindName("NewUserPasswordFieldsPanel")
-  $NoPasswordNoticeBox = $Window.FindName("NoPasswordNoticeBox")
-  $NewUserPasswordBox = $Window.FindName("NewUserPasswordBox")
-  $NewUserConfirmPasswordBox = $Window.FindName("NewUserConfirmPasswordBox")
-  $CreateUserButton = $Window.FindName("CreateUserButton")
-  $CurrentPluggedInText = $Window.FindName("CurrentPluggedInText")
-  $CurrentBatteryText = $Window.FindName("CurrentBatteryText")
-  $PluggedInMinutesTextBox = $Window.FindName("PluggedInMinutesTextBox")
-  $BatteryMinutesTextBox = $Window.FindName("BatteryMinutesTextBox")
-  $ApplyPowerSettingsButton = $Window.FindName("ApplyPowerSettingsButton")
-
-  $NavAssetId = $Window.FindName("NavAssetId")
-  $NavAssetIdText = $Window.FindName("NavAssetIdText")
-  $NavAssetIdIcon = $Window.FindName("NavAssetIdIcon")
-  $AssetIdToolbar = $Window.FindName("AssetIdToolbar")
-  $RefreshAssetIdButton = $Window.FindName("RefreshAssetIdButton")
-  $AssetIdScrollViewer = $Window.FindName("AssetIdScrollViewer")
-  $AssetOwnerNameTextBox = $Window.FindName("AssetOwnerNameTextBox")
-  $AssetDepartmentTextBox = $Window.FindName("AssetDepartmentTextBox")
-  $AssetLocationTextBox = $Window.FindName("AssetLocationTextBox")
-  $AssetPhoneNumberTextBox = $Window.FindName("AssetPhoneNumberTextBox")
-  $AssetOwnerPositionTextBox = $Window.FindName("AssetOwnerPositionTextBox")
-  $AssetPurchaseDateTextBox = $Window.FindName("AssetPurchaseDateTextBox")
-  $AssetLastInventoriedTextBox = $Window.FindName("AssetLastInventoriedTextBox")
-  $AssetWarrantyEndTextBox = $Window.FindName("AssetWarrantyEndTextBox")
-  $AssetWarrantyDurationTextBox = $Window.FindName("AssetWarrantyDurationTextBox")
-  $AssetAmountTextBox = $Window.FindName("AssetAmountTextBox")
-  $AssetNumberTextBox = $Window.FindName("AssetNumberTextBox")
-  $SaveAssetIdButton = $Window.FindName("SaveAssetIdButton")
-
-  $TempCleanupToolbar = $Window.FindName("TempCleanupToolbar")
-  $TempCleanupScrollViewer = $Window.FindName("TempCleanupScrollViewer")
-  $RefreshTempCleanupButton = $Window.FindName("RefreshTempCleanupButton")
-  $CleanSelectedTempButton = $Window.FindName("CleanSelectedTempButton")
-  $TempCleanupUserTempCard = $Window.FindName("TempCleanupUserTempCard")
-  $TempCleanupUserTempCheckbox = $Window.FindName("TempCleanupUserTempCheckbox")
-  $TempCleanupUserTempCheckmark = $Window.FindName("TempCleanupUserTempCheckmark")
-  $TempCleanupUserTempPathText = $Window.FindName("TempCleanupUserTempPathText")
-  $TempCleanupUserTempSummaryText = $Window.FindName("TempCleanupUserTempSummaryText")
-  $TempCleanupWindowsTempCard = $Window.FindName("TempCleanupWindowsTempCard")
-  $TempCleanupWindowsTempCheckbox = $Window.FindName("TempCleanupWindowsTempCheckbox")
-  $TempCleanupWindowsTempCheckmark = $Window.FindName("TempCleanupWindowsTempCheckmark")
-  $TempCleanupWindowsTempPathText = $Window.FindName("TempCleanupWindowsTempPathText")
-  $TempCleanupWindowsTempSummaryText = $Window.FindName("TempCleanupWindowsTempSummaryText")
-  $TempCleanupPrefetchCard = $Window.FindName("TempCleanupPrefetchCard")
-  $TempCleanupPrefetchCheckbox = $Window.FindName("TempCleanupPrefetchCheckbox")
-  $TempCleanupPrefetchCheckmark = $Window.FindName("TempCleanupPrefetchCheckmark")
-  $TempCleanupPrefetchPathText = $Window.FindName("TempCleanupPrefetchPathText")
-  $TempCleanupPrefetchSummaryText = $Window.FindName("TempCleanupPrefetchSummaryText")
-
-  # Keyed by the same location Name used throughout TempCleanup.ps1 (Get-TempCleanupTargetPaths/Get-TempCleanupTargets), so scan results and checkbox state can be looked up by name instead of a chain of if/elseif per card.
-  $TempCleanupCardControls = [ordered]@{
-    "User Temp"    = @{ PathText = $TempCleanupUserTempPathText; SummaryText = $TempCleanupUserTempSummaryText }
-    "Windows Temp" = @{ PathText = $TempCleanupWindowsTempPathText; SummaryText = $TempCleanupWindowsTempSummaryText }
-    "Prefetch"     = @{ PathText = $TempCleanupPrefetchPathText; SummaryText = $TempCleanupPrefetchSummaryText }
-  }
-
-  # All three cards default to checked, matching Get-TempCleanupTargets always scanning all three locations regardless of selection.
-  $script:GuiTempCleanupSelected = [ordered]@{
-    "User Temp"    = $true
-    "Windows Temp" = $true
-    "Prefetch"     = $true
-  }
-
-  # Keyed the same way Get-DeploymentAssetIdFieldNames orders them, so Update-GuiAssetIdFields/Invoke-GuiAssetIdSave can loop instead of repeating each field name by hand.
-  $AssetIdFieldTextBoxes = @{
-    "OWNERDATA.OWNERNAME"              = $AssetOwnerNameTextBox
-    "OWNERDATA.DEPARTMENT"             = $AssetDepartmentTextBox
-    "OWNERDATA.LOCATION"               = $AssetLocationTextBox
-    "OWNERDATA.PHONE_NUMBER"           = $AssetPhoneNumberTextBox
-    "OWNERDATA.OWNERPOSITION"          = $AssetOwnerPositionTextBox
-    "USERASSETDATA.PURCHASE_DATE"      = $AssetPurchaseDateTextBox
-    "USERASSETDATA.LAST_INVENTORIED"   = $AssetLastInventoriedTextBox
-    "USERASSETDATA.WARRANTY_END"       = $AssetWarrantyEndTextBox
-    "USERASSETDATA.WARRANTY_DURATION"  = $AssetWarrantyDurationTextBox
-    "USERASSETDATA.AMOUNT"             = $AssetAmountTextBox
-    "USERASSETDATA.ASSET_NUMBER"       = $AssetNumberTextBox
-  }
-
-  $WindowsConfigDeviceFields = @{
-    ComputerName         = $Window.FindName("DeviceComputerNameText")
-    Manufacturer         = $Window.FindName("DeviceManufacturerText")
-    Model                = $Window.FindName("DeviceModelText")
-    SerialNumber         = $Window.FindName("DeviceSerialNumberText")
-    BiosVersion          = $Window.FindName("DeviceBiosVersionText")
-    AssetTag             = $Window.FindName("DeviceAssetTagText")
-    NetworkType          = $Window.FindName("DeviceNetworkTypeText")
-    IPAddress            = $Window.FindName("DeviceIPAddressText")
-    MacAddress           = $Window.FindName("DeviceMacAddressText")
-    DomainWorkgroup      = $Window.FindName("DeviceDomainWorkgroupText")
-    OSEdition            = $Window.FindName("DeviceOSEditionText")
-    OSVersion            = $Window.FindName("DeviceOSVersionText")
-    OSBuildNumber        = $Window.FindName("DeviceOSBuildNumberText")
-    OSArchitecture       = $Window.FindName("DeviceOSArchitectureText")
-    ActivationStatus     = $Window.FindName("DeviceActivationStatusText")
-    ActivationStatusPill = $Window.FindName("DeviceActivationStatusPill")
-    LastUpdateInstalled  = $Window.FindName("DeviceLastUpdateText")
-    Uptime               = $Window.FindName("DeviceUptimeText")
-    LoggedUser           = $Window.FindName("DeviceLoggedUserText")
-    AdminStatus          = $Window.FindName("DeviceAdminStatusText")
-    PowerPlan            = $Window.FindName("DevicePowerPlanText")
-    Sleep                = $Window.FindName("DeviceSleepText")
-    AdminStatusPill      = $Window.FindName("DeviceAdminStatusPill")
-    Processor            = $Window.FindName("DeviceProcessorText")
-    Memory               = $Window.FindName("DeviceMemoryText")
-    Storage              = $Window.FindName("DeviceStorageText")
-    TpmStatus            = $Window.FindName("DeviceTpmStatusText")
-    TpmStatusPill        = $Window.FindName("DeviceTpmStatusPill")
-    SecureBootStatus     = $Window.FindName("DeviceSecureBootStatusText")
-    SecureBootStatusPill = $Window.FindName("DeviceSecureBootStatusPill")
-    BatteryHealth        = $Window.FindName("DeviceBatteryHealthText")
-    AntivirusStatus      = $Window.FindName("DeviceAntivirusStatusText")
-    FirewallStatus       = $Window.FindName("DeviceFirewallStatusText")
-    FirewallStatusPill   = $Window.FindName("DeviceFirewallStatusPill")
-  }
+  $script:GuiPlaceholderText = $Window.FindName("PlaceholderText")
 
   $CompletionModalControls = @{
     Overlay      = $Window.FindName("CompletionModalOverlay")
@@ -424,80 +270,6 @@ function Show-MainWindow {
   $CompletionModalOkButton = $Window.FindName("CompletionModalOkButton")
   $CompletionModalCopyButton = $Window.FindName("CompletionModalCopyButton")
 
-  $InitialTimeouts = Get-CurrentSleepTimeoutMinutes
-  $PluggedInMinutesTextBox.Text = [string]$InitialTimeouts.PluggedInMinutes
-  $BatteryMinutesTextBox.Text = [string]$InitialTimeouts.BatteryMinutes
-
-  Update-GuiApplicationGrid -GridPanel $AppGridPanel
-  Update-GuiSelectedCount -CountText $SelectedCountText
-  Update-GuiSystemInfoBar -Window $Window
-
-  $SelectAllButton.Add_Click({
-    try {
-      Select-AllApplications
-      Update-GuiApplicationGrid -GridPanel $AppGridPanel
-      Update-GuiSelectedCount -CountText $SelectedCountText
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Select All error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $SelectRecommendedButton.Add_Click({
-    try {
-      Select-RecommendedApplications | Out-Null
-      Update-GuiApplicationGrid -GridPanel $AppGridPanel
-      Update-GuiSelectedCount -CountText $SelectedCountText
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Select Recommended error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $ClearAllButton.Add_Click({
-    try {
-      Clear-AllApplications
-      Update-GuiApplicationGrid -GridPanel $AppGridPanel
-      Update-GuiSelectedCount -CountText $SelectedCountText
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Clear All error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $InstallSelectedButton.Add_Click({
-    try {
-      Invoke-GuiInstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText -InstallButton $InstallSelectedButton -UninstallButton $UninstallSelectedButton `
-        -CancelButton $CancelQueueButton -QueueProgressPanel $QueueProgressPanel -QueueProgressText $QueueProgressText -QueueProgressBar $QueueProgressBar `
-        -ModalControls $CompletionModalControls
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Install error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $UninstallSelectedButton.Add_Click({
-    try {
-      Invoke-GuiUninstallQueue -GridPanel $AppGridPanel -CountText $SelectedCountText -InstallButton $InstallSelectedButton -UninstallButton $UninstallSelectedButton `
-        -CancelButton $CancelQueueButton -QueueProgressPanel $QueueProgressPanel -QueueProgressText $QueueProgressText -QueueProgressBar $QueueProgressBar `
-        -ModalControls $CompletionModalControls
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Uninstall error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $CancelQueueButton.Add_Click({
-    try {
-      $CancelQueueButton.IsEnabled = $false
-      $CancelQueueButton.Content = "Cancelling..."
-      $script:GuiQueueCancelQueue.Enqueue($true)
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Cancel error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
   $CompletionModalOkButton.Add_Click({
     $CompletionModalControls.Overlay.Visibility = "Collapsed"
   })
@@ -506,319 +278,51 @@ function Show-MainWindow {
     Invoke-GuiCopyCompletionSummary -CopyButton $CompletionModalCopyButton
   })
 
-  $RerunValidationButton.Add_Click({
-    try {
-      Start-GuiDeploymentValidationLoad -ValidationPanel $DeploymentValidationPanel -SummaryText $ValidationSummaryText -RerunButton $RerunValidationButton
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Deployment validation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
+  # Each screen's own FindName + click-handler wiring lives in its own file; each Initialize-GuiXScreen call returns that screen's Nav Border/Text/Icon triple for the shared nav arrays below, plus (for Windows Setup/Device Details/Asset ID) whatever their one shared Refresh mechanism needs from them. Dot-sourced (". Initialize-...", not a plain call) so each function body runs in Show-MainWindow's own scope instead of a child scope that is torn down the moment the function returns -- a plain call here left every closure created inside it (nav clicks, Select All, etc.) referencing an already-gone scope, surfacing as "Cannot bind argument ... because it is null" the instant any of them fired; confirmed both the failure and the fix with a real, off-screen, simulated-click end-to-end run of this exact code.
+  $ApplicationsScreen = . Initialize-GuiApplicationsScreen -Window $Window -CompletionModalControls $CompletionModalControls
+  $WindowsSetupScreen = . Initialize-GuiWindowsSetupScreen -Window $Window
+  $DeviceDetailsScreen = . Initialize-GuiDeviceDetailsScreen -Window $Window
+  $AssetIdScreen = . Initialize-GuiAssetIdScreen -Window $Window
+  $DeploymentLogsScreen = . Initialize-GuiDeploymentLogsScreen -Window $Window
+  $DeploymentValidationScreen = . Initialize-GuiDeploymentValidationScreen -Window $Window
+  $TempCleanupScreen = . Initialize-GuiTempCleanupScreen -Window $Window -CompletionModalControls $CompletionModalControls
 
-  $RefreshLogsButton.Add_Click({
-    try {
-      Update-GuiLogsList -ListPanel $DeploymentLogsPanel -ContentTextBox $LogContentTextBox -NameText $SelectedLogNameText
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
+  $script:GuiNavBorders = @($ApplicationsScreen.NavBorder, $WindowsSetupScreen.NavBorder, $DeviceDetailsScreen.NavBorder, $AssetIdScreen.NavBorder, $DeploymentLogsScreen.NavBorder, $DeploymentValidationScreen.NavBorder, $TempCleanupScreen.NavBorder)
+  $script:GuiNavTexts = @($ApplicationsScreen.NavText, $WindowsSetupScreen.NavText, $DeviceDetailsScreen.NavText, $AssetIdScreen.NavText, $DeploymentLogsScreen.NavText, $DeploymentValidationScreen.NavText, $TempCleanupScreen.NavText)
+  $script:GuiNavIcons = @($ApplicationsScreen.NavIcon, $WindowsSetupScreen.NavIcon, $DeviceDetailsScreen.NavIcon, $AssetIdScreen.NavIcon, $DeploymentLogsScreen.NavIcon, $DeploymentValidationScreen.NavIcon, $TempCleanupScreen.NavIcon)
 
-  $OpenLogsFolderButton.Add_Click({
-    try {
-      Open-DeploymentLogsFolder
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Unable to open the Logs folder: $($_.Exception.Message)"
-    }
-  })
-
-  # Windows Setup, Device Details, and Asset ID are three screens over one shared data load, so all three Refresh buttons run the same full refresh.
-  $RefreshWindowsSetupButton.Add_Click({
-    try {
-      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText -NavAssetId $NavAssetId -AssetIdFieldTextBoxes $AssetIdFieldTextBoxes
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $RefreshDeviceDetailsButton.Add_Click({
-    try {
-      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText -NavAssetId $NavAssetId -AssetIdFieldTextBoxes $AssetIdFieldTextBoxes
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $RefreshAssetIdButton.Add_Click({
-    try {
-      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $WindowsConfigDeviceFields -CurrentNameText $CurrentComputerNameText -LocalUsersListPanel $LocalUsersListPanel -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText -NavAssetId $NavAssetId -AssetIdFieldTextBoxes $AssetIdFieldTextBoxes
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $CopyDeviceDetailsButton.Add_Click({
-    try {
-      Invoke-GuiCopyDeviceDetails -DeviceFields $WindowsConfigDeviceFields -CopyButton $CopyDeviceDetailsButton
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Copy device details error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $RefreshTempCleanupButton.Add_Click({
-    try {
-      Start-GuiTempCleanupScan -CardControls $TempCleanupCardControls -RefreshButton $RefreshTempCleanupButton -CleanButton $CleanSelectedTempButton
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $CleanSelectedTempButton.Add_Click({
-    try {
-      Invoke-GuiTempCleanup -Selected $script:GuiTempCleanupSelected -CardControls $TempCleanupCardControls -RefreshButton $RefreshTempCleanupButton -CleanButton $CleanSelectedTempButton -ModalControls $CompletionModalControls
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Temp cleanup error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $TempCleanupUserTempCard.Add_MouseLeftButtonUp({
-    try {
-      $script:GuiTempCleanupSelected["User Temp"] = -not $script:GuiTempCleanupSelected["User Temp"]
-      Set-GuiTempCleanupCheckboxState -Checkbox $TempCleanupUserTempCheckbox -Checkmark $TempCleanupUserTempCheckmark -IsChecked $script:GuiTempCleanupSelected["User Temp"]
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Checkbox error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $TempCleanupWindowsTempCard.Add_MouseLeftButtonUp({
-    try {
-      $script:GuiTempCleanupSelected["Windows Temp"] = -not $script:GuiTempCleanupSelected["Windows Temp"]
-      Set-GuiTempCleanupCheckboxState -Checkbox $TempCleanupWindowsTempCheckbox -Checkmark $TempCleanupWindowsTempCheckmark -IsChecked $script:GuiTempCleanupSelected["Windows Temp"]
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Checkbox error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $TempCleanupPrefetchCard.Add_MouseLeftButtonUp({
-    try {
-      $script:GuiTempCleanupSelected["Prefetch"] = -not $script:GuiTempCleanupSelected["Prefetch"]
-      Set-GuiTempCleanupCheckboxState -Checkbox $TempCleanupPrefetchCheckbox -Checkmark $TempCleanupPrefetchCheckmark -IsChecked $script:GuiTempCleanupSelected["Prefetch"]
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Checkbox error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  # Defaults to Later (today's existing rename behavior) -- Restart Now is always an explicit choice, never the default, since it restarts the machine immediately.
-  $script:GuiRenameRestartNow = $false
-
-  $RestartLaterOption.Add_MouseLeftButtonUp({
-    try {
-      Set-GuiRenameRestartChoice -RestartNow $false -LaterOption $RestartLaterOption -LaterOptionText $RestartLaterOptionText -NowOption $RestartNowOption -NowOptionText $RestartNowOptionText
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Restart choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $RestartNowOption.Add_MouseLeftButtonUp({
-    try {
-      Set-GuiRenameRestartChoice -RestartNow $true -LaterOption $RestartLaterOption -LaterOptionText $RestartLaterOptionText -NowOption $RestartNowOption -NowOptionText $RestartNowOptionText
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Restart choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $RenameComputerButton.Add_Click({
-    try {
-      Invoke-GuiComputerRename -NewNameTextBox $NewComputerNameTextBox -CurrentNameText $CurrentComputerNameText -RestartNow $script:GuiRenameRestartNow
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Rename error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  # Defaults to Set Password (today's existing behavior) -- No Password is always an explicit choice, never the default, since a blank-password local account is an unusual security posture.
-  $script:GuiCreateUserNoPassword = $false
-
-  $SetPasswordOption.Add_MouseLeftButtonUp({
-    try {
-      Set-GuiCreateUserPasswordChoice -NoPassword $false -SetOption $SetPasswordOption -SetOptionText $SetPasswordOptionText -NoPasswordOption $NoPasswordOption -NoPasswordOptionText $NoPasswordOptionText -PasswordFieldsPanel $NewUserPasswordFieldsPanel -NoticeText $NoPasswordNoticeBox -PasswordBox $NewUserPasswordBox -ConfirmPasswordBox $NewUserConfirmPasswordBox
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Password choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $NoPasswordOption.Add_MouseLeftButtonUp({
-    try {
-      Set-GuiCreateUserPasswordChoice -NoPassword $true -SetOption $SetPasswordOption -SetOptionText $SetPasswordOptionText -NoPasswordOption $NoPasswordOption -NoPasswordOptionText $NoPasswordOptionText -PasswordFieldsPanel $NewUserPasswordFieldsPanel -NoticeText $NoPasswordNoticeBox -PasswordBox $NewUserPasswordBox -ConfirmPasswordBox $NewUserConfirmPasswordBox
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Password choice error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $CreateUserButton.Add_Click({
-    try {
-      Invoke-GuiLocalUserCreation -UserNameTextBox $NewUserNameTextBox -FullNameTextBox $NewUserFullNameTextBox -PasswordBox $NewUserPasswordBox -ConfirmPasswordBox $NewUserConfirmPasswordBox -ListPanel $LocalUsersListPanel -NoPassword $script:GuiCreateUserNoPassword
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Create user error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $ApplyPowerSettingsButton.Add_Click({
-    try {
-      Invoke-GuiPowerSettingsApply -PluggedInMinutesTextBox $PluggedInMinutesTextBox -BatteryMinutesTextBox $BatteryMinutesTextBox -CurrentPluggedInText $CurrentPluggedInText -CurrentBatteryText $CurrentBatteryText
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Apply power settings error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $SaveAssetIdButton.Add_Click({
-    try {
-      Invoke-GuiAssetIdSave -FieldTextBoxes $AssetIdFieldTextBoxes
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Save asset ID error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $NavApplications = $Window.FindName("NavApplications")
-  $NavApplicationsText = $Window.FindName("NavApplicationsText")
-  $NavApplicationsIcon = $Window.FindName("NavApplicationsIcon")
-  $NavWindowsSetup = $Window.FindName("NavWindowsSetup")
-  $NavWindowsSetupText = $Window.FindName("NavWindowsSetupText")
-  $NavWindowsSetupIcon = $Window.FindName("NavWindowsSetupIcon")
-  $NavDeviceDetails = $Window.FindName("NavDeviceDetails")
-  $NavDeviceDetailsText = $Window.FindName("NavDeviceDetailsText")
-  $NavDeviceDetailsIcon = $Window.FindName("NavDeviceDetailsIcon")
-  $NavDeploymentLogs = $Window.FindName("NavDeploymentLogs")
-  $NavDeploymentLogsText = $Window.FindName("NavDeploymentLogsText")
-  $NavDeploymentLogsIcon = $Window.FindName("NavDeploymentLogsIcon")
-  $NavDeploymentValidation = $Window.FindName("NavDeploymentValidation")
-  $NavDeploymentValidationText = $Window.FindName("NavDeploymentValidationText")
-  $NavDeploymentValidationIcon = $Window.FindName("NavDeploymentValidationIcon")
-  $NavTempCleanup = $Window.FindName("NavTempCleanup")
-  $NavTempCleanupText = $Window.FindName("NavTempCleanupText")
-  $NavTempCleanupIcon = $Window.FindName("NavTempCleanupIcon")
-
-  $script:GuiQueueRunning = $false
-  $script:GuiSelectedCountText = $SelectedCountText
-  $script:GuiDeploymentValidationLoaded = $false
-  $script:GuiDeploymentLogsLoaded = $false
+  # Windows Setup, Device Details, and Asset ID share one background-loaded device report (Start-GuiWindowsConfigLoad/Invoke-GuiWindowsConfigurationRefresh, GuiWindowsConfigShared.ps1); each screen's own Refresh button runs the exact same full refresh, wired here since it spans controls owned by all three screens rather than belonging to just one of them.
   $script:GuiWindowsConfigLoaded = $false
-  $script:GuiTempCleanupLoaded = $false
-  $script:GuiNavBorders = @($NavApplications, $NavWindowsSetup, $NavDeviceDetails, $NavAssetId, $NavDeploymentLogs, $NavDeploymentValidation, $NavTempCleanup)
-  $script:GuiNavTexts = @($NavApplicationsText, $NavWindowsSetupText, $NavDeviceDetailsText, $NavAssetIdText, $NavDeploymentLogsText, $NavDeploymentValidationText, $NavTempCleanupText)
-  $script:GuiNavIcons = @($NavApplicationsIcon, $NavWindowsSetupIcon, $NavDeviceDetailsIcon, $NavAssetIdIcon, $NavDeploymentLogsIcon, $NavDeploymentValidationIcon, $NavTempCleanupIcon)
-  $script:GuiApplicationsToolbar = $Window.FindName("ApplicationsToolbar")
-  $script:GuiApplicationsScrollViewer = $Window.FindName("ApplicationsScrollViewer")
-  $script:GuiPlaceholderText = $Window.FindName("PlaceholderText")
-  $script:GuiDeploymentValidationToolbar = $Window.FindName("DeploymentValidationToolbar")
-  $script:GuiDeploymentValidationScrollViewer = $Window.FindName("DeploymentValidationScrollViewer")
-  $script:GuiDeploymentValidationPanel = $DeploymentValidationPanel
-  $script:GuiValidationSummaryText = $ValidationSummaryText
-  $script:GuiRerunValidationButton = $RerunValidationButton
-  $script:GuiRefreshWindowsConfigButtons = @($RefreshWindowsSetupButton, $RefreshDeviceDetailsButton, $RefreshAssetIdButton)
-  $script:GuiDeploymentLogsToolbar = $Window.FindName("DeploymentLogsToolbar")
-  $script:GuiDeploymentLogsContent = $Window.FindName("DeploymentLogsContent")
-  $script:GuiDeploymentLogsPanel = $DeploymentLogsPanel
-  $script:GuiLogContentTextBox = $LogContentTextBox
-  $script:GuiSelectedLogNameText = $SelectedLogNameText
-  $script:GuiWindowsSetupToolbar = $Window.FindName("WindowsSetupToolbar")
-  $script:GuiWindowsSetupScrollViewer = $Window.FindName("WindowsSetupScrollViewer")
-  $script:GuiDeviceDetailsToolbar = $Window.FindName("DeviceDetailsToolbar")
-  $script:GuiDeviceDetailsScrollViewer = $Window.FindName("DeviceDetailsScrollViewer")
-  $script:GuiWindowsConfigDeviceFields = $WindowsConfigDeviceFields
-  $script:GuiCurrentComputerNameText = $CurrentComputerNameText
-  $script:GuiLocalUsersListPanel = $LocalUsersListPanel
-  $script:GuiCurrentPluggedInText = $CurrentPluggedInText
-  $script:GuiCurrentBatteryText = $CurrentBatteryText
-  $script:GuiNavAssetId = $NavAssetId
-  $script:GuiAssetIdToolbar = $AssetIdToolbar
-  $script:GuiAssetIdScrollViewer = $AssetIdScrollViewer
-  $script:GuiAssetIdFieldTextBoxes = $AssetIdFieldTextBoxes
-  $script:GuiTempCleanupToolbar = $TempCleanupToolbar
-  $script:GuiTempCleanupScrollViewer = $TempCleanupScrollViewer
-  $script:GuiTempCleanupCardControls = $TempCleanupCardControls
-  $script:GuiRefreshTempCleanupButton = $RefreshTempCleanupButton
-  $script:GuiCleanSelectedTempButton = $CleanSelectedTempButton
+  $script:GuiRefreshWindowsConfigButtons = @($WindowsSetupScreen.RefreshButton, $DeviceDetailsScreen.RefreshButton, $AssetIdScreen.RefreshButton)
 
-  $NavApplications.Add_MouseLeftButtonUp({
+  $WindowsSetupScreen.RefreshButton.Add_Click({
     try {
-      Switch-GuiScreen -ScreenName "Applications" -ActiveBorder $NavApplications -ActiveText $NavApplicationsText -ActiveIcon $NavApplicationsIcon
+      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $DeviceDetailsScreen.DeviceFields -CurrentNameText $WindowsSetupScreen.CurrentNameText -LocalUsersListPanel $WindowsSetupScreen.LocalUsersListPanel -CurrentPluggedInText $WindowsSetupScreen.CurrentPluggedInText -CurrentBatteryText $WindowsSetupScreen.CurrentBatteryText -NavAssetId $AssetIdScreen.NavAssetId -AssetIdFieldTextBoxes $AssetIdScreen.FieldTextBoxes
     }
     catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
-  $NavWindowsSetup.Add_MouseLeftButtonUp({
+  $DeviceDetailsScreen.RefreshButton.Add_Click({
     try {
-      Switch-GuiScreen -ScreenName "Windows Setup" -ActiveBorder $NavWindowsSetup -ActiveText $NavWindowsSetupText -ActiveIcon $NavWindowsSetupIcon
+      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $DeviceDetailsScreen.DeviceFields -CurrentNameText $WindowsSetupScreen.CurrentNameText -LocalUsersListPanel $WindowsSetupScreen.LocalUsersListPanel -CurrentPluggedInText $WindowsSetupScreen.CurrentPluggedInText -CurrentBatteryText $WindowsSetupScreen.CurrentBatteryText -NavAssetId $AssetIdScreen.NavAssetId -AssetIdFieldTextBoxes $AssetIdScreen.FieldTextBoxes
     }
     catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
-  $NavDeviceDetails.Add_MouseLeftButtonUp({
+  $AssetIdScreen.RefreshButton.Add_Click({
     try {
-      Switch-GuiScreen -ScreenName "Device Details" -ActiveBorder $NavDeviceDetails -ActiveText $NavDeviceDetailsText -ActiveIcon $NavDeviceDetailsIcon
+      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $DeviceDetailsScreen.DeviceFields -CurrentNameText $WindowsSetupScreen.CurrentNameText -LocalUsersListPanel $WindowsSetupScreen.LocalUsersListPanel -CurrentPluggedInText $WindowsSetupScreen.CurrentPluggedInText -CurrentBatteryText $WindowsSetupScreen.CurrentBatteryText -NavAssetId $AssetIdScreen.NavAssetId -AssetIdFieldTextBoxes $AssetIdScreen.FieldTextBoxes
     }
     catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
     }
   })
 
-  $NavAssetId.Add_MouseLeftButtonUp({
-    try {
-      Switch-GuiScreen -ScreenName "Asset ID" -ActiveBorder $NavAssetId -ActiveText $NavAssetIdText -ActiveIcon $NavAssetIdIcon
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $NavDeploymentLogs.Add_MouseLeftButtonUp({
-    try {
-      Switch-GuiScreen -ScreenName "Deployment Logs" -ActiveBorder $NavDeploymentLogs -ActiveText $NavDeploymentLogsText -ActiveIcon $NavDeploymentLogsIcon
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $NavDeploymentValidation.Add_MouseLeftButtonUp({
-    try {
-      Switch-GuiScreen -ScreenName "Deployment Validation" -ActiveBorder $NavDeploymentValidation -ActiveText $NavDeploymentValidationText -ActiveIcon $NavDeploymentValidationIcon
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
-
-  $NavTempCleanup.Add_MouseLeftButtonUp({
-    try {
-      Switch-GuiScreen -ScreenName "Temp Cleanup" -ActiveBorder $NavTempCleanup -ActiveText $NavTempCleanupText -ActiveIcon $NavTempCleanupIcon
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
+  Update-GuiSystemInfoBar -Window $Window
 
   $TitleBarMinimizeButton.Add_MouseLeftButtonUp({
     try {
