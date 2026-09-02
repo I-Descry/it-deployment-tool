@@ -10,7 +10,7 @@ Instead of manually downloading and installing applications one at a time, the t
 
 `1.1.0-dev`
 
-This development version adds CrowdStrike deployment, Microsoft Office 2024 and Office 2021 LOP installation, Windows device configuration, deployment validation, application conflict protection, and required-application validation.
+This development version adds CrowdStrike deployment, Microsoft Office 2024 and Office 2021 LOP installation, Windows device configuration, deployment validation, application conflict protection, required-application validation, a graphical (GUI) interface alongside the original console menus, automatic cloud fetch of large offline installer packages, and a one-line remote bootstrap for deploying the tool itself to a new device.
 
 Local non-destructive acceptance testing has been completed. Fresh application installations and real system changes remain pending because an authorized clean test device is not currently available.
 
@@ -102,6 +102,7 @@ The version will remain `1.1.0-dev` until the remaining acceptance tests pass.
 - Supports uninstallation of Script-type applications through a configurable `UninstallerPath`
 - Supports uninstallation of Microsoft Office LTSC Standard 2024 by mounting the Office ISO and running the Office Deployment Tool with a local removal configuration file
 - Supports uninstallation of Microsoft Office Professional Plus 2021 - LOP through the same registry-based path as EXE applications
+- Does not automate CrowdStrike sensor removal, by deliberate choice (see CrowdStrike Falcon Sensor below)
 - Returns a clear "not yet supported" result for installation types that do not yet support uninstallation
 - Normalizes uninstallation results into `Uninstalled`, `Skipped`, or `Failed`
 - Displays a final uninstallation summary
@@ -264,6 +265,7 @@ testing.
 - Supplies the Customer ID and installation token to the installer
 - Keeps acceptance of the Sensor Terms of Use as a manual technician action
 - Verifies installation by checking for the Falcon service
+- Does not support automated uninstallation. This is a deliberate choice, not a gap: removal requires CrowdStrike's own separate `CsUninstallTool.exe` (downloaded from the Falcon console's Tool Downloads page) and, when Maintenance Protection is enabled, a maintenance token — see the CrowdStrike Example below for the manual removal command.
 
 The CrowdStrike installer and credential-containing README are excluded from Git.
 
@@ -515,11 +517,17 @@ The required application check reads the `RequiredForIssuance` property from `Co
 ```text
 IT Deployment Tool/
 ├── Config/
-│   └── Applications.json
+│   ├── Applications.json
+│   └── CloudInstallerSources.json   (not tracked -- see Cloud Installer Fetch)
 ├── Installers/
 │   ├── EXE/
+│   │   ├── Canon/
 │   │   ├── CrowdStrike/
-│   │   └── SAP/
+│   │   ├── EPSON/
+│   │   ├── FreeFileSync/
+│   │   ├── HP/
+│   │   ├── SAP/
+│   │   └── ThinkPadAssetID/
 │   ├── MSI/
 │   ├── ISO/
 │   │   └── Office2024/
@@ -527,6 +535,7 @@ IT Deployment Tool/
 │   │   └── Office2021LOP/
 │   ├── ZIP/
 │   └── Scripts/
+│       └── WinMTR/
 ├── Logs/
 │   └── .gitkeep
 ├── Modules/
@@ -540,7 +549,20 @@ IT Deployment Tool/
 │   │   ├── Elevation.ps1
 │   │   ├── Logging.ps1
 │   │   └── UI.ps1
+│   ├── Gui/
+│   │   ├── Fonts/
+│   │   ├── GuiApplicationsScreen.ps1
+│   │   ├── GuiDeploymentLogsScreen.ps1
+│   │   ├── GuiDeploymentValidationScreen.ps1
+│   │   ├── GuiDialog.ps1
+│   │   ├── GuiIcons.ps1
+│   │   ├── GuiTempCleanupScreen.ps1
+│   │   ├── GuiWindow.ps1
+│   │   ├── GuiWindowsConfigScreen.ps1
+│   │   └── MainWindow.xaml
 │   ├── Installation/
+│   │   ├── AppxInstaller.ps1
+│   │   ├── CloudInstallerFetch.ps1
 │   │   ├── CrowdStrikeInstaller.ps1
 │   │   ├── InstallationQueue.ps1
 │   │   ├── InstallationResult.ps1
@@ -551,6 +573,9 @@ IT Deployment Tool/
 │   │   ├── OfficeIsoInstaller.ps1
 │   │   ├── OfflineInstaller.ps1
 │   │   ├── ScriptInstaller.ps1
+│   │   ├── UninstallationQueue.ps1
+│   │   ├── UninstallationResult.ps1
+│   │   ├── UninstallationRouter.ps1
 │   │   ├── WingetInstaller.ps1
 │   │   └── ZipInstaller.ps1
 │   ├── Interface/
@@ -568,10 +593,15 @@ IT Deployment Tool/
 │   │   └── SystemInformation.ps1
 │   └── Windows/
 │       ├── ComputerNameConfiguration.ps1
+│       ├── LenovoAssetId.ps1
 │       ├── LocalUserConfiguration.ps1
 │       ├── PowerConfiguration.ps1
+│       ├── TempCleanup.ps1
 │       └── WindowsConfiguration.ps1
 ├── .gitignore
+├── CLAUDE.md
+├── Deploy.ps1
+├── Import-CloudInstallers.ps1
 ├── README.md
 ├── TESTING.md
 └── Start.ps1
@@ -579,6 +609,7 @@ IT Deployment Tool/
 
 > Installer packages and generated log files are excluded from the repository.
 > PowerShell modules are organized by responsibility and loaded by `Start.ps1` using an explicit dependency-aware order.
+> `Deploy.ps1` and `Import-CloudInstallers.ps1` are standalone scripts at the repo root, not part of `$ModulePaths` -- see Cloud Installer Fetch and Deploying to a New Machine below.
 
 ---
 
@@ -675,7 +706,7 @@ Applications may define processes that must be closed before installation:
   "Name": "SAP GUI for Windows 7.70",
   "DetectionName": "SAP GUI for Windows 7.70",
   "InstallType": "Exe",
-  "InstallerPath": "SAPGUI-7.70-WINDOWS_50152942_2\\BD_NW_7.0_Presentation_7.70_Comp._1_\\PRES1\\GUI\\Windows\\Win32\\SapGuiSetup.exe",
+  "InstallerPath": "EXE\\SAP\\SAPGUI-7.70-WINDOWS_50152942_2\\BD_NW_7.0_Presentation_7.70_Comp._1_\\PRES1\\GUI\\Windows\\Win32\\SapGuiSetup.exe",
   "SilentArguments": "",
   "SuccessExitCodes": [0, 129],
   "RebootExitCodes": [129],
@@ -701,7 +732,7 @@ Applications may define processes that must be closed before installation:
 CrowdStrike does not require an installer path in `Applications.json`. Its dedicated module searches inside:
 
 ```text
-Installers/CrowdStrike/
+Installers/EXE/CrowdStrike/
 ```
 
 ---
@@ -735,22 +766,25 @@ Required installer directories are created automatically when the deployment too
 
 ```text
 Installers/
-`-- SAPGUI-7.70-WINDOWS_50152942_2/
-    `-- BD_NW_7.0_Presentation_7.70_Comp._1_/
-        `-- PRES1/
-            `-- GUI/
-                `-- Windows/
-                    `-- Win32/
-                        `-- SapGuiSetup.exe
+`-- EXE/
+    `-- SAP/
+        `-- SAPGUI-7.70-WINDOWS_50152942_2/
+            `-- BD_NW_7.0_Presentation_7.70_Comp._1_/
+                `-- PRES1/
+                    `-- GUI/
+                        `-- Windows/
+                            `-- Win32/
+                                `-- SapGuiSetup.exe
 ```
 
 ### CrowdStrike Example
 
 ```text
 Installers/
-`-- CrowdStrike/
-    |-- FalconSensor_Windows - 7.35.20709.exe
-    `-- Readme.txt
+`-- EXE/
+    `-- CrowdStrike/
+        |-- FalconSensor_Windows - 7.35.20709.exe
+        `-- Readme.txt
 ```
 
 The CrowdStrike README is expected to contain:
@@ -767,9 +801,40 @@ Do not commit or publicly share the real values.
 
 ---
 
+## Cloud Installer Fetch
+
+Some offline installer packages are too large to keep in this repository's Git history: CrowdStrike, Microsoft Office LTSC 2024, Microsoft Office 2021 LOP, and SAP GUI. For an application with a configured cloud source, the tool downloads and extracts its package automatically the first time it's needed — a technician never has to locate and copy these large files onto a new machine by hand.
+
+The mapping of application name to source lives in `Config\CloudInstallerSources.json`, mapping each application's `Name` (as it appears in `Config\Applications.json`) to a Google Drive share URL. This file is **not tracked in Git** and is **not** the same file as `Config\Applications.json` — this repository's GitHub remote is public, and a Drive share link committed into a tracked file would let anyone who reads the repository download these licensed and credential-bearing packages. A missing `CloudInstallerSources.json` is not an error; it just means no application has a configured cloud source, the same as a device with no CrowdStrike `Readme.txt`.
+
+The fetch only runs when the package isn't already present locally (the same read-only availability check `Deployment Validation` uses), and only ever downloads inside the actual install step — never during a read-only check. Downloaded ZIPs are expected to wrap the application's own folder (e.g. `SAP.zip` contains a top-level `SAP\` folder), so extraction recreates the existing `Installers\` subfolder structure exactly.
+
+If an application has no configured cloud source, its package must still be placed manually, the same as before this feature existed. For that manual path, `Import-CloudInstallers.ps1` (repo root) automates the "which `Installers\` subfolder does this ZIP belong in" step for a folder of manually downloaded ZIPs:
+
+```powershell
+.\Import-CloudInstallers.ps1
+.\Import-CloudInstallers.ps1 -SourceFolder "D:\Downloads"
+```
+
+It matches each ZIP's filename against either the application's installer subfolder name (e.g. `SAP.zip` for `Installers\EXE\SAP\`) or the application's `Name` in `Applications.json` (e.g. `WinMTR.zip`), then extracts it into the correct place — reusing the exact same folder-resolution logic the automatic fetch uses, so the two paths can never disagree about where a package belongs.
+
+---
+
 ## Deploying to a New Machine
 
-The tool is copied to each machine rather than installed through a package manager. When setting up a brand new company laptop:
+Setting up a brand-new device has two paths, depending on whether this is a real deployment target or a development copy of the tool itself.
+
+### Remote Bootstrap (Recommended for a Real Device)
+
+Open PowerShell on the new device and run:
+
+```powershell
+irm https://raw.githubusercontent.com/I-Descry/it-deployment-tool/main/Deploy.ps1 | iex
+```
+
+This one line downloads the current tool (everything Git tracks — the scripts and `Config\Applications.json`, a few MB) to the real interactively logged-in user's `Desktop\IT Deployment Tool` — resolved correctly even if the session is elevated as a different admin account than the person the device is actually for — then launches `Start.ps1 -Gui` automatically. The gitignored `Installers\` binaries are not part of the Git repository and are not fetched by this script; applications with a configured cloud source (above) fetch their own package automatically on first install, and everything else still needs to be copied in separately. A device set up this way self-deletes the entire tool folder (not the applications it installed) when its window closes and the technician confirms — see [Self-Removal on Devices Set Up via the Remote Bootstrap](#self-removal-on-devices-set-up-via-the-remote-bootstrap) below.
+
+### Manual Clone or Copy (This Dev Repository, or Any Manual Setup)
 
 1. **Get the code onto the machine.** Clone or copy this repository. Everything except the `Installers\` directory's actual package files travels with it automatically, including the bundled Nunito font used by the GUI (`Modules\Gui\Fonts\`).
 2. **Transfer the offline installer packages separately.** `Installers\` is deliberately excluded from Git (see [Offline Installers](#offline-installers) above) because its contents are large, proprietary, licensed, or security-sensitive. On a machine that already has these staged, the directory structure under `Installers\` can be copied as-is onto the new machine — the exact transfer method (external drive, network share, cloud storage) isn't dictated by this tool and is still an open decision for this project; whichever is used, preserve the existing subfolder structure (`Installers\EXE\...`, `Installers\ISO\...`, etc.) exactly, since the application catalog's `InstallerPath` values are matched against it directly.
@@ -843,7 +908,19 @@ A WPF graphical interface is available as an alternative to the console menus, s
 .\Start.ps1 -Gui
 ```
 
-Administrator elevation is requested before the window opens, exactly like console mode. The GUI covers the same functionality as the console menus: Applications (browse, select, install, uninstall — install/uninstall run in the background so the window stays responsive), Windows Configuration (device information, computer rename, local standard user creation, power and sleep settings), Deployment Logs (browse and view recent session logs), and Deployment Validation (device readiness checks and installer package status).
+Administrator elevation is requested before the window opens, exactly like console mode, and the GUI drives the same underlying functions the console menus use — application detection, installer routing, and result normalization are identical between the two; the GUI is a different interface layer over the same logic, not a separate implementation. The sidebar has seven screens:
+
+- **Applications** — the same catalog, grouped by category, with Select All / Select Recommended / Clear All / individual selection, plus Install Selected and Uninstall Selected queues that run on a background thread so the window stays responsive during a real install or uninstall. Progress shows a determinate bar and "Installing N of M: AppName..." text; a Cancel button lets the queue finish whichever application is currently running, then marks everything remaining as Cancelled rather than forcibly killing an installer mid-run. Results appear in a completion modal (counts per status, a scrollable failure-details list, and a Copy Results button that copies the full summary to the clipboard).
+- **Windows Setup** — Computer Rename (with a Restart Later / Restart Now choice), Create Local Standard User (with a Set Password / No Password choice), and Configure Power and Sleep Settings.
+- **Device Details** — a read-only report covering identity, network, OS, session, power, and hardware information (including TPM, Secure Boot, BitLocker, antivirus, firewall status, uptime, and battery health where the device can report them), with a Copy Device Details button.
+- **Asset ID** — shown only on a Lenovo ThinkPad (hidden entirely on any other device); edits and writes the BIOS asset-tracking fields supported by Lenovo's WinAIA utility (owner name, department, location, phone, position, purchase date, last inventoried, warranty end/duration, amount, asset number).
+- **Deployment Validation** — the same read-only readiness checks as the console menu, shown as pass/fail rows with colored status badges.
+- **Deployment Logs** — browse and view recent session logs without leaving the GUI.
+- **Temp Cleanup** — scans and clears the current user's `%TEMP%`, `C:\Windows\Temp`, and `C:\Windows\Prefetch`, each as its own card with a checkbox, file count, and total size; deletion requires a confirmation that names exactly which locations and how much data will be removed.
+
+Windows Setup, Device Details, and Asset ID share one background-loaded device report, so whichever of the three is opened first performs the load and the others reuse it without re-querying. Every confirmation, warning, and informational prompt throughout the GUI (uninstall confirmations, rename/create-user/power-setting confirmations, Temp Cleanup's delete confirmation, error messages) uses a custom in-app dialog matching the tool's own dark theme and button style, instead of a native Windows message box.
+
+A device set up through the remote bootstrap self-deletes when its window closes; see [Self-Removal on Devices Set Up via the Remote Bootstrap](#self-removal-on-devices-set-up-via-the-remote-bootstrap) above.
 
 ---
 
