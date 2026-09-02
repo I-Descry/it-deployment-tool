@@ -758,7 +758,10 @@ The CrowdStrike README is expected to contain:
 ```text
 Customer ID: <company CID with checksum>
 Token: <installation token>
+Maintenance Token: <maintenance token>
 ```
+
+`Customer ID` and `Token` are read and used by this tool to install the sensor. `Maintenance Token` is for a technician's own manual reference only — this tool does not read, parse, or act on it. CrowdStrike uninstallation is not automated by this tool (see [Uninstallation Automation](#uninstallation-automation) above); removing the sensor requires CrowdStrike's own `CsUninstallTool.exe` (downloaded separately from the Falcon console's Tool Downloads page) run by hand as `CsUninstallTool.exe MAINTENANCE_TOKEN=<token> /quiet`, or without the token if Maintenance Protection is disabled in the Falcon console.
 
 Do not commit or publicly share the real values.
 

@@ -213,7 +213,7 @@ Uninstallation currently supports:
 * `OfficeISO` — via `Start-Office2024Uninstallation`, which mounts the same Office ISO used for install and runs `setup.exe /configure office-remove.xml`, where `office-remove.xml` is a local file (`Installers\ISO\Office2024\office-remove.xml`, not tracked by git) containing the standard ODT `<Remove All="TRUE" />` element.
 * `Office2021IMG` — via the same registry-based path as `Exe`. Office 2021 LOP installs via a Retail Click-to-Run mechanism (`Setup.exe /AUTORUN`), not the ODT `/configure` pattern `OfficeISO` uses, so there is no ODT-based removal available. Click-to-Run products (retail and volume license alike) register a standard entry under the classic `Uninstall` registry key, the same as any other Windows application, so this relies on whatever command Windows itself already registered rather than inventing Office-specific removal syntax. The exact registry `DisplayName` for Office 2021 LOP has not been verified against a device with it installed; if it does not match, `Uninstall-ApplicationWithExe` already fails cleanly rather than doing anything incorrect.
 
-`CrowdStrike` uninstallation is intentionally out of scope. Selecting it for uninstall returns a clean `Failed` result with an explanatory message rather than attempting an unsupported removal. This is a deliberate decision, not a pending item: this tool has no access to a separate maintenance/removal token, and CrowdStrike sensors are deliberately hardened against uninstall without one when Maintenance Protection is enabled in the Falcon console.
+`CrowdStrike` uninstallation is intentionally out of scope and remains unautomated by deliberate choice. Selecting it for uninstall falls through `Uninstall-ApplicationByType`'s `default` case and returns a clean `Failed` result with an explanatory message rather than attempting removal. CrowdStrike's own separate `CsUninstallTool.exe` (downloaded from the Falcon console's Tool Downloads page, not bundled with the sensor installer) supports a silent, maintenance-token-gated removal (`CsUninstallTool.exe MAINTENANCE_TOKEN=<token> /quiet`, or without the token if Maintenance Protection is disabled) — `Readme.txt` may carry an additional `Maintenance Token:` line alongside `Customer ID:`/`Token:` for a technician's own manual use with that tool, but this app does not read, parse, or act on that value anywhere.
 
 ### Uninstallation results
 
@@ -356,6 +356,7 @@ Sensitive values include, but are not limited to:
 
 * CrowdStrike Customer ID;
 * CrowdStrike installation token;
+* CrowdStrike maintenance token;
 * account passwords;
 * Office product keys.
 
