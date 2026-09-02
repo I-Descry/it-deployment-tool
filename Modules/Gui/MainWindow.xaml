@@ -265,6 +265,18 @@
             <TextBlock x:Name="NavDeploymentValidationText" Text="Deployment Validation" Foreground="#9A9EA8" FontSize="13" VerticalAlignment="Center"/>
           </StackPanel>
         </Border>
+        <Border x:Name="NavTempCleanup" Background="Transparent" CornerRadius="6" Padding="11,9" Margin="0,0,0,2" Cursor="Hand">
+          <StackPanel Orientation="Horizontal">
+            <Canvas x:Name="NavTempCleanupIcon" Width="20" Height="20" Margin="0,0,10,0">
+              <Line X1="4" Y1="6" X2="16" Y2="6" Stroke="#9A9EA8" StrokeThickness="1.4" StrokeStartLineCap="Round"/>
+              <Path Stroke="#9A9EA8" StrokeThickness="1.4" StrokeLineJoin="Round" Data="M7 6V4.5a1 1 0 011-1h4a1 1 0 011 1V6"/>
+              <Path Stroke="#9A9EA8" StrokeThickness="1.4" StrokeLineJoin="Round" Data="M5.5 6l.8 10a1 1 0 001 1h5.4a1 1 0 001-1l.8-10"/>
+              <Line X1="8.5" Y1="8.5" X2="8.8" Y2="14.5" Stroke="#9A9EA8" StrokeThickness="1.2" StrokeStartLineCap="Round"/>
+              <Line X1="11.5" Y1="8.5" X2="11.2" Y2="14.5" Stroke="#9A9EA8" StrokeThickness="1.2" StrokeStartLineCap="Round"/>
+            </Canvas>
+            <TextBlock x:Name="NavTempCleanupText" Text="Temp Cleanup" Foreground="#9A9EA8" FontSize="13" VerticalAlignment="Center"/>
+          </StackPanel>
+        </Border>
         </StackPanel>
       </DockPanel>
     </Border>
@@ -377,6 +389,27 @@
             <TextBlock Text="Deployment Logs" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
           </StackPanel>
           <TextBlock Text="Review past deployment sessions and their recorded outcomes." Foreground="#9A9EA8" FontSize="11.5" Margin="25,3,0,0"/>
+        </StackPanel>
+      </DockPanel>
+
+      <!-- Temp Cleanup toolbar -->
+      <DockPanel x:Name="TempCleanupToolbar" Grid.Row="1" Margin="24,14,24,10" LastChildFill="False" Visibility="Collapsed">
+        <Button x:Name="CleanSelectedTempButton" Content="Clean Selected" DockPanel.Dock="Right"
+                Padding="18,9" Background="#38BDF8" Foreground="#08131A"
+                BorderThickness="0" FontSize="13" FontWeight="Bold"/>
+        <Button x:Name="RefreshTempCleanupButton" Content="Refresh" DockPanel.Dock="Right"
+                Padding="14,8" Margin="0,0,10,0" Background="#23262E" Foreground="#E8E9EC"
+                BorderBrush="#2C2F38" BorderThickness="1" FontSize="12.5"/>
+        <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal">
+            <Canvas Width="16" Height="16" Margin="0,0,9,0">
+              <Line X1="3.2" Y1="4.8" X2="12.8" Y2="4.8" Stroke="#38BDF8" StrokeThickness="1.3" StrokeStartLineCap="Round"/>
+              <Path Stroke="#38BDF8" StrokeThickness="1.3" StrokeLineJoin="Round" Data="M5.6 4.8V3.6a0.8 0.8 0 01.8-.8h3.2a0.8 0.8 0 01.8.8v1.2"/>
+              <Path Stroke="#38BDF8" StrokeThickness="1.3" StrokeLineJoin="Round" Data="M4.4 4.8l.6 8a0.8 0.8 0 00.8.8h4.4a0.8 0.8 0 00.8-.8l.6-8"/>
+            </Canvas>
+            <TextBlock Text="Temp Cleanup" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+          </StackPanel>
+          <TextBlock Text="Reviews and clears temp/cache locations before handing off this device." Foreground="#9A9EA8" FontSize="11.5" Margin="25,3,0,0"/>
         </StackPanel>
       </DockPanel>
 
@@ -923,6 +956,70 @@
                   <TextBlock x:Name="DeviceFirewallStatusText" Text="-" Foreground="#6B6F79" FontSize="11" FontWeight="SemiBold"/>
                 </Border>
               </Grid>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </ScrollViewer>
+
+      <!-- Temp Cleanup content: three fixed cards (User Temp, Windows Temp, Prefetch), each with a card-level checkbox toggling whether that location is included in Clean Selected -->
+      <ScrollViewer x:Name="TempCleanupScrollViewer" Grid.Row="2" Padding="24,4,24,24" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="14"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="14"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+
+          <!-- User Temp -->
+          <Border x:Name="TempCleanupUserTempCard" Grid.Column="0" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" Cursor="Hand" VerticalAlignment="Top">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Border x:Name="TempCleanupUserTempCheckbox" Width="18" Height="18" CornerRadius="5" Background="#38BDF8" VerticalAlignment="Center" Margin="0,0,10,0">
+                  <Canvas Width="10" Height="10">
+                    <Path x:Name="TempCleanupUserTempCheckmark" Stroke="#0B1116" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M1.5 5L4 7.5L8.5 2"/>
+                  </Canvas>
+                </Border>
+                <TextBlock Text="User Temp" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+              </StackPanel>
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,12"/>
+              <TextBlock x:Name="TempCleanupUserTempPathText" Text="-" Foreground="#9A9EA8" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,8"/>
+              <TextBlock x:Name="TempCleanupUserTempSummaryText" Text="Scanning..." Foreground="#E8E9EC" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Windows Temp -->
+          <Border x:Name="TempCleanupWindowsTempCard" Grid.Column="2" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" Cursor="Hand" VerticalAlignment="Top">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Border x:Name="TempCleanupWindowsTempCheckbox" Width="18" Height="18" CornerRadius="5" Background="#38BDF8" VerticalAlignment="Center" Margin="0,0,10,0">
+                  <Canvas Width="10" Height="10">
+                    <Path x:Name="TempCleanupWindowsTempCheckmark" Stroke="#0B1116" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M1.5 5L4 7.5L8.5 2"/>
+                  </Canvas>
+                </Border>
+                <TextBlock Text="Windows Temp" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+              </StackPanel>
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,12"/>
+              <TextBlock x:Name="TempCleanupWindowsTempPathText" Text="-" Foreground="#9A9EA8" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,8"/>
+              <TextBlock x:Name="TempCleanupWindowsTempSummaryText" Text="Scanning..." Foreground="#E8E9EC" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Prefetch -->
+          <Border x:Name="TempCleanupPrefetchCard" Grid.Column="4" Background="#1C1F26" BorderBrush="#2C2F38" BorderThickness="1" CornerRadius="10" Padding="16" Cursor="Hand" VerticalAlignment="Top">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Border x:Name="TempCleanupPrefetchCheckbox" Width="18" Height="18" CornerRadius="5" Background="#38BDF8" VerticalAlignment="Center" Margin="0,0,10,0">
+                  <Canvas Width="10" Height="10">
+                    <Path x:Name="TempCleanupPrefetchCheckmark" Stroke="#0B1116" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M1.5 5L4 7.5L8.5 2"/>
+                  </Canvas>
+                </Border>
+                <TextBlock Text="Prefetch" Foreground="#E8E9EC" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+              </StackPanel>
+              <Border BorderBrush="#2C2F38" BorderThickness="0,0,0,1" Margin="0,0,0,12"/>
+              <TextBlock x:Name="TempCleanupPrefetchPathText" Text="-" Foreground="#9A9EA8" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,8"/>
+              <TextBlock x:Name="TempCleanupPrefetchSummaryText" Text="Scanning..." Foreground="#E8E9EC" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"/>
             </StackPanel>
           </Border>
         </Grid>

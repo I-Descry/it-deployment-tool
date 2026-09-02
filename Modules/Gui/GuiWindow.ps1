@@ -86,6 +86,8 @@ function Switch-GuiScreen {
   $script:GuiDeviceDetailsScrollViewer.Visibility = "Collapsed"
   $script:GuiAssetIdToolbar.Visibility = "Collapsed"
   $script:GuiAssetIdScrollViewer.Visibility = "Collapsed"
+  $script:GuiTempCleanupToolbar.Visibility = "Collapsed"
+  $script:GuiTempCleanupScrollViewer.Visibility = "Collapsed"
   $script:GuiPlaceholderText.Visibility = "Collapsed"
 
   if ($ScreenName -eq "Applications") {
@@ -143,6 +145,17 @@ function Switch-GuiScreen {
     else {
       Start-GuiFadeIn -Element $ActiveScrollViewer
     }
+  }
+  elseif ($ScreenName -eq "Temp Cleanup") {
+    $script:GuiTempCleanupToolbar.Visibility = "Visible"
+    $script:GuiTempCleanupScrollViewer.Visibility = "Visible"
+
+    if (-not $script:GuiTempCleanupLoaded) {
+      $script:GuiTempCleanupLoaded = $true
+      Start-GuiTempCleanupScan -CardControls $script:GuiTempCleanupCardControls -RefreshButton $script:GuiRefreshTempCleanupButton -CleanButton $script:GuiCleanSelectedTempButton
+    }
+
+    Start-GuiFadeIn -Element $script:GuiTempCleanupScrollViewer
   }
   else {
     $script:GuiPlaceholderText.Text = "$ScreenName screen - not built yet"
@@ -312,6 +325,40 @@ function Show-MainWindow {
   $AssetAmountTextBox = $Window.FindName("AssetAmountTextBox")
   $AssetNumberTextBox = $Window.FindName("AssetNumberTextBox")
   $SaveAssetIdButton = $Window.FindName("SaveAssetIdButton")
+
+  $TempCleanupToolbar = $Window.FindName("TempCleanupToolbar")
+  $TempCleanupScrollViewer = $Window.FindName("TempCleanupScrollViewer")
+  $RefreshTempCleanupButton = $Window.FindName("RefreshTempCleanupButton")
+  $CleanSelectedTempButton = $Window.FindName("CleanSelectedTempButton")
+  $TempCleanupUserTempCard = $Window.FindName("TempCleanupUserTempCard")
+  $TempCleanupUserTempCheckbox = $Window.FindName("TempCleanupUserTempCheckbox")
+  $TempCleanupUserTempCheckmark = $Window.FindName("TempCleanupUserTempCheckmark")
+  $TempCleanupUserTempPathText = $Window.FindName("TempCleanupUserTempPathText")
+  $TempCleanupUserTempSummaryText = $Window.FindName("TempCleanupUserTempSummaryText")
+  $TempCleanupWindowsTempCard = $Window.FindName("TempCleanupWindowsTempCard")
+  $TempCleanupWindowsTempCheckbox = $Window.FindName("TempCleanupWindowsTempCheckbox")
+  $TempCleanupWindowsTempCheckmark = $Window.FindName("TempCleanupWindowsTempCheckmark")
+  $TempCleanupWindowsTempPathText = $Window.FindName("TempCleanupWindowsTempPathText")
+  $TempCleanupWindowsTempSummaryText = $Window.FindName("TempCleanupWindowsTempSummaryText")
+  $TempCleanupPrefetchCard = $Window.FindName("TempCleanupPrefetchCard")
+  $TempCleanupPrefetchCheckbox = $Window.FindName("TempCleanupPrefetchCheckbox")
+  $TempCleanupPrefetchCheckmark = $Window.FindName("TempCleanupPrefetchCheckmark")
+  $TempCleanupPrefetchPathText = $Window.FindName("TempCleanupPrefetchPathText")
+  $TempCleanupPrefetchSummaryText = $Window.FindName("TempCleanupPrefetchSummaryText")
+
+  # Keyed by the same location Name used throughout TempCleanup.ps1 (Get-TempCleanupTargetPaths/Get-TempCleanupTargets), so scan results and checkbox state can be looked up by name instead of a chain of if/elseif per card.
+  $TempCleanupCardControls = [ordered]@{
+    "User Temp"    = @{ PathText = $TempCleanupUserTempPathText; SummaryText = $TempCleanupUserTempSummaryText }
+    "Windows Temp" = @{ PathText = $TempCleanupWindowsTempPathText; SummaryText = $TempCleanupWindowsTempSummaryText }
+    "Prefetch"     = @{ PathText = $TempCleanupPrefetchPathText; SummaryText = $TempCleanupPrefetchSummaryText }
+  }
+
+  # All three cards default to checked, matching Get-TempCleanupTargets always scanning all three locations regardless of selection.
+  $script:GuiTempCleanupSelected = [ordered]@{
+    "User Temp"    = $true
+    "Windows Temp" = $true
+    "Prefetch"     = $true
+  }
 
   # Keyed the same way Get-DeploymentAssetIdFieldNames orders them, so Update-GuiAssetIdFields/Invoke-GuiAssetIdSave can loop instead of repeating each field name by hand.
   $AssetIdFieldTextBoxes = @{
@@ -523,6 +570,54 @@ function Show-MainWindow {
     }
   })
 
+  $RefreshTempCleanupButton.Add_Click({
+    try {
+      Start-GuiTempCleanupScan -CardControls $TempCleanupCardControls -RefreshButton $RefreshTempCleanupButton -CleanButton $CleanSelectedTempButton
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $CleanSelectedTempButton.Add_Click({
+    try {
+      Invoke-GuiTempCleanup -Selected $script:GuiTempCleanupSelected -CardControls $TempCleanupCardControls -RefreshButton $RefreshTempCleanupButton -CleanButton $CleanSelectedTempButton -ModalControls $CompletionModalControls
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Temp cleanup error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $TempCleanupUserTempCard.Add_MouseLeftButtonUp({
+    try {
+      $script:GuiTempCleanupSelected["User Temp"] = -not $script:GuiTempCleanupSelected["User Temp"]
+      Set-GuiTempCleanupCheckboxState -Checkbox $TempCleanupUserTempCheckbox -Checkmark $TempCleanupUserTempCheckmark -IsChecked $script:GuiTempCleanupSelected["User Temp"]
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Checkbox error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $TempCleanupWindowsTempCard.Add_MouseLeftButtonUp({
+    try {
+      $script:GuiTempCleanupSelected["Windows Temp"] = -not $script:GuiTempCleanupSelected["Windows Temp"]
+      Set-GuiTempCleanupCheckboxState -Checkbox $TempCleanupWindowsTempCheckbox -Checkmark $TempCleanupWindowsTempCheckmark -IsChecked $script:GuiTempCleanupSelected["Windows Temp"]
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Checkbox error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $TempCleanupPrefetchCard.Add_MouseLeftButtonUp({
+    try {
+      $script:GuiTempCleanupSelected["Prefetch"] = -not $script:GuiTempCleanupSelected["Prefetch"]
+      Set-GuiTempCleanupCheckboxState -Checkbox $TempCleanupPrefetchCheckbox -Checkmark $TempCleanupPrefetchCheckmark -IsChecked $script:GuiTempCleanupSelected["Prefetch"]
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Checkbox error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
   # Defaults to Later (today's existing rename behavior) -- Restart Now is always an explicit choice, never the default, since it restarts the machine immediately.
   $script:GuiRenameRestartNow = $false
 
@@ -616,15 +711,19 @@ function Show-MainWindow {
   $NavDeploymentValidation = $Window.FindName("NavDeploymentValidation")
   $NavDeploymentValidationText = $Window.FindName("NavDeploymentValidationText")
   $NavDeploymentValidationIcon = $Window.FindName("NavDeploymentValidationIcon")
+  $NavTempCleanup = $Window.FindName("NavTempCleanup")
+  $NavTempCleanupText = $Window.FindName("NavTempCleanupText")
+  $NavTempCleanupIcon = $Window.FindName("NavTempCleanupIcon")
 
   $script:GuiQueueRunning = $false
   $script:GuiSelectedCountText = $SelectedCountText
   $script:GuiDeploymentValidationLoaded = $false
   $script:GuiDeploymentLogsLoaded = $false
   $script:GuiWindowsConfigLoaded = $false
-  $script:GuiNavBorders = @($NavApplications, $NavWindowsSetup, $NavDeviceDetails, $NavAssetId, $NavDeploymentLogs, $NavDeploymentValidation)
-  $script:GuiNavTexts = @($NavApplicationsText, $NavWindowsSetupText, $NavDeviceDetailsText, $NavAssetIdText, $NavDeploymentLogsText, $NavDeploymentValidationText)
-  $script:GuiNavIcons = @($NavApplicationsIcon, $NavWindowsSetupIcon, $NavDeviceDetailsIcon, $NavAssetIdIcon, $NavDeploymentLogsIcon, $NavDeploymentValidationIcon)
+  $script:GuiTempCleanupLoaded = $false
+  $script:GuiNavBorders = @($NavApplications, $NavWindowsSetup, $NavDeviceDetails, $NavAssetId, $NavDeploymentLogs, $NavDeploymentValidation, $NavTempCleanup)
+  $script:GuiNavTexts = @($NavApplicationsText, $NavWindowsSetupText, $NavDeviceDetailsText, $NavAssetIdText, $NavDeploymentLogsText, $NavDeploymentValidationText, $NavTempCleanupText)
+  $script:GuiNavIcons = @($NavApplicationsIcon, $NavWindowsSetupIcon, $NavDeviceDetailsIcon, $NavAssetIdIcon, $NavDeploymentLogsIcon, $NavDeploymentValidationIcon, $NavTempCleanupIcon)
   $script:GuiApplicationsToolbar = $Window.FindName("ApplicationsToolbar")
   $script:GuiApplicationsScrollViewer = $Window.FindName("ApplicationsScrollViewer")
   $script:GuiPlaceholderText = $Window.FindName("PlaceholderText")
@@ -652,6 +751,11 @@ function Show-MainWindow {
   $script:GuiAssetIdToolbar = $AssetIdToolbar
   $script:GuiAssetIdScrollViewer = $AssetIdScrollViewer
   $script:GuiAssetIdFieldTextBoxes = $AssetIdFieldTextBoxes
+  $script:GuiTempCleanupToolbar = $TempCleanupToolbar
+  $script:GuiTempCleanupScrollViewer = $TempCleanupScrollViewer
+  $script:GuiTempCleanupCardControls = $TempCleanupCardControls
+  $script:GuiRefreshTempCleanupButton = $RefreshTempCleanupButton
+  $script:GuiCleanSelectedTempButton = $CleanSelectedTempButton
 
   $NavApplications.Add_MouseLeftButtonUp({
     try {
@@ -701,6 +805,15 @@ function Show-MainWindow {
   $NavDeploymentValidation.Add_MouseLeftButtonUp({
     try {
       Switch-GuiScreen -ScreenName "Deployment Validation" -ActiveBorder $NavDeploymentValidation -ActiveText $NavDeploymentValidationText -ActiveIcon $NavDeploymentValidationIcon
+    }
+    catch {
+      Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+    }
+  })
+
+  $NavTempCleanup.Add_MouseLeftButtonUp({
+    try {
+      Switch-GuiScreen -ScreenName "Temp Cleanup" -ActiveBorder $NavTempCleanup -ActiveText $NavTempCleanupText -ActiveIcon $NavTempCleanupIcon
     }
     catch {
       Show-GuiDialog -Title "Error" -Icon Warning -Message "Navigation error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"

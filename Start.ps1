@@ -76,6 +76,7 @@ $ModulePaths = @(
   "Windows\PowerConfiguration.ps1"
   "Windows\WindowsConfiguration.ps1"
   "Windows\LenovoAssetId.ps1"
+  "Windows\TempCleanup.ps1"
 
   "Validation\DeploymentValidation.ps1"
   "Validation\InstallerPackageReadiness.ps1"
@@ -86,6 +87,7 @@ $ModulePaths = @(
   "Gui\GuiApplicationsScreen.ps1"
   "Gui\GuiDeploymentLogsScreen.ps1"
   "Gui\GuiWindowsConfigScreen.ps1"
+  "Gui\GuiTempCleanupScreen.ps1"
   "Gui\GuiWindow.ps1"
 
   "Interface\DeploymentLogs.ps1"
@@ -139,6 +141,8 @@ if ($ValidateOnly) {
     "Expand-ZipDeploymentPackage"
     "Remove-ZipDeploymentExtraction"
     "Install-ApplicationFromZip"
+    "Get-TempCleanupTargets"
+    "Remove-TempCleanupTarget"
   )
 
   $MissingFunctions = @(
@@ -153,7 +157,7 @@ if ($ValidateOnly) {
 
   $ValidationProblems = @()
 
-  if ($ModulePaths.Count -ne 48) {
+  if ($ModulePaths.Count -ne 50) {
     $ValidationProblems += ("Expected 48 modules but the loader contains {0}." -f $ModulePaths.Count)
   }
 
