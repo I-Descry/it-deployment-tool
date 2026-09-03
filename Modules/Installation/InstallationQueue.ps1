@@ -90,9 +90,11 @@ function Install-SelectedApplications {
 
     Write-Host "Checking installer..." -NoNewline
 
+    # A cloud-sourced application (CrowdStrike, Office LTSC 2024, Office 2021 LOP, SAP GUI) correctly reports unavailable here on a fresh device that has not fetched its package yet -- that is not the same as genuinely unavailable, since Install-ApplicationByType fetches it automatically before installing. Only short-circuits to Not Found when there is neither a local package nor a configured cloud source to fetch one from.
     $InstallerAvailable = Test-ApplicationInstallerAvailable -Application $Application
+    $CloudSourceConfigured = Test-CloudInstallerConfigured -Application $Application
 
-    if (-not $InstallerAvailable) {
+    if ((-not $InstallerAvailable) -and (-not $CloudSourceConfigured)) {
       Write-Host " [ NOT FOUND ]" -ForegroundColor Red
 
       $NotFoundMessage = ("Installer was not found or is unavailable for {0}." -f $Application.Name)

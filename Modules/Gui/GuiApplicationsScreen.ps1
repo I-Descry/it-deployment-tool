@@ -317,6 +317,7 @@ function Start-GuiApplicationQueue {
       "Installation\CrowdStrikeInstaller.ps1"
       "Installation\OfficeIsoInstaller.ps1"
       "Installation\Office2021ImgInstaller.ps1"
+      "Installation\CloudInstallerFetch.ps1"
       "Installation\InstallationRouter.ps1"
       "Installation\UninstallationRouter.ps1"
     )
@@ -370,9 +371,11 @@ function Start-GuiApplicationQueue {
           continue
         }
 
+        # A cloud-sourced application (CrowdStrike, Office LTSC 2024, Office 2021 LOP, SAP GUI) correctly reports unavailable here on a fresh device that has not fetched its package yet -- that is not the same as genuinely unavailable, since Install-ApplicationByType fetches it automatically before installing. Only short-circuits to Not Found when there is neither a local package nor a configured cloud source to fetch one from.
         $InstallerAvailable = Test-ApplicationInstallerAvailable -Application $Application
+        $CloudSourceConfigured = Test-CloudInstallerConfigured -Application $Application
 
-        if (-not $InstallerAvailable) {
+        if ((-not $InstallerAvailable) -and (-not $CloudSourceConfigured)) {
           Write-DeploymentLog -Message ("Installer was not found or is unavailable for {0}." -f $Application.Name) -Level "ERROR"
           [void]$Results.Add([PSCustomObject]@{ ApplicationName = $Application.Name; Status = "NotFound"; Message = "Installer was not found or is unavailable for $($Application.Name)." })
           continue
