@@ -81,16 +81,21 @@ function Get-WingetUninstallArguments {
 # WinGet exit code -1978335217 (0x8A15000F, "Data required by the source is missing") is a known, confirmed-real WinGet/AppX bug where an elevated process cannot read the Microsoft.Winget.Source package's data even though the same command works fine unelevated; re-registering that package from its existing files is the confirmed real-device fix.
 $script:WingetSourceDataMissingExitCode = -1978335217
 
-function Repair-WingetSourceDataPackage {
-  # Re-registers the Microsoft.Winget.Source AppX package from its existing files, without reinstalling or removing anything, to recover from the known source-data-missing exit code.
-  try {
-    $SourcePackage = Get-AppxPackage -AllUsers "Microsoft.Winget.Source" -ErrorAction Stop | Select-Object -First 1
+function Repair-AppxPackageRegistration {
+  # Re-registers an already-installed AppX package from its existing files for the current user session, without reinstalling or removing anything. Shared by Repair-WingetSourceDataPackage (a known source-data-missing exit code) and Test-WingetAvailable (winget.exe itself not registered/active for the current session).
+  param(
+    [Parameter(Mandatory)]
+    [string]$PackageName
+  )
 
-    if ($null -eq $SourcePackage) {
+  try {
+    $Package = Get-AppxPackage -AllUsers $PackageName -ErrorAction Stop | Select-Object -First 1
+
+    if ($null -eq $Package) {
       return $false
     }
 
-    $ManifestPath = Join-Path $SourcePackage.InstallLocation "AppXManifest.xml"
+    $ManifestPath = Join-Path $Package.InstallLocation "AppXManifest.xml"
 
     Add-AppxPackage -DisableDevelopmentMode -Register $ManifestPath -ErrorAction Stop
 
@@ -100,6 +105,32 @@ function Repair-WingetSourceDataPackage {
   catch {
     return $false
   }
+}
+
+function Repair-WingetSourceDataPackage {
+  # Thin wrapper over Repair-AppxPackageRegistration, kept for its existing name and call sites -- recovers from the known source-data-missing exit code.
+  return Repair-AppxPackageRegistration -PackageName "Microsoft.Winget.Source"
+}
+
+function Test-WingetAvailable {
+  # Get-Command only ever resolves winget.exe for the CURRENT process's own account. When elevation switched to a different account than the real interactively logged-on user (e.g. the Built-in Administrator, required when the real user is a standard, non-admin account), winget's own per-user app execution alias is genuinely not registered/active for THIS account -- even on a device where Microsoft.DesktopAppInstaller is installed machine-wide and the real user's own session has winget working fine. Detects that specific case (the package is installed, just not registered for this session) and re-registers it, the same repair Repair-WingetSourceDataPackage already uses for a different known WinGet bug, before concluding winget is genuinely unavailable. Checks the well-known alias path directly afterward rather than re-calling Get-Command, since PowerShell's own command-resolution cache is not guaranteed to immediately notice a file that only just started existing.
+  if ($null -ne (Get-Command -Name "winget.exe" -ErrorAction SilentlyContinue)) {
+    return $true
+  }
+
+  $DesktopAppInstallerPackage = Get-AppxPackage -AllUsers "Microsoft.DesktopAppInstaller" -ErrorAction SilentlyContinue | Select-Object -First 1
+
+  if ($null -eq $DesktopAppInstallerPackage) {
+    return $false
+  }
+
+  if (-not (Repair-AppxPackageRegistration -PackageName "Microsoft.DesktopAppInstaller")) {
+    return $false
+  }
+
+  $AliasPath = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps\winget.exe"
+
+  return (Test-Path -LiteralPath $AliasPath -PathType Leaf)
 }
 
 function Invoke-WingetCommandWithSourceRepair {
@@ -136,9 +167,7 @@ function Test-WingetPackage {
   # Only confirms winget itself is present, not that this specific package ID exists -- "winget show" was found to give false negatives on a real device where winget's source data was unreadable from this tool's elevated process even though "winget install" for that same package succeeded fine. Install-ApplicationWithWinget's own exit-code handling is the real, reliable source of truth for whether a specific package installs.
   param([PSCustomObject]$Application)
 
-  $WingetCommand = Get-Command -Name "winget" -ErrorAction SilentlyContinue
-
-  return ($null -ne $WingetCommand)
+  return Test-WingetAvailable
 }
 
 function Install-ApplicationWithWinget {
@@ -149,6 +178,10 @@ function Install-ApplicationWithWinget {
 
   try {
     $WingetArguments = Get-WingetInstallArguments -Application $Application
+
+    if (-not (Test-WingetAvailable)) {
+      throw "WinGet is not available in this session."
+    }
   }
 
   catch {
@@ -189,6 +222,10 @@ function Uninstall-ApplicationWithWinget {
 
   try {
     $WingetArguments = Get-WingetUninstallArguments -Application $Application
+
+    if (-not (Test-WingetAvailable)) {
+      throw "WinGet is not available in this session."
+    }
   }
 
   catch {

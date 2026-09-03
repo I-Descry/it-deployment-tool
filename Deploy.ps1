@@ -88,7 +88,14 @@ if (Test-Path -LiteralPath $DestinationRoot) {
   Remove-Item -LiteralPath $DestinationRoot -Recurse -Force
 }
 
-Move-Item -LiteralPath $ExtractedFolder.FullName -Destination $DestinationRoot
+# Move-Item never creates missing intermediate folders -- on a device where the target user's Desktop folder does not yet exist (e.g. a profile whose standard folders were never fully provisioned, or a broken OneDrive Known Folder Move redirection), this would otherwise fail with "Could not find a part of the path" while still being a non-terminating error by default, letting the script print "Ready"/"Launching" and only fail a second, more confusing time when it tries to launch a Start.ps1 that was never actually placed there.
+$DestinationParent = Split-Path -Path $DestinationRoot -Parent
+
+if (-not (Test-Path -LiteralPath $DestinationParent)) {
+  New-Item -ItemType Directory -Path $DestinationParent -Force | Out-Null
+}
+
+Move-Item -LiteralPath $ExtractedFolder.FullName -Destination $DestinationRoot -ErrorAction Stop
 
 Remove-Item -LiteralPath $TempZipPath -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath $TempExtractPath -Recurse -Force -ErrorAction SilentlyContinue

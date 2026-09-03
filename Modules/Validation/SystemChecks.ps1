@@ -50,13 +50,13 @@ function Test-Internet {
 }
 
 function Test-Winget {
+  # Delegates to Test-WingetAvailable (Installation\WingetInstaller.ps1, loaded later but already defined by the time this function is ever called, same as every other cross-module call in this app) rather than a plain Get-Command, since a bare Get-Command check reported red/unavailable on a real device where the elevated session was running as a different account (e.g. the Built-in Administrator) than the real interactively logged-on user -- winget's own app execution alias is per-user, so that account genuinely did not have it on PATH even though the real user's own session did.
   [CmdletBinding()]
   param(
     [switch]$PassThru
   )
 
-  $WingetCommand = Get-Command -Name "winget.exe" -ErrorAction SilentlyContinue
-  $WingetAvailable = [bool]($null -ne $WingetCommand)
+  $WingetAvailable = Test-WingetAvailable
 
   $SystemInfo.WingetAvailable = $WingetAvailable
 
