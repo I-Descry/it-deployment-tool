@@ -32,6 +32,19 @@
 # logged-on user's own profile folder instead, so the tool lands on their
 # Desktop, matching where a technician (and, if they never delete it, that
 # user) would actually expect to find it.
+#
+# -CloudSourcesUrl is optional and lets a technician auto-place Config\CloudInstallerSources.json
+# (needed for CrowdStrike/Office/SAP GUI installs, see CloudInstallerFetch.ps1) on this device
+# instead of copying that file over by hand. It is never embedded here -- this script and its
+# GitHub repo are fully public, so anything hardcoded into it is exposed to anyone, exactly the
+# risk CloudInstallerSources.json was already kept out of git to avoid. Passing it through requires
+# the standard irm | iex parameter idiom instead of the plain one-liner above:
+#
+#   iex "& { $(irm https://raw.githubusercontent.com/I-Descry/it-deployment-tool/main/Deploy.ps1) } -CloudSourcesUrl 'https://drive.google.com/...'"
+
+param(
+  [string]$CloudSourcesUrl
+)
 
 function Get-InteractiveUserProfilePath {
   # Falls back to $env:USERPROFILE (this process's own account) if the real interactive user's profile can't be resolved for any reason, so bootstrapping still works either way.
@@ -99,6 +112,29 @@ Move-Item -LiteralPath $ExtractedFolder.FullName -Destination $DestinationRoot -
 
 Remove-Item -LiteralPath $TempZipPath -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath $TempExtractPath -Recurse -Force -ErrorAction SilentlyContinue
+
+# Reuses Get-GoogleDriveFileIdFromUrl/Invoke-GoogleDriveFileDownload from the tool's own just-extracted CloudInstallerFetch.ps1 rather than duplicating Google Drive's large-file download handling here. A failure here is intentionally non-fatal (matches CloudInstallerFetch.ps1's own "a missing CloudInstallerSources.json is not an error" contract) -- cloud-sourced applications simply report Not Found until the file is placed, exactly as if -CloudSourcesUrl had never been passed.
+if (-not [string]::IsNullOrWhiteSpace($CloudSourcesUrl)) {
+  Write-Host "Fetching Config\CloudInstallerSources.json from the provided source..." -ForegroundColor Cyan
+
+  try {
+    . (Join-Path $DestinationRoot "Modules\Installation\CloudInstallerFetch.ps1")
+
+    $CloudSourcesFileId = Get-GoogleDriveFileIdFromUrl -Url $CloudSourcesUrl
+
+    if ([string]::IsNullOrWhiteSpace($CloudSourcesFileId)) {
+      throw "Could not parse a Google Drive file ID from the provided -CloudSourcesUrl."
+    }
+
+    Invoke-GoogleDriveFileDownload -FileId $CloudSourcesFileId -OutFile (Join-Path $DestinationRoot "Config\CloudInstallerSources.json")
+
+    Write-Host "Config\CloudInstallerSources.json placed." -ForegroundColor Green
+  }
+  catch {
+    Write-Host "Could not fetch CloudInstallerSources.json: $($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host "Cloud-sourced applications (CrowdStrike, Office, SAP GUI) will report Not Found until this file is placed." -ForegroundColor Yellow
+  }
+}
 
 Write-Host "Ready at $DestinationRoot" -ForegroundColor Green
 Write-Host "Launching..." -ForegroundColor Cyan

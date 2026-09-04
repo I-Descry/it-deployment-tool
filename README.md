@@ -838,6 +838,14 @@ irm https://raw.githubusercontent.com/I-Descry/it-deployment-tool/main/Deploy.ps
 
 This one line downloads the current tool (everything Git tracks — the scripts and `Config\Applications.json`, a few MB) to the real interactively logged-in user's `Desktop\IT Deployment Tool` — resolved correctly even if the session is elevated as a different admin account than the person the device is actually for — then launches `Start.ps1 -Gui` automatically. The gitignored `Installers\` binaries are not part of the Git repository and are not fetched by this script; applications with a configured cloud source (above) fetch their own package automatically on first install, and everything else still needs to be copied in separately. A device set up this way self-deletes the entire tool folder (not the applications it installed) when its window closes and the technician confirms — see [Self-Removal on Devices Set Up via the Remote Bootstrap](#self-removal-on-devices-set-up-via-the-remote-bootstrap) below.
 
+Since `Config\CloudInstallerSources.json` (above) is never part of this download — it's gitignored on purpose — a fresh device has no configured cloud source until that file exists on it, and cloud-sourced applications (CrowdStrike, Office, SAP GUI) report **Not Found** until it does. To place it automatically instead of copying the file over by hand, pass its own Google Drive share URL through the standard `irm | iex` parameter-passing idiom (the plain one-liner above has no way to take parameters):
+
+```powershell
+iex "& { $(irm https://raw.githubusercontent.com/I-Descry/it-deployment-tool/main/Deploy.ps1) } -CloudSourcesUrl 'https://drive.google.com/...'"
+```
+
+`-CloudSourcesUrl` is never hardcoded anywhere in this repository — `Deploy.ps1` and its GitHub remote are both fully public, so anything embedded in it would be exposed to anyone, exactly what keeping this file out of Git was meant to avoid. Supplying it by hand each time keeps that same protection while skipping the manual file copy. If it's omitted, or the download fails for any reason, the bootstrap still completes and launches normally — cloud-sourced applications just report **Not Found** until the file is placed, exactly as if this parameter didn't exist.
+
 ### Manual Clone or Copy (This Dev Repository, or Any Manual Setup)
 
 1. **Get the code onto the machine.** Clone or copy this repository. Everything except the `Installers\` directory's actual package files travels with it automatically, including the bundled Nunito font used by the GUI (`Modules\Gui\Fonts\`).

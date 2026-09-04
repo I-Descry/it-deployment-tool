@@ -34,6 +34,8 @@ Pending real-device tests include:
 - Cloud-sourced application install fix (CrowdStrike, Office LTSC 2024, Office 2021 LOP, SAP GUI no longer stopping at a premature "Not Found") -- needs a real install attempt on a device that previously showed this
 - Brave Browser `WingetScope: machine` fix for the admin-context-prohibited uninstall error -- needs confirming on a device where Brave is freshly installed under the new config (an already-installed, user-scope Brave will still fail to uninstall until reinstalled)
 - IT / Employee deployment mode choice (console and GUI) -- verified locally via off-screen simulated-click testing for both modes; needs a real technician click-through on an actual device (mode-selection window, Employee-mode single-tab GUI, Employee-mode console menu)
+- `.\Start.ps1 -Gui` assembly-load fix (`Show-GuiModeSelection` now loads `PresentationFramework` itself) -- needs re-confirming on the device that previously showed no GUI opening at all after elevation
+- `Deploy.ps1 -CloudSourcesUrl` automatic placement of `Config\CloudInstallerSources.json` -- needs a real end-to-end bootstrap run with a real Drive share URL on a fresh device
 
 These items are pending, not failed. Version `1.1.0-dev` will remain unchanged until the required tests are completed.
 
@@ -953,6 +955,17 @@ Found on a real device immediately after the change above: after granting the UA
 - [x] `.\Start.ps1 -ValidateOnly` still passes (55 modules, 35 required functions).
 - [ ] The original off-screen test harness used to verify this whole feature never caught this, because it pre-loads `PresentationFramework`/`PresentationCore`/`WindowsBase` itself before calling anything -- a real blind spot in that harness for exactly this class of bug (a genuinely fresh process with nothing WPF-related loaded yet). Worth remembering for any future new "first WPF code to run" entry point.
 - [ ] Not yet re-confirmed on the real device that hit this -- only verified locally as above.
+
+### Added: Optional Automatic Placement of `Config\CloudInstallerSources.json` via `Deploy.ps1 -CloudSourcesUrl`
+
+Reported after a fresh device correctly showed CrowdStrike as `Not Found`: `Config\CloudInstallerSources.json` is deliberately excluded from Git (public repo, licensed Drive links), so it never travels with the remote bootstrap's download and must exist on every single target device individually. The user wanted this automatic rather than copying the file onto each device by hand.
+
+- [x] **Real constraint confirmed before choosing a design**: `Deploy.ps1` downloads a fully public, unauthenticated GitHub ZIP archive onto the target device -- anything hardcoded into it (the mapping file itself, or a fixed URL to fetch it) would be exposed to anyone who reads the public repo, which is exactly the exposure `CloudInstallerSources.json` was already kept out of Git to avoid. A truly zero-input automatic version is not possible without giving up that protection -- confirmed with the user via a direct question before implementing, rather than picking a design unilaterally.
+- [x] Chosen approach: `Deploy.ps1` gained an optional `-CloudSourcesUrl` parameter -- a Google Drive share URL for the mapping file itself, supplied by the technician as part of the bootstrap command (via the standard `irm | iex` parameter-passing idiom, since the plain one-liner form can't take parameters), never embedded in the script.
+- [x] Reuses `Get-GoogleDriveFileIdFromUrl`/`Invoke-GoogleDriveFileDownload` (`Modules\Installation\CloudInstallerFetch.ps1`, dot-sourced from the just-extracted copy at `$DestinationRoot`) rather than duplicating Google Drive's large-file download handling in `Deploy.ps1` itself. Verified these two functions dot-source and run standalone without needing `Write-DeploymentLog`, `$script:ITDeploymentToolRoot`, or any other module loaded first -- neither function references them.
+- [x] Failure is non-fatal by design, matching `CloudInstallerFetch.ps1`'s own existing "a missing `CloudInstallerSources.json` is not an error" contract: a bad URL, network failure, or omitted parameter all just leave cloud-sourced applications reporting `Not Found`, exactly as before this change, rather than aborting the whole bootstrap.
+- [x] Verified directly: `Deploy.ps1` still parses with no syntax errors after adding the top-level `param()` block (`[System.Management.Automation.Language.Parser]::ParseFile`); `Get-GoogleDriveFileIdFromUrl` dot-sourced and called standalone from `CloudInstallerFetch.ps1` correctly parses a real Google Drive share URL format.
+- [ ] Not yet run through an actual end-to-end bootstrap on a real device with a real `-CloudSourcesUrl` value -- only verified the parameter parsing, the file-ID extraction, and the script's own syntax locally. The download itself (`Invoke-GoogleDriveFileDownload`, including Google's large-file interstitial handling) was already verified separately when `CloudInstallerFetch.ps1` was first built, but not specifically from within this new `Deploy.ps1` code path.
 
 ---
 
