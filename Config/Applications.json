@@ -233,6 +233,14 @@
     "Recommended": false
   },
   {
+    "Name": "Perplexity",
+    "InstallType": "Winget",
+    "Winget": "Perplexity.Perplexity",
+    "Category": "AI Tools",
+    "Description": "Perplexity AI's desktop search and assistant application",
+    "Recommended": false
+  },
+  {
     "Name": "Laragon",
     "InstallType": "Winget",
     "Winget": "LeNgocKhoa.Laragon",
