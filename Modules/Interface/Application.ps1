@@ -1,6 +1,9 @@
 function Start-Application {
   Show-Banner
 
+  # The first interactive moment, before anything else about the tool is shown.
+  Read-DeploymentMode
+
   # Load system information
   Get-SystemInformation
 

@@ -8,11 +8,19 @@ function Show-MainMenu {
   Write-Section -Title "Deployment Status"
 
   Write-Host " [1] Install Applications"
-  Write-Host " [2] Configure Windows"
-  Write-Host " [3] Deployment Logs"
+
+  if ($script:DeploymentMode -ne "Employee") {
+    Write-Host " [2] Configure Windows"
+    Write-Host " [3] Deployment Logs"
+  }
+
   Write-Host " [4] About"
-  Write-Host " [5] Deployment Validation"
-  Write-Host " [6] Installer Package Status"
+
+  if ($script:DeploymentMode -ne "Employee") {
+    Write-Host " [5] Deployment Validation"
+    Write-Host " [6] Installer Package Status"
+  }
+
   Write-Host
   Write-Host " [0] Exit"
   Write-Host
@@ -42,17 +50,32 @@ function Start-MainMenu {
       continue
     }
 
+    # [2]/[3]/[5]/[6] are only ever printed by Show-MainMenu when not in Employee mode, but the switch guards them too, in case a technician types one anyway.
     switch ($Choice) {
       "1" {
         Show-ApplicationMenu
       }
 
       "2" {
-        Show-WindowsConfigurationMenu
+        if ($script:DeploymentMode -eq "Employee") {
+          Write-Host
+          Write-Host "Invalid selection." -ForegroundColor Red
+          Pause-Application
+        }
+        else {
+          Show-WindowsConfigurationMenu
+        }
       }
 
       "3" {
-        Show-DeploymentLogsMenu
+        if ($script:DeploymentMode -eq "Employee") {
+          Write-Host
+          Write-Host "Invalid selection." -ForegroundColor Red
+          Pause-Application
+        }
+        else {
+          Show-DeploymentLogsMenu
+        }
       }
 
       "4" {
@@ -69,21 +92,35 @@ function Start-MainMenu {
       }
 
       "5" {
-        Show-DeploymentValidationReport
+        if ($script:DeploymentMode -eq "Employee") {
+          Write-Host
+          Write-Host "Invalid selection." -ForegroundColor Red
+          Pause-Application
+        }
+        else {
+          Show-DeploymentValidationReport
 
-        Pause-Application
+          Pause-Application
+        }
       }
 
       "6" {
-        Clear-Host
+        if ($script:DeploymentMode -eq "Employee") {
+          Write-Host
+          Write-Host "Invalid selection." -ForegroundColor Red
+          Pause-Application
+        }
+        else {
+          Clear-Host
 
-        Write-Title -Title "INSTALLER PACKAGE STATUS"
+          Write-Title -Title "INSTALLER PACKAGE STATUS"
 
-        $ReadinessResults = Get-InstallerPackageReadiness -Applications $script:Applications
+          $ReadinessResults = Get-InstallerPackageReadiness -Applications $script:Applications
 
-        Show-InstallerPackageReadiness -Results $ReadinessResults
+          Show-InstallerPackageReadiness -Results $ReadinessResults
 
-        Pause-Application
+          Pause-Application
+        }
       }
 
       "0" {

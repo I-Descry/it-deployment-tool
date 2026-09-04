@@ -19,7 +19,8 @@ function Show-ApplicationMenu {
 }
 
 function Show-ApplicationList {
-  $GroupedApplications = $script:Applications | Group-Object Category
+  $VisibleApplications = Get-VisibleApplications
+  $GroupedApplications = $VisibleApplications | Group-Object Category
 
   $ApplicationNumber = 1
 
@@ -67,7 +68,7 @@ function Show-ApplicationList {
     }
   }
 
-  $SelectedCount = @($script:Applications | Where-Object {
+  $SelectedCount = @($VisibleApplications | Where-Object {
     $_.Selected -eq $true
   }
   ).Count

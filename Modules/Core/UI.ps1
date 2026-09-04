@@ -75,3 +75,32 @@ function Write-Title {
 
   Write-Line
 }
+
+function Read-DeploymentMode {
+  # Sets $script:DeploymentMode (ApplicationCatalog.ps1), read by Get-VisibleApplications and Show-MainMenu -- IT is unchanged, Employee restricts the Applications catalog and hides most menu options.
+  Write-Title -Title "SELECT DEPLOYMENT MODE"
+
+  while ($true) {
+    Write-Host " [1] IT       - All features and application categories."
+    Write-Host " [2] Employee - Applications only (Browsers, Communication, Remote Support, Company Apps, Productivity, Printers)."
+    Write-Host
+
+    $Choice = Read-Host "Select an option"
+
+    switch ([string]$Choice.Trim()) {
+      "1" {
+        $script:DeploymentMode = "IT"
+        return
+      }
+      "2" {
+        $script:DeploymentMode = "Employee"
+        return
+      }
+      default {
+        Write-Host
+        Write-Host "Invalid selection." -ForegroundColor Red
+        Write-Host
+      }
+    }
+  }
+}

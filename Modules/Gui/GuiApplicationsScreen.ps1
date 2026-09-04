@@ -190,7 +190,7 @@ function Update-GuiApplicationGrid {
 
   $GridPanel.Items.Clear()
 
-  $Grouped = $script:Applications | Group-Object Category
+  $Grouped = (Get-VisibleApplications) | Group-Object Category
 
   foreach ($Group in $Grouped) {
     $SortedApplications = $Group.Group | Sort-Object Name
@@ -205,7 +205,7 @@ function Update-GuiSelectedCount {
     [System.Windows.Controls.TextBlock]$CountText
   )
 
-  $SelectedCount = @($script:Applications | Where-Object { $_.Selected -eq $true }).Count
+  $SelectedCount = @((Get-VisibleApplications) | Where-Object { $_.Selected -eq $true }).Count
   $CountText.Text = "$SelectedCount selected"
 }
 

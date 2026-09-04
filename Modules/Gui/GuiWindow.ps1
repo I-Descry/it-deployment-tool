@@ -72,19 +72,23 @@ function Switch-GuiScreen {
   # Every screen is hidden first, then only the requested one is shown. Doing it this way keeps each branch to the two lines that actually differ, instead of repeating the full visibility list once per screen.
   $script:GuiApplicationsToolbar.Visibility = "Collapsed"
   $script:GuiApplicationsScrollViewer.Visibility = "Collapsed"
-  $script:GuiDeploymentValidationToolbar.Visibility = "Collapsed"
-  $script:GuiDeploymentValidationScrollViewer.Visibility = "Collapsed"
-  $script:GuiDeploymentLogsToolbar.Visibility = "Collapsed"
-  $script:GuiDeploymentLogsContent.Visibility = "Collapsed"
-  $script:GuiWindowsSetupToolbar.Visibility = "Collapsed"
-  $script:GuiWindowsSetupScrollViewer.Visibility = "Collapsed"
-  $script:GuiDeviceDetailsToolbar.Visibility = "Collapsed"
-  $script:GuiDeviceDetailsScrollViewer.Visibility = "Collapsed"
-  $script:GuiAssetIdToolbar.Visibility = "Collapsed"
-  $script:GuiAssetIdScrollViewer.Visibility = "Collapsed"
-  $script:GuiTempCleanupToolbar.Visibility = "Collapsed"
-  $script:GuiTempCleanupScrollViewer.Visibility = "Collapsed"
   $script:GuiPlaceholderText.Visibility = "Collapsed"
+
+  # Employee mode never initializes any of these six screens (Show-MainWindow), so their $script:Gui* toolbar/scrollviewer variables are $null -- setting a property on $null throws "The property '...' cannot be found on this object", not silently a no-op, so this whole block is skipped rather than guarded line by line.
+  if ($script:DeploymentMode -ne "Employee") {
+    $script:GuiDeploymentValidationToolbar.Visibility = "Collapsed"
+    $script:GuiDeploymentValidationScrollViewer.Visibility = "Collapsed"
+    $script:GuiDeploymentLogsToolbar.Visibility = "Collapsed"
+    $script:GuiDeploymentLogsContent.Visibility = "Collapsed"
+    $script:GuiWindowsSetupToolbar.Visibility = "Collapsed"
+    $script:GuiWindowsSetupScrollViewer.Visibility = "Collapsed"
+    $script:GuiDeviceDetailsToolbar.Visibility = "Collapsed"
+    $script:GuiDeviceDetailsScrollViewer.Visibility = "Collapsed"
+    $script:GuiAssetIdToolbar.Visibility = "Collapsed"
+    $script:GuiAssetIdScrollViewer.Visibility = "Collapsed"
+    $script:GuiTempCleanupToolbar.Visibility = "Collapsed"
+    $script:GuiTempCleanupScrollViewer.Visibility = "Collapsed"
+  }
 
   if ($ScreenName -eq "Applications") {
     $script:GuiApplicationsToolbar.Visibility = "Visible"
@@ -280,47 +284,64 @@ function Show-MainWindow {
 
   # Each screen's own FindName + click-handler wiring lives in its own file; each Initialize-GuiXScreen call returns that screen's Nav Border/Text/Icon triple for the shared nav arrays below, plus (for Windows Setup/Device Details/Asset ID) whatever their one shared Refresh mechanism needs from them. Dot-sourced (". Initialize-...", not a plain call) so each function body runs in Show-MainWindow's own scope instead of a child scope that is torn down the moment the function returns -- a plain call here left every closure created inside it (nav clicks, Select All, etc.) referencing an already-gone scope, surfacing as "Cannot bind argument ... because it is null" the instant any of them fired; confirmed both the failure and the fix with a real, off-screen, simulated-click end-to-end run of this exact code.
   $ApplicationsScreen = . Initialize-GuiApplicationsScreen -Window $Window -CompletionModalControls $CompletionModalControls
-  $WindowsSetupScreen = . Initialize-GuiWindowsSetupScreen -Window $Window
-  $DeviceDetailsScreen = . Initialize-GuiDeviceDetailsScreen -Window $Window
-  $AssetIdScreen = . Initialize-GuiAssetIdScreen -Window $Window
-  $DeploymentLogsScreen = . Initialize-GuiDeploymentLogsScreen -Window $Window
-  $DeploymentValidationScreen = . Initialize-GuiDeploymentValidationScreen -Window $Window
-  $TempCleanupScreen = . Initialize-GuiTempCleanupScreen -Window $Window -CompletionModalControls $CompletionModalControls
 
-  $script:GuiNavBorders = @($ApplicationsScreen.NavBorder, $WindowsSetupScreen.NavBorder, $DeviceDetailsScreen.NavBorder, $AssetIdScreen.NavBorder, $DeploymentLogsScreen.NavBorder, $DeploymentValidationScreen.NavBorder, $TempCleanupScreen.NavBorder)
-  $script:GuiNavTexts = @($ApplicationsScreen.NavText, $WindowsSetupScreen.NavText, $DeviceDetailsScreen.NavText, $AssetIdScreen.NavText, $DeploymentLogsScreen.NavText, $DeploymentValidationScreen.NavText, $TempCleanupScreen.NavText)
-  $script:GuiNavIcons = @($ApplicationsScreen.NavIcon, $WindowsSetupScreen.NavIcon, $DeviceDetailsScreen.NavIcon, $AssetIdScreen.NavIcon, $DeploymentLogsScreen.NavIcon, $DeploymentValidationScreen.NavIcon, $TempCleanupScreen.NavIcon)
+  # Employee mode shows only the Applications tab, per instruction (Windows Setup, Asset ID) and by extension (Device Details, Deployment Validation, Deployment Logs, Temp Cleanup are all IT-facing diagnostic/maintenance/config tools, not application-installation-relevant). None of their Initialize-GuiXScreen functions are called at all in this mode -- their nav items are hidden directly here rather than left wired-but-invisible, since they were never asked to render or accept clicks in the first place. If/else branches are not their own scope in PowerShell (unlike function calls), so the variables assigned inside the "else" branch below are ordinary Show-MainWindow locals, not at risk of the same torn-down-scope problem dot-sourcing works around above.
+  if ($script:DeploymentMode -eq "Employee") {
+    foreach ($HiddenNavName in @("NavWindowsSetup", "NavDeviceDetails", "NavAssetId", "NavDeploymentLogs", "NavDeploymentValidation", "NavTempCleanup")) {
+      $HiddenNav = $Window.FindName($HiddenNavName)
 
-  # Windows Setup, Device Details, and Asset ID share one background-loaded device report (Start-GuiWindowsConfigLoad/Invoke-GuiWindowsConfigurationRefresh, GuiWindowsConfigShared.ps1); each screen's own Refresh button runs the exact same full refresh, wired here since it spans controls owned by all three screens rather than belonging to just one of them.
-  $script:GuiWindowsConfigLoaded = $false
-  $script:GuiRefreshWindowsConfigButtons = @($WindowsSetupScreen.RefreshButton, $DeviceDetailsScreen.RefreshButton, $AssetIdScreen.RefreshButton)
+      if ($null -ne $HiddenNav) {
+        $HiddenNav.Visibility = "Collapsed"
+      }
+    }
 
-  $WindowsSetupScreen.RefreshButton.Add_Click({
-    try {
-      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $DeviceDetailsScreen.DeviceFields -CurrentNameText $WindowsSetupScreen.CurrentNameText -LocalUsersListPanel $WindowsSetupScreen.LocalUsersListPanel -CurrentPluggedInText $WindowsSetupScreen.CurrentPluggedInText -CurrentBatteryText $WindowsSetupScreen.CurrentBatteryText -NavAssetId $AssetIdScreen.NavAssetId -AssetIdFieldTextBoxes $AssetIdScreen.FieldTextBoxes
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
+    $script:GuiNavBorders = @($ApplicationsScreen.NavBorder)
+    $script:GuiNavTexts = @($ApplicationsScreen.NavText)
+    $script:GuiNavIcons = @($ApplicationsScreen.NavIcon)
+  }
+  else {
+    $WindowsSetupScreen = . Initialize-GuiWindowsSetupScreen -Window $Window
+    $DeviceDetailsScreen = . Initialize-GuiDeviceDetailsScreen -Window $Window
+    $AssetIdScreen = . Initialize-GuiAssetIdScreen -Window $Window
+    $DeploymentLogsScreen = . Initialize-GuiDeploymentLogsScreen -Window $Window
+    $DeploymentValidationScreen = . Initialize-GuiDeploymentValidationScreen -Window $Window
+    $TempCleanupScreen = . Initialize-GuiTempCleanupScreen -Window $Window -CompletionModalControls $CompletionModalControls
 
-  $DeviceDetailsScreen.RefreshButton.Add_Click({
-    try {
-      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $DeviceDetailsScreen.DeviceFields -CurrentNameText $WindowsSetupScreen.CurrentNameText -LocalUsersListPanel $WindowsSetupScreen.LocalUsersListPanel -CurrentPluggedInText $WindowsSetupScreen.CurrentPluggedInText -CurrentBatteryText $WindowsSetupScreen.CurrentBatteryText -NavAssetId $AssetIdScreen.NavAssetId -AssetIdFieldTextBoxes $AssetIdScreen.FieldTextBoxes
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
+    $script:GuiNavBorders = @($ApplicationsScreen.NavBorder, $WindowsSetupScreen.NavBorder, $DeviceDetailsScreen.NavBorder, $AssetIdScreen.NavBorder, $DeploymentLogsScreen.NavBorder, $DeploymentValidationScreen.NavBorder, $TempCleanupScreen.NavBorder)
+    $script:GuiNavTexts = @($ApplicationsScreen.NavText, $WindowsSetupScreen.NavText, $DeviceDetailsScreen.NavText, $AssetIdScreen.NavText, $DeploymentLogsScreen.NavText, $DeploymentValidationScreen.NavText, $TempCleanupScreen.NavText)
+    $script:GuiNavIcons = @($ApplicationsScreen.NavIcon, $WindowsSetupScreen.NavIcon, $DeviceDetailsScreen.NavIcon, $AssetIdScreen.NavIcon, $DeploymentLogsScreen.NavIcon, $DeploymentValidationScreen.NavIcon, $TempCleanupScreen.NavIcon)
 
-  $AssetIdScreen.RefreshButton.Add_Click({
-    try {
-      Invoke-GuiWindowsConfigurationRefresh -DeviceFields $DeviceDetailsScreen.DeviceFields -CurrentNameText $WindowsSetupScreen.CurrentNameText -LocalUsersListPanel $WindowsSetupScreen.LocalUsersListPanel -CurrentPluggedInText $WindowsSetupScreen.CurrentPluggedInText -CurrentBatteryText $WindowsSetupScreen.CurrentBatteryText -NavAssetId $AssetIdScreen.NavAssetId -AssetIdFieldTextBoxes $AssetIdScreen.FieldTextBoxes
-    }
-    catch {
-      Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
-    }
-  })
+    # Windows Setup, Device Details, and Asset ID share one background-loaded device report (Start-GuiWindowsConfigLoad/Invoke-GuiWindowsConfigurationRefresh, GuiWindowsConfigShared.ps1); each screen's own Refresh button runs the exact same full refresh, wired here since it spans controls owned by all three screens rather than belonging to just one of them.
+    $script:GuiWindowsConfigLoaded = $false
+    $script:GuiRefreshWindowsConfigButtons = @($WindowsSetupScreen.RefreshButton, $DeviceDetailsScreen.RefreshButton, $AssetIdScreen.RefreshButton)
+
+    $WindowsSetupScreen.RefreshButton.Add_Click({
+      try {
+        Invoke-GuiWindowsConfigurationRefresh -DeviceFields $DeviceDetailsScreen.DeviceFields -CurrentNameText $WindowsSetupScreen.CurrentNameText -LocalUsersListPanel $WindowsSetupScreen.LocalUsersListPanel -CurrentPluggedInText $WindowsSetupScreen.CurrentPluggedInText -CurrentBatteryText $WindowsSetupScreen.CurrentBatteryText -NavAssetId $AssetIdScreen.NavAssetId -AssetIdFieldTextBoxes $AssetIdScreen.FieldTextBoxes
+      }
+      catch {
+        Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+      }
+    })
+
+    $DeviceDetailsScreen.RefreshButton.Add_Click({
+      try {
+        Invoke-GuiWindowsConfigurationRefresh -DeviceFields $DeviceDetailsScreen.DeviceFields -CurrentNameText $WindowsSetupScreen.CurrentNameText -LocalUsersListPanel $WindowsSetupScreen.LocalUsersListPanel -CurrentPluggedInText $WindowsSetupScreen.CurrentPluggedInText -CurrentBatteryText $WindowsSetupScreen.CurrentBatteryText -NavAssetId $AssetIdScreen.NavAssetId -AssetIdFieldTextBoxes $AssetIdScreen.FieldTextBoxes
+      }
+      catch {
+        Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+      }
+    })
+
+    $AssetIdScreen.RefreshButton.Add_Click({
+      try {
+        Invoke-GuiWindowsConfigurationRefresh -DeviceFields $DeviceDetailsScreen.DeviceFields -CurrentNameText $WindowsSetupScreen.CurrentNameText -LocalUsersListPanel $WindowsSetupScreen.LocalUsersListPanel -CurrentPluggedInText $WindowsSetupScreen.CurrentPluggedInText -CurrentBatteryText $WindowsSetupScreen.CurrentBatteryText -NavAssetId $AssetIdScreen.NavAssetId -AssetIdFieldTextBoxes $AssetIdScreen.FieldTextBoxes
+      }
+      catch {
+        Show-GuiDialog -Title "Error" -Icon Warning -Message "Refresh error: $($_.Exception.Message)`n`n$($_.ScriptStackTrace)"
+      }
+    })
+  }
 
   Update-GuiSystemInfoBar -Window $Window
 

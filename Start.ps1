@@ -82,6 +82,7 @@ $ModulePaths = @(
   "Validation\InstallerPackageReadiness.ps1"
 
   "Gui\GuiDialog.ps1"
+  "Gui\GuiModeSelection.ps1"
   "Gui\GuiIcons.ps1"
   "Gui\GuiCompletionModal.ps1"
   "Gui\GuiDeploymentValidationScreen.ps1"
@@ -147,6 +148,9 @@ if ($ValidateOnly) {
     "Install-ApplicationFromZip"
     "Get-TempCleanupTargets"
     "Remove-TempCleanupTarget"
+    "Get-VisibleApplications"
+    "Show-GuiModeSelection"
+    "Read-DeploymentMode"
   )
 
   $MissingFunctions = @(
@@ -161,8 +165,8 @@ if ($ValidateOnly) {
 
   $ValidationProblems = @()
 
-  if ($ModulePaths.Count -ne 54) {
-    $ValidationProblems += ("Expected 54 modules but the loader contains {0}." -f $ModulePaths.Count)
+  if ($ModulePaths.Count -ne 55) {
+    $ValidationProblems += ("Expected 55 modules but the loader contains {0}." -f $ModulePaths.Count)
   }
 
   if ($MissingFunctions.Count -gt 0) {
@@ -211,6 +215,15 @@ if ($Gui) {
   if ($ConsoleWindowHandle -ne [IntPtr]::Zero) {
     [ITDeploymentTool.Win32ConsoleWindow]::ShowWindow($ConsoleWindowHandle, 0) | Out-Null
   }
+
+  # The first thing shown in GUI mode. Closing this window without choosing (X / Alt+F4) returns $null, exiting cleanly before the main window ever opens, the same way declining a confirmation elsewhere just backs out. $script:DeploymentMode (ApplicationCatalog.ps1, defaults to "IT") is the single source of truth Get-VisibleApplications and Show-MainWindow both read from here on -- no separate -Mode parameter threaded through, to avoid a second channel for the same fact that could drift out of sync.
+  $Mode = Show-GuiModeSelection
+
+  if ($null -eq $Mode) {
+    exit
+  }
+
+  $script:DeploymentMode = $Mode
 
   Show-MainWindow -DeleteOnClose:$DeleteOnClose
   exit
